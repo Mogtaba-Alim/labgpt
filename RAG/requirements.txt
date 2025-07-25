@@ -1,0 +1,12 @@
+flask==3.1.0
+werkzeug==3.1.3
+numpy==1.26.4
+sentence-transformers==3.4.1
+faiss-cpu==1.10.0
+PyMuPDF==1.25.2
+langchain==0.3.25
+tqdm==4.66.5
+torch==2.4.1
+transformers==4.45.2
+pathlib
+logging 

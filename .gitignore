@@ -1,0 +1,17 @@
+__pycache__/
+**/__pycache__/
+
+.env
+**/.env
+*.env
+
+STORAGE/
+
+test_production/
+test_basic/
+rag_demo_storage/
+
+final_test/
+
+data_generation/Paper_Outputs_with_chunks/
+data_generation/repos/
