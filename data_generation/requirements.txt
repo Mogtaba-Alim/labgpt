@@ -1,0 +1,15 @@
+Flask==2.3.3
+anthropic==0.25.0
+openai==1.35.0
+python-dotenv==1.0.0
+GitPython==3.1.43
+networkx==3.1
+PyPDF2==3.0.1
+nltk==3.8.1
+requests==2.31.0
+Werkzeug==2.3.7
+Jinja2==3.1.2
+itsdangerous==2.1.2
+click==8.1.7
+blinker==1.6.2
+MarkupSafe==2.1.3 

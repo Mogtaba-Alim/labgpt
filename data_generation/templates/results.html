@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabGPT Data Generation - Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin: 50px auto;
+            max-width: 1000px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1rem 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #28a745;
+        }
+        .dataset-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .file-item {
+            background: #e9ecef;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+        .file-icon {
+            font-size: 2rem;
+            margin-right: 1rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .btn-outline-primary {
+            border-color: #28a745;
+            color: #28a745;
+            border-radius: 20px;
+        }
+        .btn-outline-primary:hover {
+            background: #28a745;
+            border-color: #28a745;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .stat-box {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .success-icon {
+            font-size: 4rem;
+            color: #28a745;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h1><i class="fas fa-chart-line me-3"></i>Data Generation Complete!</h1>
+            <p class="mb-0">Your fine-tuning datasets have been successfully generated</p>
+        </div>
+        
+        <div class="content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'warning' if category == 'warning' else 'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Dataset Statistics -->
+            <div class="result-card">
+                <h3><i class="fas fa-chart-bar text-success me-2"></i>Dataset Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number">{{ results.train_size }}</div>
+                        <div class="text-muted">Training Examples</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">{{ results.val_size }}</div>
+                        <div class="text-muted">Validation Examples</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">{{ results.train_size + results.val_size }}</div>
+                        <div class="text-muted">Total Examples</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">JSON</div>
+                        <div class="text-muted">Output Format</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generated Files -->
+            <div class="result-card">
+                <h3><i class="fas fa-file-download text-primary me-2"></i>Generated Dataset Files</h3>
+                <p class="text-muted">The following files have been generated and are ready for use in your fine-tuning pipeline:</p>
+                
+                <!-- Training Dataset -->
+                <div class="file-item">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <div class="file-icon text-success">
+                            <i class="fas fa-file-code"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ results.train_file }}</h6>
+                            <small class="text-muted">
+                                Training dataset - {{ results.train_size }} examples
+                                {% if results.train_exists %}
+                                    <span class="badge bg-success ms-2">Available</span>
+                                {% else %}
+                                    <span class="badge bg-danger ms-2">Not Found</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% if results.train_exists %}
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="viewSample('{{ results.train_file }}')">
+                            <i class="fas fa-eye me-1"></i>Preview
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Validation Dataset -->
+                <div class="file-item">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <div class="file-icon text-warning">
+                            <i class="fas fa-file-code"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ results.val_file }}</h6>
+                            <small class="text-muted">
+                                Validation dataset - {{ results.val_size }} examples
+                                {% if results.val_exists %}
+                                    <span class="badge bg-success ms-2">Available</span>
+                                {% else %}
+                                    <span class="badge bg-danger ms-2">Not Found</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% if results.val_exists %}
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="viewSample('{{ results.val_file }}')">
+                            <i class="fas fa-eye me-1"></i>Preview
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Usage Instructions -->
+            <div class="result-card">
+                <h3><i class="fas fa-lightbulb text-warning me-2"></i>Next Steps</h3>
+                <div class="dataset-info">
+                    <h6>Using Your Generated Datasets</h6>
+                    <ol>
+                        <li><strong>Training:</strong> Use <code>{{ results.train_file }}</code> for fine-tuning your language model</li>
+                        <li><strong>Validation:</strong> Use <code>{{ results.val_file }}</code> to evaluate model performance during training</li>
+                        <li><strong>Format:</strong> Both files are in JSON format with standardized structure for Q&A pairs, code completion, debugging tasks, and more</li>
+                        <li><strong>Integration:</strong> These datasets can be directly used with popular fine-tuning frameworks like Hugging Face Transformers</li>
+                    </ol>
+                </div>
+                
+                <div class="dataset-info">
+                    <h6>Dataset Structure</h6>
+                    <p>Each dataset entry contains:</p>
+                    <ul class="mb-0">
+                        <li><strong>Code Data:</strong> Q&A pairs, completion tasks, debugging challenges, refactoring suggestions, docstring generation</li>
+                        <li><strong>Research Paper Data:</strong> Question-answer pairs extracted from your lab's research papers</li>
+                        <li><strong>Metadata:</strong> Repository information, file paths, language types, and dependencies</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <button class="btn btn-outline-primary me-3" onclick="location.href='/'">
+                    <i class="fas fa-plus me-2"></i>Generate Another Dataset
+                </button>
+                <button class="btn btn-primary" onclick="downloadInstructions()">
+                    <i class="fas fa-download me-2"></i>Download Usage Guide
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample Preview Modal -->
+    <div class="modal fade" id="sampleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dataset Sample Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <pre id="sampleContent" style="background: #f8f9fa; padding: 1rem; border-radius: 5px; max-height: 400px; overflow-y: auto;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function viewSample(filename) {
+            // This would typically fetch a sample from the server
+            // For now, we'll show a placeholder
+            const sampleData = {
+                "repo": "https://github.com/example/repo.git",
+                "file": "example.py",
+                "language": "python",
+                "qa_pairs": [
+                    {
+                        "question": "What does this function do?",
+                        "answer": "This function processes data and returns results..."
+                    }
+                ],
+                "completion_tasks": [
+                    {
+                        "prompt": "def process_data(data):",
+                        "completion": "    # Process the input data\n    return processed_data"
+                    }
+                ]
+            };
+            
+            document.getElementById('sampleContent').textContent = JSON.stringify(sampleData, null, 2);
+            new bootstrap.Modal(document.getElementById('sampleModal')).show();
+        }
+
+        function downloadInstructions() {
+            const instructions = `# Fine-Tuning Dataset Usage Guide
+
+## Generated Files
+- ${document.querySelector('.file-item h6').textContent}: Training dataset
+- Validation dataset: For model evaluation
+
+## Dataset Structure
+Each entry contains:
+- Code analysis data (Q&A, completion, debugging, refactoring)
+- Research paper Q&A pairs
+- Metadata and dependencies
+
+## Usage Example
+\`\`\`python
+import json
+
+# Load training data
+with open('${document.querySelector('.file-item h6').textContent}', 'r') as f:
+    train_data = json.load(f)
+
+# Use with your fine-tuning framework
+for entry in train_data:
+    # Process each training example
+    pass
+\`\`\`
+
+Generated by LabGPT Data Generation Pipeline
+`;
+            
+            const blob = new Blob([instructions], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dataset_usage_guide.md';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html> 
