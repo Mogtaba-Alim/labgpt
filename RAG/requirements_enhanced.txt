@@ -1,0 +1,33 @@
+# Enhanced RAG System Requirements
+# Core dependencies for the upgraded ingestion and retrieval system
+
+# Document processing and NLP
+PyMuPDF>=1.20.0  # PDF processing
+nltk>=3.8.1      # Natural language processing
+tiktoken>=0.5.0  # Token counting for text splitting
+
+# Machine Learning and Embeddings
+sentence-transformers>=2.2.0  # Embedding models and cross-encoders
+faiss-cpu>=1.7.0             # Dense vector search (use faiss-gpu for GPU support)
+rank-bm25>=0.2.2             # Sparse retrieval (BM25)
+
+# Scientific computing
+numpy>=1.21.0
+scipy>=1.9.0
+
+# Configuration and data handling
+PyYAML>=6.0      # Configuration files
+pandas>=1.5.0    # Data manipulation
+tqdm>=4.64.0     # Progress bars
+
+# Optional: For GPU acceleration
+# torch>=1.13.0  # PyTorch for GPU models
+# faiss-gpu>=1.7.0  # GPU-accelerated FAISS
+
+# Optional: For LLM-based query expansion
+# openai>=1.0.0   # OpenAI API
+# anthropic>=0.3.0  # Anthropic API
+
+# Development and testing
+pytest>=7.0.0
+pytest-cov>=4.0.0 

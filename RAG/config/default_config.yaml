@@ -1,0 +1,144 @@
+# Enhanced RAG System Configuration
+# This file controls all aspects of the ingestion and retrieval pipeline
+
+# Model Configuration
+models:
+  # Embedding model for dense retrieval
+  embedding_model: "sentence-transformers/all-mpnet-base-v2"
+  
+  # Cross-encoder model for re-ranking
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  
+  # Query expansion model (for LLM-based expansion)
+  query_expansion_model: "gpt-3.5-turbo"
+  
+  # Device to use: "cpu", "cuda", or "auto"
+  device: "auto"
+
+# Dense Retrieval Configuration (FAISS)
+dense:
+  # Number of candidates to retrieve
+  top_k: 20
+  
+  # Minimum similarity score threshold
+  score_threshold: 0.0
+  
+  # Enable GPU acceleration if available
+  use_gpu: true
+  
+  # FAISS index type: "hnsw", "ivf", "flat"
+  index_type: "hnsw"
+
+# Sparse Retrieval Configuration (BM25)
+sparse:
+  # Number of candidates to retrieve
+  top_k: 20
+  
+  # BM25 parameters
+  k1: 1.2  # Term frequency saturation parameter
+  b: 0.75  # Document length normalization parameter
+  
+  # Text preprocessing
+  use_stemming: true
+  remove_stopwords: true
+
+# Query Processing Configuration
+query_processing:
+  # Enable query expansion
+  enable_expansion: true
+  
+  # Maximum number of expanded queries
+  max_expansions: 3
+  
+  # Expansion method: "llm", "wordnet", "embedding"
+  expansion_method: "wordnet"
+  
+  # Include original query in results
+  include_original: true
+  
+  # Enable query rewriting
+  query_rewriting: true
+
+# Re-ranking Configuration
+reranking:
+  # Enable cross-encoder re-ranking
+  enable_reranking: true
+  
+  # Number of candidates to re-rank
+  rerank_top_k: 50
+  
+  # Final number of results to return
+  final_top_k: 10
+  
+  # Minimum score threshold for re-ranked results
+  score_threshold: 0.0
+
+# Result Fusion Configuration
+fusion:
+  # Fusion method: "rrf", "linear", "rank_sum"
+  fusion_method: "rrf"
+  
+  # Weights for linear fusion
+  dense_weight: 0.6
+  sparse_weight: 0.4
+  
+  # RRF parameter (higher = more conservative)
+  rrf_k: 60
+
+# Filtering Configuration
+filtering:
+  # Minimum chunk quality score
+  min_chunk_quality: 0.4
+  
+  # Maximum age of chunks in days (null = no limit)
+  max_chunk_age_days: null
+  
+  # Allowed document types (null = all allowed)
+  allowed_doc_types: null
+  
+  # Excluded sections
+  excluded_sections: null
+  
+  # Diversity threshold (0-1, higher = more diverse)
+  diversity_threshold: 0.8
+
+# System Configuration
+cache_embeddings: true
+parallel_retrieval: true
+logging_level: "INFO"
+
+# Text Splitting Configuration
+text_splitting:
+  # Target chunk size in tokens
+  target_chunk_size: 400
+  
+  # Maximum chunk size in tokens
+  max_chunk_size: 512
+  
+  # Minimum chunk size in tokens
+  min_chunk_size: 50
+  
+  # Overlap between chunks in tokens
+  chunk_overlap: 50
+  
+  # Respect sentence boundaries
+  respect_sentence_boundaries: true
+  
+  # Respect document structure (sections, headings)
+  respect_section_boundaries: true
+  
+  # Preserve hierarchical structure
+  preserve_structure: true
+
+# Quality Filtering Configuration
+quality_filtering:
+  # Minimum quality score (0-1)
+  min_quality_score: 0.3
+  
+  # Language for processing
+  language: "english"
+  
+  # Content type specific settings
+  enable_code_detection: true
+  enable_math_detection: true
+  enable_citation_detection: true 

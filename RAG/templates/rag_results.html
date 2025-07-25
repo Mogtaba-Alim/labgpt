@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Results - LabGPT RAG</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin: 50px auto;
+            max-width: 900px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .file-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        .file-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .file-card.exists {
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%);
+        }
+        .file-card.missing {
+            border-color: #f44336;
+            background: linear-gradient(135deg, #ffebee 0%, #fce4ec 100%);
+        }
+        .file-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+        .file-icon.success {
+            background: #4CAF50;
+            color: white;
+        }
+        .file-icon.error {
+            background: #f44336;
+            color: white;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .info-box {
+            background: #e8f5e8;
+            border-left: 4px solid #4CAF50;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+        }
+        .success-badge {
+            background: #4CAF50;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1><i class="fas fa-check-circle me-3"></i>Processing Complete!</h1>
+            <p class="mb-0">RAG Document Processing Results</p>
+        </div>
+        
+        <div class="content">
+            <!-- Success Summary -->
+            <div class="summary-card">
+                <i class="fas fa-trophy fa-3x text-warning mb-3"></i>
+                <h3>Processing Successful</h3>
+                <p class="mb-3">Your documents have been successfully processed and are ready for RAG system use!</p>
+                <span class="success-badge">
+                    <i class="fas fa-check me-2"></i>All Stages Completed
+                </span>
+            </div>
+
+            <!-- Generated Files -->
+            <div class="mb-4">
+                <h3><i class="fas fa-file-alt text-primary me-2"></i>Generated Files</h3>
+                <div class="info-box">
+                    <strong>Files Ready:</strong> The following files have been generated and are available in the RAG directory.
+                </div>
+
+                <!-- Chunks File -->
+                <div class="file-card {{ 'exists' if file_info['chunks.npy']['exists'] else 'missing' }}">
+                    <div class="d-flex align-items-center">
+                        <div class="file-icon {{ 'success' if file_info['chunks.npy']['exists'] else 'error' }}">
+                            <i class="fas fa-{{ 'file-text' if file_info['chunks.npy']['exists'] else 'exclamation-triangle' }}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1">chunks.npy</h5>
+                            <p class="mb-1 text-muted">Text chunks extracted from your documents</p>
+                            <small class="text-muted">
+                                {% if file_info['chunks.npy']['exists'] %}
+                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                    Available - Size: {{ file_info['chunks.npy']['size'] }}
+                                {% else %}
+                                    <i class="fas fa-times-circle text-danger me-1"></i>
+                                    File not found
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Embeddings File -->
+                <div class="file-card {{ 'exists' if file_info['embeddings.npy']['exists'] else 'missing' }}">
+                    <div class="d-flex align-items-center">
+                        <div class="file-icon {{ 'success' if file_info['embeddings.npy']['exists'] else 'error' }}">
+                            <i class="fas fa-{{ 'vector-square' if file_info['embeddings.npy']['exists'] else 'exclamation-triangle' }}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1">embeddings.npy</h5>
+                            <p class="mb-1 text-muted">Vector embeddings for semantic search</p>
+                            <small class="text-muted">
+                                {% if file_info['embeddings.npy']['exists'] %}
+                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                    Available - Size: {{ file_info['embeddings.npy']['size'] }}
+                                {% else %}
+                                    <i class="fas fa-times-circle text-danger me-1"></i>
+                                    File not found
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAISS Index File -->
+                <div class="file-card {{ 'exists' if file_info['faiss_index.bin']['exists'] else 'missing' }}">
+                    <div class="d-flex align-items-center">
+                        <div class="file-icon {{ 'success' if file_info['faiss_index.bin']['exists'] else 'error' }}">
+                            <i class="fas fa-{{ 'search' if file_info['faiss_index.bin']['exists'] else 'exclamation-triangle' }}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1">faiss_index.bin</h5>
+                            <p class="mb-1 text-muted">Optimized search index for fast retrieval</p>
+                            <small class="text-muted">
+                                {% if file_info['faiss_index.bin']['exists'] %}
+                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                    Available - Size: {{ file_info['faiss_index.bin']['size'] }}
+                                {% else %}
+                                    <i class="fas fa-times-circle text-danger me-1"></i>
+                                    File not found
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="mb-4">
+                <h3><i class="fas fa-arrow-right text-success me-2"></i>Next Steps</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="bg-light p-3 rounded mb-3">
+                            <h6><i class="fas fa-code text-primary me-2"></i>Use in Python</h6>
+                            <p class="mb-0 small">Load the files in your Python scripts:</p>
+                            <code class="small">
+                                import numpy as np<br>
+                                import faiss<br><br>
+                                chunks = np.load("chunks.npy")<br>
+                                embeddings = np.load("embeddings.npy")<br>
+                                index = faiss.read_index("faiss_index.bin")
+                            </code>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-light p-3 rounded mb-3">
+                            <h6><i class="fas fa-search text-warning me-2"></i>Perform Search</h6>
+                            <p class="mb-0 small">Use the RAG system for semantic search:</p>
+                            <code class="small">
+                                # Query your documents<br>
+                                query = "your search query"<br>
+                                # Encode query and search index<br>
+                                # Retrieve relevant chunks
+                            </code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technical Details -->
+            <div class="mb-4">
+                <h3><i class="fas fa-info-circle text-info me-2"></i>Technical Details</h3>
+                <div class="info-box">
+                    <ul class="mb-0">
+                        <li><strong>Embedding Model:</strong> sentence-transformers/all-mpnet-base-v2</li>
+                        <li><strong>Chunk Size:</strong> 2048 characters (~512 tokens)</li>
+                        <li><strong>Chunk Overlap:</strong> 512 characters (~128 tokens)</li>
+                        <li><strong>Index Type:</strong> FAISS HNSWFlat for efficient similarity search</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center">
+                <a href="/" class="btn btn-primary me-2">
+                    <i class="fas fa-plus me-2"></i>Process New Documents
+                </a>
+                <button class="btn btn-success" onclick="downloadFiles()">
+                    <i class="fas fa-download me-2"></i>Download Files Info
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function downloadFiles() {
+            // Create a summary of the files
+            const fileInfo = {{ file_info | tojson }};
+            const summary = {
+                timestamp: new Date().toISOString(),
+                processing_complete: true,
+                files: fileInfo
+            };
+            
+            const blob = new Blob([JSON.stringify(summary, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rag_processing_summary.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Auto-refresh page if files are missing (in case of delayed writes)
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInfo = {{ file_info | tojson }};
+            const allExist = Object.values(fileInfo).every(info => info.exists);
+            
+            if (!allExist) {
+                setTimeout(() => {
+                    location.reload();
+                }, 5000); // Refresh after 5 seconds if files are missing
+            }
+        });
+    </script>
+</body>
+</html> 

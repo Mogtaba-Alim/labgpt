@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Processing - LabGPT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin: 50px auto;
+            max-width: 1000px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .stage-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        .stage-card.active {
+            border-color: #2196F3;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        }
+        .stage-card.completed {
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%);
+        }
+        .stage-card.error {
+            border-color: #f44336;
+            background: linear-gradient(135deg, #ffebee 0%, #fce4ec 100%);
+        }
+        .stage-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+        .stage-icon.pending {
+            background: #e0e0e0;
+            color: #757575;
+        }
+        .stage-icon.active {
+            background: #2196F3;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        .stage-icon.completed {
+            background: #4CAF50;
+            color: white;
+        }
+        .stage-icon.error {
+            background: #f44336;
+            color: white;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .progress-container {
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .log-container {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 10px;
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        .log-entry {
+            margin: 0.2rem 0;
+            padding: 0.2rem;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1><i class="fas fa-cogs me-3"></i>RAG Processing Pipeline</h1>
+            <p class="mb-0">Real-time Status and Progress</p>
+        </div>
+        
+        <div class="content">
+            <!-- Status Overview -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="text-center">
+                        <h4 id="statusText">Initializing...</h4>
+                        <div class="progress" style="height: 20px;">
+                            <div id="progressBar" class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <small id="progressText" class="text-muted">0% Complete</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-center">
+                        <div id="statusSpinner" class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div id="statusMessage" class="mt-2 text-muted">Preparing to start...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Stages -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div id="stage1" class="stage-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stage-icon pending">
+                                <i class="fas fa-file-text"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">Data Ingestion</h5>
+                                <p class="mb-0 text-muted">Processing documents, extracting text, creating chunks</p>
+                                <div class="mt-2">
+                                    <small class="text-muted">Status: <span id="stage1Status">Waiting</span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div id="stage2" class="stage-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stage-icon pending">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">Index Building</h5>
+                                <p class="mb-0 text-muted">Creating FAISS index for similarity search</p>
+                                <div class="mt-2">
+                                    <small class="text-muted">Status: <span id="stage2Status">Waiting</span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Logs -->
+            <div class="mt-4">
+                <h5><i class="fas fa-terminal me-2"></i>Processing Logs</h5>
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry">Waiting for processing to start...</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <button id="backBtn" class="btn btn-secondary me-2" onclick="goBack()">
+                    <i class="fas fa-arrow-left me-2"></i>Go Back
+                </button>
+                <button id="resultsBtn" class="btn btn-success" onclick="viewResults()" style="display: none;">
+                    <i class="fas fa-check-circle me-2"></i>View Results
+                </button>
+                <button id="resetBtn" class="btn btn-warning" onclick="resetProcessing()" style="display: none;">
+                    <i class="fas fa-redo me-2"></i>Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let statusInterval;
+        let completedStages = [];
+
+        function startStatusUpdates() {
+            statusInterval = setInterval(updateStatus, 1000);
+            updateStatus();
+        }
+
+        function updateStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    updateUI(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
+                });
+        }
+
+        function updateUI(status) {
+            // Update progress bar
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            progressBar.style.width = status.progress + '%';
+            progressText.textContent = status.progress + '% Complete';
+
+            // Update status text and message
+            document.getElementById('statusText').textContent = status.message || 'Processing...';
+            document.getElementById('statusMessage').textContent = status.stage || 'Initializing';
+
+            // Update spinner visibility
+            const spinner = document.getElementById('statusSpinner');
+            if (status.status === 'processing') {
+                spinner.style.display = 'block';
+            } else {
+                spinner.style.display = 'none';
+            }
+
+            // Update stage indicators
+            updateStageUI(status);
+
+            // Update logs
+            updateLogs(status.logs || []);
+            
+            // Show cleanup stage if present
+            if (status.stage === 'cleanup') {
+                document.getElementById('statusMessage').textContent = 'Cleaning up existing files...';
+            }
+
+            // Handle completion or error
+            if (status.status === 'completed') {
+                clearInterval(statusInterval);
+                showCompletionButtons();
+                progressBar.className = 'progress-bar bg-success';
+            } else if (status.status === 'error') {
+                clearInterval(statusInterval);
+                showErrorState(status.error);
+                progressBar.className = 'progress-bar bg-danger';
+            }
+        }
+
+        function updateStageUI(status) {
+            const stage1 = document.getElementById('stage1');
+            const stage2 = document.getElementById('stage2');
+            const stage1Icon = stage1.querySelector('.stage-icon');
+            const stage2Icon = stage2.querySelector('.stage-icon');
+            const stage1Status = document.getElementById('stage1Status');
+            const stage2Status = document.getElementById('stage2Status');
+
+            // Reset classes
+            [stage1, stage2].forEach(stage => {
+                stage.className = 'stage-card';
+            });
+            [stage1Icon, stage2Icon].forEach(icon => {
+                icon.className = 'stage-icon pending';
+            });
+
+            if (status.stage === 'data_ingestion' || status.status === 'processing') {
+                stage1.classList.add('active');
+                stage1Icon.classList.remove('pending');
+                stage1Icon.classList.add('active');
+                stage1Status.textContent = 'Processing...';
+                
+                if (status.progress >= 50) {
+                    stage1.classList.remove('active');
+                    stage1.classList.add('completed');
+                    stage1Icon.classList.remove('active');
+                    stage1Icon.classList.add('completed');
+                    stage1Status.textContent = 'Completed';
+                    
+                    stage2.classList.add('active');
+                    stage2Icon.classList.remove('pending');
+                    stage2Icon.classList.add('active');
+                    stage2Status.textContent = 'Processing...';
+                }
+            }
+
+            if (status.status === 'completed') {
+                [stage1, stage2].forEach(stage => {
+                    stage.className = 'stage-card completed';
+                });
+                [stage1Icon, stage2Icon].forEach(icon => {
+                    icon.className = 'stage-icon completed';
+                });
+                stage1Status.textContent = 'Completed';
+                stage2Status.textContent = 'Completed';
+            }
+
+            if (status.status === 'error') {
+                const activeStage = status.stage === 'data_ingestion' ? stage1 : stage2;
+                const activeIcon = status.stage === 'data_ingestion' ? stage1Icon : stage2Icon;
+                const activeStatus = status.stage === 'data_ingestion' ? stage1Status : stage2Status;
+                
+                activeStage.classList.add('error');
+                activeIcon.classList.remove('pending', 'active');
+                activeIcon.classList.add('error');
+                activeStatus.textContent = 'Error';
+            }
+        }
+
+        function updateLogs(logs) {
+            const container = document.getElementById('logContainer');
+            container.innerHTML = '';
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="log-entry">No logs available yet...</div>';
+                return;
+            }
+
+            logs.forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.textContent = log;
+                container.appendChild(logEntry);
+            });
+
+            // Auto-scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showCompletionButtons() {
+            document.getElementById('resultsBtn').style.display = 'inline-block';
+            document.getElementById('resetBtn').style.display = 'inline-block';
+        }
+
+        function showErrorState(error) {
+            document.getElementById('statusText').textContent = 'Processing Failed';
+            document.getElementById('statusMessage').textContent = error || 'Unknown error occurred';
+            document.getElementById('resetBtn').style.display = 'inline-block';
+        }
+
+        function goBack() {
+            if (confirm('Are you sure you want to go back? Processing may still be running.')) {
+                window.location.href = '/';
+            }
+        }
+
+        function viewResults() {
+            window.location.href = '/results';
+        }
+
+        function resetProcessing() {
+            if (confirm('Are you sure you want to reset? This will clear the current status.')) {
+                window.location.href = '/reset';
+            }
+        }
+
+        // Start monitoring when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            startStatusUpdates();
+        });
+
+        // Cleanup interval when page unloads
+        window.addEventListener('beforeunload', function() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+        });
+    </script>
+</body>
+</html> 
