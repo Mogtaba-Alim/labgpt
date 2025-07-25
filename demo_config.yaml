@@ -1,0 +1,68 @@
+# Enhanced RAG Demo Configuration
+# Optimized for demo purposes with lenient settings for better chunk creation
+
+# Model Configuration
+models:
+  embedding_model: "all-MiniLM-L6-v2"  # Fast, lightweight model for demo
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  device: "auto"  # Automatically select GPU if available
+
+# Dense Retrieval Settings
+dense:
+  top_k: 15
+  index_type: "hnsw"
+  nprobe: 10
+  ef_search: 128
+
+# Sparse Retrieval Settings  
+sparse:
+  top_k: 15
+  k1: 1.2
+  b: 0.75
+  use_stemming: true
+  remove_stopwords: true
+
+# Result Fusion
+fusion:
+  fusion_method: "rrf"  # Reciprocal Rank Fusion
+  dense_weight: 0.6
+  sparse_weight: 0.4
+  rrf_k: 60
+
+# Text Splitting (Lenient settings for demo)
+splitting:
+  target_chunk_size: 200    # Smaller target for demo
+  max_chunk_size: 400       # Smaller max size
+  min_chunk_size: 30        # Much lower minimum for short texts
+  chunk_overlap: 20         # Reasonable overlap
+  respect_sentence_boundaries: true
+  respect_section_boundaries: false  # Less strict for demo
+  preserve_structure: true
+
+# Quality Filtering (Lenient for demo)
+quality:
+  min_quality_score: 0.2    # Lower threshold for demo
+  language: 'english'
+  filter_very_short: false  # Allow shorter chunks for demo
+  filter_very_long: true
+  remove_duplicates: true
+
+# Query Processing
+query_processing:
+  enable_expansion: true
+  max_expansions: 2         # Fewer expansions for demo speed
+  expansion_methods: ["embedding"]
+
+# Re-ranking
+reranking:
+  enable: true
+  rerank_top_k: 25
+  final_top_k: 8            # Show 8 results by default
+
+# Advanced Features
+advanced:
+  enable_caching: true
+  enable_versioning: true
+  enable_telemetry: true
+  enable_adaptive_retrieval: true
+  enable_answer_guardrails: true 

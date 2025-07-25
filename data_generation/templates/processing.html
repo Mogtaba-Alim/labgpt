@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabGPT Data Generation - Processing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin: 50px auto;
+            max-width: 1000px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .progress-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1rem 0;
+        }
+        .status-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .log-container {
+            background: #212529;
+            color: #00ff00;
+            border-radius: 10px;
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .stage-indicator {
+            display: flex;
+            align-items: center;
+            margin: 1rem 0;
+        }
+        .stage-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 18px;
+        }
+        .stage-active {
+            background: #FF6B6B;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+        .stage-completed {
+            background: #28a745;
+            color: white;
+        }
+        .stage-pending {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+        .stage-error {
+            background: #dc3545;
+            color: white;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1><i class="fas fa-cogs me-3"></i>Data Generation Pipeline</h1>
+            <p class="mb-0">Processing GitHub repositories and research papers...</p>
+        </div>
+        
+        <div class="content">
+            <!-- Current Status -->
+            <div class="status-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1">Current Status</h4>
+                        <p class="text-muted mb-0" id="statusMessage">Initializing...</p>
+                    </div>
+                    <div class="text-end">
+                        <div class="spinner-border text-primary" role="status" id="loadingSpinner">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="mt-3">
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-gradient" id="progressBar" role="progressbar" style="width: 0%">
+                            <span id="progressText">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage Indicators -->
+            <div class="progress-section">
+                <h5 class="mb-3">Processing Stages</h5>
+                
+                <div class="stage-indicator">
+                    <div class="stage-icon stage-pending" id="stage1Icon">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Code Analysis & Repository Processing</h6>
+                        <small class="text-muted">Cloning repositories and generating code training data</small>
+                    </div>
+                </div>
+                
+                <div class="stage-indicator">
+                    <div class="stage-icon stage-pending" id="stage2Icon">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Research Paper Processing</h6>
+                        <small class="text-muted">Extracting text and generating Q&A pairs from papers</small>
+                    </div>
+                </div>
+                
+                <div class="stage-indicator">
+                    <div class="stage-icon stage-pending" id="stage3Icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Dataset Combination & Finalization</h6>
+                        <small class="text-muted">Merging code and paper data into final training datasets</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Logs -->
+            <div class="status-card">
+                <h5 class="mb-3">Live Processing Logs</h5>
+                <div class="log-container" id="logContainer">
+                    <div>Waiting for processing to begin...</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <button class="btn btn-primary" onclick="location.href='/'" id="backButton" style="display: none;">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Home
+                </button>
+                <button class="btn btn-success" onclick="location.href='/results'" id="resultsButton" style="display: none;">
+                    <i class="fas fa-check-circle me-2"></i>View Results
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let lastLogCount = 0;
+
+        function updateStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update status message
+                    document.getElementById('statusMessage').textContent = data.message || 'Processing...';
+                    
+                    // Update progress bar
+                    const progressBar = document.getElementById('progressBar');
+                    const progressText = document.getElementById('progressText');
+                    progressBar.style.width = data.progress + '%';
+                    progressText.textContent = data.progress + '%';
+                    
+                    // Update stage indicators
+                    updateStageIndicators(data.current_stage);
+                    
+                    // Update logs
+                    updateLogs(data.logs);
+                    
+                    // Handle completion or error
+                    if (data.current_stage === 'Completed') {
+                        document.getElementById('loadingSpinner').style.display = 'none';
+                        document.getElementById('resultsButton').style.display = 'inline-block';
+                        document.getElementById('backButton').style.display = 'inline-block';
+                        clearInterval(statusInterval);
+                    } else if (data.current_stage === 'Error') {
+                        document.getElementById('loadingSpinner').style.display = 'none';
+                        document.getElementById('backButton').style.display = 'inline-block';
+                        clearInterval(statusInterval);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
+                });
+        }
+
+        function updateStageIndicators(current_stage) {
+            // Reset all stages
+            const stages = ['stage1Icon', 'stage2Icon', 'stage3Icon'];
+            stages.forEach(stageId => {
+                const element = document.getElementById(stageId);
+                element.className = 'stage-icon stage-pending';
+            });
+
+            // Update based on current stage
+            if (current_stage === 'Generating Code Fine-tune Data') {
+                document.getElementById('stage1Icon').className = 'stage-icon stage-active';
+            } else if (current_stage === 'Generating Final Data Output') {
+                document.getElementById('stage1Icon').className = 'stage-icon stage-completed';
+                document.getElementById('stage2Icon').className = 'stage-icon stage-active';
+            } else if (current_stage === 'Completed') {
+                document.getElementById('stage1Icon').className = 'stage-icon stage-completed';
+                document.getElementById('stage2Icon').className = 'stage-icon stage-completed';
+                document.getElementById('stage3Icon').className = 'stage-icon stage-completed';
+            } else if (current_stage === 'Error') {
+                stages.forEach(stageId => {
+                    const element = document.getElementById(stageId);
+                    if (!element.classList.contains('stage-completed')) {
+                        element.className = 'stage-icon stage-error';
+                    }
+                });
+            }
+        }
+
+        function updateLogs(logs) {
+            const logContainer = document.getElementById('logContainer');
+            
+            if (logs && logs.length > lastLogCount) {
+                // Add new logs
+                for (let i = lastLogCount; i < logs.length; i++) {
+                    const logDiv = document.createElement('div');
+                    logDiv.textContent = logs[i];
+                    logContainer.appendChild(logDiv);
+                }
+                lastLogCount = logs.length;
+                
+                // Auto-scroll to bottom
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        }
+
+        // Start polling for status updates
+        const statusInterval = setInterval(updateStatus, 2000);
+        
+        // Initial status check
+        updateStatus();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,270 @@
+# Task Taxonomy Configuration
+# Defines the number and types of tasks to generate per symbol complexity level
+
+# Global settings
+global:
+  max_total_tasks_per_symbol: 10
+  min_total_tasks_per_symbol: 3
+  enable_grounding_verification: true
+  require_context_citations: true
+  
+# Symbol type specific configurations
+symbol_types:
+  function:
+    enabled: true
+    priority: 8
+    
+  class:
+    enabled: true
+    priority: 10
+    
+  method:
+    enabled: true
+    priority: 6
+    
+  async_function:
+    enabled: true
+    priority: 7
+    
+  property:
+    enabled: true
+    priority: 4
+    
+  static_method:
+    enabled: true
+    priority: 5
+    
+  class_method:
+    enabled: true
+    priority: 5
+
+# Complexity-based task distribution
+complexity_levels:
+  simple:
+    description: "Simple symbols with low complexity (< 10 complexity score)"
+    qa_pairs:
+      count: 2
+      focus_areas:
+        - "basic_functionality"
+        - "parameter_description"
+      templates:
+        - "What does the {symbol_type} {symbol_name} do?"
+        - "What parameters does {symbol_name} accept?"
+        - "What does {symbol_name} return?"
+        
+    completion_tasks:
+      count: 1
+      focus_areas:
+        - "simple_usage"
+      
+    debugging_tasks:
+      count: 1
+      focus_areas:
+        - "parameter_validation"
+        - "return_type_errors"
+        
+    refactoring_tasks:
+      count: 1
+      focus_areas:
+        - "readability_improvement"
+        - "variable_naming"
+        
+    docstring_tasks:
+      count: 1
+      requirements:
+        - "include_parameters"
+        - "include_return_type"
+        - "basic_description"
+
+  moderate:
+    description: "Moderate complexity symbols (10-25 complexity score)"
+    qa_pairs:
+      count: 3
+      focus_areas:
+        - "functionality_details"
+        - "edge_cases"
+        - "parameter_relationships"
+        - "algorithm_explanation"
+      templates:
+        - "How does {symbol_name} handle edge cases?"
+        - "What is the algorithm used in {symbol_name}?"
+        - "What are the dependencies of {symbol_name}?"
+        - "When should {symbol_name} be used?"
+        
+    completion_tasks:
+      count: 2
+      focus_areas:
+        - "partial_implementation"
+        - "error_handling"
+        
+    debugging_tasks:
+      count: 2
+      focus_areas:
+        - "logic_errors"
+        - "boundary_conditions"
+        - "exception_handling"
+        
+    refactoring_tasks:
+      count: 2
+      focus_areas:
+        - "performance_optimization"
+        - "code_structure"
+        - "error_handling_improvement"
+        
+    docstring_tasks:
+      count: 1
+      requirements:
+        - "detailed_parameters"
+        - "return_description"
+        - "examples"
+        - "exception_documentation"
+
+  complex:
+    description: "Complex symbols (25-50 complexity score)"
+    qa_pairs:
+      count: 4
+      focus_areas:
+        - "architecture_explanation"
+        - "performance_considerations"
+        - "integration_points"
+        - "design_patterns"
+        - "scalability"
+      templates:
+        - "What design patterns are used in {symbol_name}?"
+        - "How does {symbol_name} handle performance concerns?"
+        - "What are the integration points for {symbol_name}?"
+        - "How does {symbol_name} ensure thread safety?"
+        
+    completion_tasks:
+      count: 2
+      focus_areas:
+        - "complex_logic"
+        - "state_management"
+        - "async_patterns"
+        
+    debugging_tasks:
+      count: 3
+      focus_areas:
+        - "concurrency_issues"
+        - "memory_management"
+        - "performance_bottlenecks"
+        - "race_conditions"
+        
+    refactoring_tasks:
+      count: 2
+      focus_areas:
+        - "architectural_improvement"
+        - "separation_of_concerns"
+        - "dependency_injection"
+        
+    docstring_tasks:
+      count: 1
+      requirements:
+        - "comprehensive_parameters"
+        - "detailed_examples"
+        - "performance_notes"
+        - "thread_safety_notes"
+        - "side_effects_documentation"
+
+  very_complex:
+    description: "Very complex symbols (> 50 complexity score)"
+    qa_pairs:
+      count: 5
+      focus_areas:
+        - "system_architecture"
+        - "distributed_concerns"
+        - "fault_tolerance"
+        - "monitoring_observability"
+        - "security_considerations"
+      templates:
+        - "How does {symbol_name} ensure fault tolerance?"
+        - "What security considerations apply to {symbol_name}?"
+        - "How does {symbol_name} handle distributed concerns?"
+        - "What monitoring capabilities does {symbol_name} provide?"
+        
+    completion_tasks:
+      count: 3
+      focus_areas:
+        - "system_integration"
+        - "fault_handling"
+        - "monitoring_implementation"
+        
+    debugging_tasks:
+      count: 3
+      focus_areas:
+        - "distributed_debugging"
+        - "performance_profiling"
+        - "security_vulnerabilities"
+        - "resource_leaks"
+        
+    refactoring_tasks:
+      count: 3
+      focus_areas:
+        - "system_decomposition"
+        - "microservice_extraction"
+        - "observability_improvement"
+        
+    docstring_tasks:
+      count: 2
+      requirements:
+        - "architectural_overview"
+        - "comprehensive_examples"
+        - "performance_characteristics"
+        - "security_implications"
+        - "operational_considerations"
+
+# Task-specific configurations
+task_configs:
+  qa_pairs:
+    grounding_required: true
+    max_answer_tokens: 500
+    require_code_citations: true
+    allowed_not_in_context: false
+    
+  completion_tasks:
+    partial_percentage_range: [30, 70]  # How much of the code to show as partial
+    require_syntactic_correctness: true
+    include_context_lines: 3
+    
+  debugging_tasks:
+    introduce_realistic_bugs: true
+    bug_types:
+      - "off_by_one"
+      - "null_pointer"
+      - "type_mismatch"
+      - "logic_error"
+      - "boundary_condition"
+    require_fix_explanation: true
+    
+  refactoring_tasks:
+    preserve_functionality: true
+    improvement_categories:
+      - "readability"
+      - "performance"
+      - "maintainability"
+      - "testability"
+    require_before_after: true
+    require_explanation: true
+    
+  docstring_tasks:
+    style: "google"  # "google", "numpy", "sphinx"
+    require_examples: true
+    include_type_hints: true
+    max_docstring_length: 1000
+
+# Quality thresholds
+quality_thresholds:
+  groundedness_min_score: 0.7
+  specificity_min_score: 0.6
+  clarity_min_score: 0.6
+  usefulness_min_score: 0.5
+  
+# Negative example configuration
+negative_examples:
+  enabled: true
+  percentage_of_total: 0.15  # 15% of examples should be negative
+  types:
+    - "impossible_question"  # Ask about non-existent parameters
+    - "out_of_scope"        # Ask about unrelated functionality
+    - "insufficient_context" # Ask question requiring external knowledge
+  expected_response: "NOT_IN_CONTEXT" 

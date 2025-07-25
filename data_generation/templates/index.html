@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabGPT Data Generation - Fine-Tuning Dataset Creator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin: 50px auto;
+            max-width: 1000px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .input-section {
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            background-color: #f8f9fa;
+        }
+        .repo-input-group {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .repo-input-group .form-control {
+            padding-right: 50px;
+        }
+        .remove-repo-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 12px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 20px;
+        }
+        .form-control, .form-control:focus {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+        .form-control:focus {
+            border-color: #FF6B6B;
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25);
+        }
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+        }
+        .process-preview {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .step-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #FF6B6B;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1><i class="fas fa-code-branch me-3"></i>LabGPT Data Generation</h1>
+            <p class="mb-0">AI Fine-Tuning Dataset Creator from Code & Research Papers</p>
+        </div>
+        
+        <div class="content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="post" id="dataGenerationForm">
+                <!-- GitHub Repositories Section -->
+                <div class="input-section">
+                    <h3><i class="fab fa-github text-dark me-2"></i>GitHub Repositories</h3>
+                    <div class="info-box">
+                        <strong>Instructions:</strong> Add GitHub repository URLs that contain the code you want to use for fine-tuning dataset generation. The system will clone these repositories, analyze the code, and generate Q&A pairs, completion tasks, debugging tasks, and more.
+                    </div>
+                    
+                    <div id="repoInputs">
+                        <div class="repo-input-group">
+                            <input type="url" name="repo_url_1" class="form-control" placeholder="https://github.com/username/repository.git" required>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-success" onclick="addRepoInput()">
+                        <i class="fas fa-plus me-2"></i>Add Another Repository
+                    </button>
+                </div>
+
+                <!-- Research Papers Directory Section -->
+                <div class="input-section">
+                    <h3><i class="fas fa-folder-open text-primary me-2"></i>Research Papers Directory</h3>
+                    <div class="info-box">
+                        <strong>Instructions:</strong> Provide the full path to the directory containing your lab's research papers (PDF files). The system will process these papers to generate Q&A pairs and combine them with the code dataset.
+                    </div>
+                    <input type="text" name="papers_dir" class="form-control" placeholder="/path/to/research/papers/directory" required>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle"></i> 
+                        Example: /home/user/lab_papers or C:\Users\username\Documents\research_papers
+                    </div>
+                </div>
+
+                <!-- Process Preview -->
+                <div class="process-preview">
+                    <h3><i class="fas fa-cogs text-info me-2"></i>Processing Pipeline</h3>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="step-card">
+                                <i class="fas fa-download fa-2x text-primary mb-2"></i>
+                                <h6>Step 1: Code Analysis</h6>
+                                <small>Clone repositories and analyze code files to generate diverse training data</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="step-card">
+                                <i class="fas fa-file-pdf fa-2x text-warning mb-2"></i>
+                                <h6>Step 2: Paper Processing</h6>
+                                <small>Extract text from research papers and generate Q&A pairs</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="step-card">
+                                <i class="fas fa-database fa-2x text-success mb-2"></i>
+                                <h6>Step 3: Dataset Creation</h6>
+                                <small>Combine code and paper data into training and validation datasets</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output Files Preview -->
+                <div class="info-box">
+                    <h5><i class="fas fa-file-export me-2"></i>Generated Output Files</h5>
+                    <ul class="mb-0">
+                        <li><strong>combined_dataset_train.json</strong> - Training dataset with code and research paper data</li>
+                        <li><strong>combined_dataset_val.json</strong> - Validation dataset for model evaluation</li>
+                        <li><strong>code_combined_train_dataset.json</strong> - Intermediate code-only training data</li>
+                        <li><strong>code_combined_val_dataset.json</strong> - Intermediate code-only validation data</li>
+                    </ul>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-rocket me-2"></i>Start Data Generation Pipeline
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let repoCount = 1;
+
+        function addRepoInput() {
+            repoCount++;
+            const repoInputs = document.getElementById('repoInputs');
+            const newInput = document.createElement('div');
+            newInput.className = 'repo-input-group';
+            newInput.innerHTML = `
+                <input type="url" name="repo_url_${repoCount}" class="form-control" placeholder="https://github.com/username/repository.git">
+                <button type="button" class="remove-repo-btn" onclick="removeRepoInput(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            repoInputs.appendChild(newInput);
+        }
+
+        function removeRepoInput(button) {
+            const inputGroup = button.closest('.repo-input-group');
+            inputGroup.remove();
+        }
+
+        // Form validation
+        document.getElementById('dataGenerationForm').addEventListener('submit', function(e) {
+            const repoInputs = document.querySelectorAll('input[name^="repo_url_"]');
+            let hasValidRepo = false;
+            repoInputs.forEach(input => {
+                if (input.value.trim()) {
+                    hasValidRepo = true;
+                }
+            });
+            
+            if (!hasValidRepo) {
+                e.preventDefault();
+                alert('Please provide at least one GitHub repository URL.');
+                return false;
+            }
+            
+            const papersDir = document.querySelector('input[name="papers_dir"]').value.trim();
+            if (!papersDir) {
+                e.preventDefault();
+                alert('Please provide the research papers directory path.');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html> 
