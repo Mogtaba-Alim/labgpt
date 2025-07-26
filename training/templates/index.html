@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabGPT Model Training - Fine-Tune Your AI Model</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin: 50px auto;
+            max-width: 900px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .input-section {
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            background-color: #f8f9fa;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .form-control, .form-control:focus {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+        .form-control:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+        }
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+        }
+        .process-preview {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .step-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #4CAF50;
+        }
+        .file-input-group {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1><i class="fas fa-brain me-3"></i>LabGPT Model Training</h1>
+            <p class="mb-0">Fine-Tune Your AI Model with Generated Datasets</p>
+        </div>
+        
+        <div class="content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="post" id="trainingForm">
+                <!-- Training Dataset Section -->
+                <div class="input-section">
+                    <h3><i class="fas fa-database text-primary me-2"></i>Training Dataset</h3>
+                    <div class="info-box">
+                        <strong>Instructions:</strong> Provide the path to your training JSON file generated from the data generation pipeline. This file should contain the combined code and research paper data formatted for fine-tuning.
+                    </div>
+                    
+                    <div class="file-input-group">
+                        <label for="train_file" class="form-label">Training JSON File Path</label>
+                        <input type="text" name="train_file" id="train_file" class="form-control" 
+                               placeholder="combined_dataset_train.json" required>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Example: ./combined_dataset_train.json or /path/to/your/combined_dataset_train.json
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validation Dataset Section -->
+                <div class="input-section">
+                    <h3><i class="fas fa-check-circle text-warning me-2"></i>Validation Dataset</h3>
+                    <div class="info-box">
+                        <strong>Instructions:</strong> Provide the path to your validation JSON file. This will be used to evaluate the model during training and prevent overfitting.
+                    </div>
+                    
+                    <div class="file-input-group">
+                        <label for="val_file" class="form-label">Validation JSON File Path</label>
+                        <input type="text" name="val_file" id="val_file" class="form-control" 
+                               placeholder="combined_dataset_val.json" required>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Example: ./combined_dataset_val.json or /path/to/your/combined_dataset_val.json
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Name Section -->
+                <div class="input-section">
+                    <h3><i class="fas fa-tag text-success me-2"></i>Output Model Name</h3>
+                    <div class="info-box">
+                        <strong>Instructions:</strong> Choose a name for your fine-tuned model. This will be the directory name where your trained model files will be saved.
+                    </div>
+                    
+                    <div class="file-input-group">
+                        <label for="model_name" class="form-label">Model Name</label>
+                        <input type="text" name="model_name" id="model_name" class="form-control" 
+                               placeholder="my-labgpt-model" required>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Example: labgpt-finetuned, my-research-model, code-assistant-v1
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training Process Preview -->
+                <div class="process-preview">
+                    <h3><i class="fas fa-cogs text-info me-2"></i>Training Pipeline</h3>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="step-card">
+                                <i class="fas fa-file-check fa-2x text-primary mb-2"></i>
+                                <h6>Step 1: Data Validation</h6>
+                                <small>Validate input files and check dataset integrity</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="step-card">
+                                <i class="fas fa-cog fa-2x text-warning mb-2"></i>
+                                <h6>Step 2: Model Preparation</h6>
+                                <small>Setup training environment and model configuration</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="step-card">
+                                <i class="fas fa-rocket fa-2x text-success mb-2"></i>
+                                <h6>Step 3: Fine-Tuning</h6>
+                                <small>Train the model using your custom dataset</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training Configuration Info -->
+                <div class="info-box">
+                    <h5><i class="fas fa-sliders-h me-2"></i>Training Configuration</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li><strong>Base Model:</strong> Llama 3.1 8B</li>
+                                <li><strong>Training Method:</strong> LoRA (Low-Rank Adaptation)</li>
+                                <li><strong>Batch Size:</strong> 1 (with gradient accumulation)</li>
+                                <li><strong>Learning Rate:</strong> 2e-5</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li><strong>Epochs:</strong> 3</li>
+                                <li><strong>Max Sequence Length:</strong> 8192 tokens</li>
+                                <li><strong>Optimization:</strong> AdamW 8-bit</li>
+                                <li><strong>Mixed Precision:</strong> FP16</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expected Output -->
+                <div class="info-box">
+                    <h5><i class="fas fa-file-export me-2"></i>Expected Output</h5>
+                    <ul class="mb-0">
+                        <li><strong>Model Directory:</strong> ./{model_name}/ - Contains the fine-tuned model files</li>
+                        <li><strong>Model Weights:</strong> PyTorch model files and LoRA adapters</li>
+                        <li><strong>Tokenizer:</strong> Custom tokenizer configuration</li>
+                        <li><strong>Training Logs:</strong> TensorBoard logs and checkpoints</li>
+                    </ul>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-play me-2"></i>Start Model Training
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add some basic file path suggestions
+        document.getElementById('train_file').addEventListener('input', function() {
+            if (!document.getElementById('val_file').value && this.value) {
+                const trainFile = this.value;
+                if (trainFile.includes('train')) {
+                    document.getElementById('val_file').value = trainFile.replace('train', 'val');
+                }
+            }
+        });
+
+        // Auto-suggest model name based on file names
+        document.getElementById('train_file').addEventListener('blur', function() {
+            if (!document.getElementById('model_name').value) {
+                const fileName = this.value.split('/').pop().split('.')[0];
+                if (fileName.includes('dataset')) {
+                    document.getElementById('model_name').value = 'labgpt-' + fileName.replace('dataset', 'model');
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

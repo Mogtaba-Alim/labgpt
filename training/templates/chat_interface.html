@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabGPT Chat Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .chat-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .model-status {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .model-status.loading {
+            background: rgba(255,193,7,0.3);
+        }
+        
+        .model-status.loaded {
+            background: rgba(40,167,69,0.3);
+        }
+        
+        .model-status.error {
+            background: rgba(220,53,69,0.3);
+        }
+        
+        .chat-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #ffffff;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            max-width: 80%;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            margin-left: auto;
+        }
+        
+        .message.assistant {
+            margin-right: auto;
+        }
+        
+        .message-content {
+            padding: 0.75rem 1rem;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+        
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .message.assistant .message-content {
+            background: #f1f3f4;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.25rem;
+            text-align: right;
+        }
+        
+        .message.assistant .message-time {
+            text-align: left;
+        }
+        
+        .input-area {
+            padding: 1rem;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .input-group {
+            max-width: 100%;
+        }
+        
+        #messageInput {
+            border-radius: 25px;
+            border: 2px solid #e0e0e0;
+            padding: 0.75rem 1rem;
+            resize: none;
+        }
+        
+        #messageInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            margin-left: 0.5rem;
+        }
+        
+        .send-btn:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+        
+        .send-btn:disabled {
+            background: #ccc;
+        }
+        
+        .model-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .model-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .model-card.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 0.75rem 1rem;
+            background: #f1f3f4;
+            border-radius: 18px;
+            margin-bottom: 1rem;
+            max-width: 200px;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Header -->
+        <div class="chat-header">
+            <div>
+                <h4 class="mb-0"><i class="fas fa-robot me-2"></i>LabGPT Chat</h4>
+                <small>Chat with Hugging Face Models</small>
+            </div>
+            <div class="model-status" id="modelStatus">
+                <i class="fas fa-circle me-1"></i>
+                <span id="statusText">No Model Loaded</span>
+            </div>
+        </div>
+        
+        <!-- Main Chat Body -->
+        <div class="chat-body">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <h6><i class="fas fa-cog me-2"></i>Model Selection</h6>
+                
+                <!-- Custom Model Input -->
+                <div class="mb-3">
+                    <label class="form-label">Custom Model ID:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="customModel" 
+                               placeholder="e.g., gpt2, microsoft/DialoGPT-medium">
+                        <button class="btn btn-outline-primary" onclick="loadCustomModel()">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Popular Models -->
+                <h6>Popular Models:</h6>
+                {% for model in popular_models %}
+                <div class="model-card" data-model-id="{{ model.model_id }}" onclick="selectModel(this)">
+                    <strong>{{ model.name }}</strong>
+                    <p class="small text-muted mb-0">{{ model.description }}</p>
+                    <code class="small">{{ model.model_id }}</code>
+                </div>
+                {% endfor %}
+                
+                <hr>
+                
+                <!-- Chat Controls -->
+                <button class="btn btn-outline-danger btn-sm w-100" onclick="clearChat()">
+                    <i class="fas fa-trash me-1"></i>Clear Chat
+                </button>
+            </div>
+            
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <!-- Messages -->
+                <div class="messages-container" id="messagesContainer">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-comments fa-3x mb-3"></i>
+                        <h5>Welcome to LabGPT Chat!</h5>
+                        <p>Select a model from the sidebar to start chatting.</p>
+                    </div>
+                </div>
+                
+                <!-- Typing Indicator -->
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <span class="ms-2 small text-muted">AI is typing...</span>
+                </div>
+                
+                <!-- Input Area -->
+                <div class="input-area">
+                    <div class="input-group">
+                        <textarea class="form-control" id="messageInput" 
+                                  placeholder="Type your message..." 
+                                  rows="1"
+                                  onkeydown="handleKeyPress(event)"></textarea>
+                        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-border text-primary mb-3" role="status"></div>
+            <h5 id="loadingTitle">Loading Model...</h5>
+            <p id="loadingMessage">Please wait while we download and initialize the model.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let conversationHistory = [];
+        let selectedModelId = '';
+        let statusCheckInterval = null;
+        
+        // Auto-resize textarea
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+        
+        function selectModel(element) {
+            // Remove previous selection
+            document.querySelectorAll('.model-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select current
+            element.classList.add('selected');
+            selectedModelId = element.dataset.modelId;
+            
+            // Load the model
+            loadModel(selectedModelId);
+        }
+        
+        function loadCustomModel() {
+            const customModel = document.getElementById('customModel').value.trim();
+            if (customModel) {
+                selectedModelId = customModel;
+                loadModel(customModel);
+            } else {
+                alert('Please enter a model ID');
+            }
+        }
+        
+        function loadModel(modelId) {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            fetch('/api/load-model', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({model_name: modelId})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    startStatusMonitoring();
+                } else {
+                    alert('Error: ' + data.error);
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                alert('Error loading model: ' + error);
+                document.getElementById('loadingOverlay').style.display = 'none';
+            });
+        }
+        
+        function startStatusMonitoring() {
+            statusCheckInterval = setInterval(checkModelStatus, 1000);
+        }
+        
+        function checkModelStatus() {
+            fetch('/api/model-status')
+            .then(response => response.json())
+            .then(status => {
+                updateStatusDisplay(status);
+                
+                if (status.status === 'loaded') {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    clearInterval(statusCheckInterval);
+                    showWelcomeMessage();
+                } else if (status.status === 'error') {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    clearInterval(statusCheckInterval);
+                    alert('Error loading model: ' + status.error);
+                }
+                
+                // Update loading message
+                if (status.progress) {
+                    document.getElementById('loadingMessage').textContent = status.progress;
+                }
+            });
+        }
+        
+        function updateStatusDisplay(status) {
+            const statusElement = document.getElementById('modelStatus');
+            const statusText = document.getElementById('statusText');
+            
+            statusElement.className = 'model-status ' + status.status;
+            
+            switch(status.status) {
+                case 'idle':
+                    statusText.textContent = 'No Model Loaded';
+                    break;
+                case 'loading':
+                    statusText.textContent = 'Loading Model...';
+                    break;
+                case 'loaded':
+                    statusText.textContent = status.model_name || 'Model Loaded';
+                    break;
+                case 'error':
+                    statusText.textContent = 'Error Loading Model';
+                    break;
+            }
+        }
+        
+        function showWelcomeMessage() {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+            
+            addMessage('assistant', `Hello! I'm ready to chat. I'm using the model: ${selectedModelId}. How can I help you today?`);
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+            input.style.height = 'auto';
+            
+            // Show typing indicator
+            document.getElementById('typingIndicator').style.display = 'block';
+            
+            // Send to API
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    message: message,
+                    history: conversationHistory
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('typingIndicator').style.display = 'none';
+                
+                if (data.success) {
+                    addMessage('assistant', data.response);
+                    
+                    // Update conversation history
+                    conversationHistory.push({
+                        user: message,
+                        assistant: data.response
+                    });
+                } else {
+                    addMessage('assistant', 'Error: ' + data.error, true);
+                }
+            })
+            .catch(error => {
+                document.getElementById('typingIndicator').style.display = 'none';
+                addMessage('assistant', 'Error: ' + error, true);
+            });
+        }
+        
+        function addMessage(sender, content, isError = false) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentClass = isError ? 'message-content text-danger' : 'message-content';
+            messageDiv.innerHTML = `
+                <div class="${contentClass}">${content}</div>
+                <div class="message-time">${new Date().toLocaleTimeString()}</div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function clearChat() {
+            if (confirm('Clear all chat messages?')) {
+                document.getElementById('messagesContainer').innerHTML = `
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-comments fa-3x mb-3"></i>
+                        <h5>Chat Cleared</h5>
+                        <p>Start a new conversation!</p>
+                    </div>
+                `;
+                conversationHistory = [];
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkModelStatus();
+        });
+    </script>
+</body>
+</html> 
