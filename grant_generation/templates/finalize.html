@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Finalize Grant Proposal</title>
+</head>
+<body>
+    <h1>Finalize Grant Proposal</h1>
+    <h2>Overview</h2>
+    <p>{{ overview }}</p>
+    {% for section, text in sections.items() %}
+        <h2>{{ section }}</h2>
+        <p>{{ text }}</p>
+    {% endfor %}
+    <a href="{{ url_for('download') }}">Download PDF</a>
+</body>
+</html>
