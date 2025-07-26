@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Grant Proposal Generator - {{ section_name }} Section</title>
+</head>
+<body>
+    <h1>{{ section_name }} Section</h1>
+    <form action="" method="post">
+        <label for="section_text">Section Text (edit as needed):</label><br>
+        <textarea name="section_text" rows="10" cols="80">{{ section_text }}</textarea><br><br>
+        <label for="mod_request">Modification Request (if you want additional changes):</label><br>
+        <textarea name="mod_request" rows="3" cols="80"></textarea><br><br>
+        <button type="submit" name="action" value="Generate">Generate Section</button>
+        <button type="submit" name="action" value="Request Changes">Request Additional Changes</button>
+        <button type="submit" name="action" value="Save">Save and Continue</button>
+    </form>
+</body>
+</html>

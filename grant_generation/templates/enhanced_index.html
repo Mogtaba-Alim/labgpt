@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabGPT Grant Generator - Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin: 50px auto;
+            max-width: 900px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin: 1rem 0;
+        }
+        .upload-area:hover {
+            border-color: #4CAF50;
+            background-color: #f9f9f9;
+        }
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background-color: #e8f5e8;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .form-control, .form-control:focus {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+        .form-control:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #4CAF50;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+        }
+        .file-list {
+            margin-top: 1rem;
+        }
+        .file-item {
+            background: #e8f5e8;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1><i class="fas fa-microscope me-3"></i>LabGPT Grant Generator</h1>
+            <p class="mb-0">AI-Powered Scientific Grant Writing Assistant</p>
+        </div>
+        
+        <div class="content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="post" enctype="multipart/form-data" id="grantForm">
+                <!-- Grant Overview Section -->
+                <div class="mb-4">
+                    <h3><i class="fas fa-lightbulb text-warning me-2"></i>Grant Overview</h3>
+                    <div class="info-box">
+                        <strong>Instructions:</strong> Provide a detailed overview of your grant proposal. Include the research problem, objectives, approach, and expected outcomes. This will guide the AI in generating relevant content for each section.
+                    </div>
+                    <textarea 
+                        name="overview" 
+                        class="form-control" 
+                        rows="8" 
+                        placeholder="Example: We propose to investigate the role of machine learning in predicting protein structures for drug discovery. Our lab has developed novel algorithms that combine deep learning with structural biology data. The main objectives are to: 1) Develop improved prediction models, 2) Validate against experimental data, 3) Create open-source tools for the community..."
+                        required></textarea>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle"></i> 
+                        Minimum 200 characters recommended for best results
+                    </div>
+                </div>
+
+                <!-- Document Upload Section -->
+                <div class="mb-4">
+                    <h3><i class="fas fa-upload text-primary me-2"></i>Supporting Documents</h3>
+                    <div class="info-box">
+                        <strong>Optional:</strong> Upload relevant documents like previous grants, research papers, or reports. These will be analyzed to extract relevant information for each section. Supported formats: PDF, TXT, DOC, DOCX (max 16MB each).
+                    </div>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h5>Drag & Drop Files Here</h5>
+                        <p class="text-muted">or click to browse</p>
+                        <input type="file" name="supporting_docs" multiple accept=".pdf,.txt,.doc,.docx" class="d-none" id="fileInput">
+                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-folder-open me-2"></i>Browse Files
+                        </button>
+                    </div>
+                    
+                    <div class="file-list" id="fileList"></div>
+                </div>
+
+                <!-- Process Workflow Preview -->
+                <div class="mb-4">
+                    <h3><i class="fas fa-route text-info me-2"></i>What Happens Next?</h3>
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="bg-light p-3 rounded">
+                                <i class="fas fa-file-medical-alt fa-2x text-primary mb-2"></i>
+                                <h6>Document Analysis</h6>
+                                <small>AI extracts relevant information from your uploaded documents</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="bg-light p-3 rounded">
+                                <i class="fas fa-cogs fa-2x text-warning mb-2"></i>
+                                <h6>Section Generation</h6>
+                                <small>Generate 12 grant sections with lab-specific context</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="bg-light p-3 rounded">
+                                <i class="fas fa-file-pdf fa-2x text-danger mb-2"></i>
+                                <h6>Final PDF</h6>
+                                <small>Download your completed grant proposal</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-rocket me-2"></i>Start Grant Generation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            fileInput.files = files;
+            updateFileList();
+        });
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', updateFileList);
+
+        function updateFileList() {
+            const files = fileInput.files;
+            fileList.innerHTML = '';
+            
+            if (files.length > 0) {
+                fileList.innerHTML = '<h6><i class="fas fa-files me-2"></i>Selected Files:</h6>';
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <i class="fas fa-file me-2"></i>${file.name} 
+                        <small class="text-muted">(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                    `;
+                    fileList.appendChild(fileItem);
+                }
+            }
+        }
+
+        // Form validation
+        document.getElementById('grantForm').addEventListener('submit', function(e) {
+            const overview = document.querySelector('textarea[name="overview"]').value;
+            if (overview.length < 200) {
+                alert('Please provide a more detailed grant overview (at least 200 characters).');
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html> 

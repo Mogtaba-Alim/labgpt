@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabGPT Grant Generator - {{ section_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 1200px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 1.5rem;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .progress-bar-custom {
+            height: 25px;
+            border-radius: 15px;
+            background: #f8f9fa;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            border-radius: 15px;
+            transition: width 0.3s ease;
+        }
+        .section-navigation {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        .section-nav-item {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .section-nav-item.completed {
+            background: #4CAF50;
+            color: white;
+        }
+        .section-nav-item.current {
+            background: #2196F3;
+            color: white;
+        }
+        .section-nav-item.pending {
+            background: #e0e0e0;
+            color: #666;
+        }
+        .quality-indicator {
+            position: relative;
+            margin: 1rem 0;
+        }
+        .quality-score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        .quality-excellent { color: #4CAF50; }
+        .quality-good { color: #FFC107; }
+        .quality-poor { color: #F44336; }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #FFC107 0%, #FFB300 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+        }
+        .btn-info {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+        }
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+        .form-control:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+        }
+        .generation-status {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .suggestions-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .content-tabs {
+            margin: 2rem 0;
+        }
+        .tab-content {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2><i class="fas fa-edit me-2"></i>{{ section_name }}</h2>
+                    <p class="mb-0">Section {{ progress.current_index + 1 }} of {{ progress.total_sections }}</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="progress-bar-custom">
+                        <div class="progress-fill" style="width: {{ progress.percentage }}%"></div>
+                    </div>
+                    <small class="text-white">{{ progress.completed_count }}/{{ progress.total_sections }} completed</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Section Navigation -->
+            <div class="section-navigation">
+                <h6><i class="fas fa-map me-2"></i>Grant Sections</h6>
+                {% for section in sections_order %}
+                    <a href="{{ url_for('section_workflow', section_name=section) }}" 
+                       class="section-nav-item 
+                              {% if section == section_name %}current
+                              {% elif section in completed_sections %}completed
+                              {% else %}pending{% endif %}">
+                        {{ section }}
+                        {% if section in completed_sections %}
+                            <i class="fas fa-check-circle ms-1"></i>
+                        {% elif section == section_name %}
+                            <i class="fas fa-edit ms-1"></i>
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <!-- Generation Status (hidden by default) -->
+            <div class="generation-status" id="generationStatus">
+                <div class="spinner"></div>
+                <h5>Generating {{ section_name }} Section...</h5>
+                <p>Please wait while LabGPT analyzes your documents and generates content.</p>
+            </div>
+
+            <!-- Main Content -->
+            <div id="mainContent">
+                <form method="post" id="sectionForm">
+                    <!-- Quality Indicator -->
+                    {% if section_data.quality_score %}
+                    <div class="quality-indicator">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <span class="quality-score 
+                                           {% if section_data.quality_score >= 4 %}quality-excellent
+                                           {% elif section_data.quality_score >= 3 %}quality-good
+                                           {% else %}quality-poor{% endif %}">
+                                    {{ "%.1f"|format(section_data.quality_score) }}/5.0
+                                </span>
+                                <span class="badge 
+                                           {% if section_data.quality_score >= 4 %}bg-success
+                                           {% elif section_data.quality_score >= 3 %}bg-warning
+                                           {% else %}bg-danger{% endif %}">
+                                    {% if section_data.quality_score >= 4 %}Excellent
+                                    {% elif section_data.quality_score >= 3 %}Good
+                                    {% else %}Needs Improvement{% endif %}
+                                </span>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="collapse" data-bs-target="#qualityDetails">
+                                    <i class="fas fa-info-circle me-1"></i>Quality Details
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="collapse mt-2" id="qualityDetails">
+                            <div class="suggestions-box">
+                                <h6><i class="fas fa-lightbulb me-2"></i>AI Suggestions:</h6>
+                                <ul class="mb-0">
+                                    {% for suggestion in section_data.suggestions %}
+                                        <li>{{ suggestion }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Content Tabs -->
+                    <div class="content-tabs">
+                        <ul class="nav nav-tabs" id="contentTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="edit-tab" data-bs-toggle="tab" data-bs-target="#edit" type="button" role="tab">
+                                    <i class="fas fa-edit me-2"></i>Edit Content
+                                </button>
+                            </li>
+                            {% if section_data.extracted_info %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="extracted-tab" data-bs-toggle="tab" data-bs-target="#extracted" type="button" role="tab">
+                                    <i class="fas fa-file-alt me-2"></i>Extracted Info
+                                </button>
+                            </li>
+                            {% endif %}
+                            {% if section_data.rag_context %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="context-tab" data-bs-toggle="tab" data-bs-target="#context" type="button" role="tab">
+                                    <i class="fas fa-database me-2"></i>Lab Context
+                                </button>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        
+                        <div class="tab-content" id="contentTabsContent">
+                            <!-- Edit Tab -->
+                            <div class="tab-pane fade show active" id="edit" role="tabpanel">
+                                <textarea name="section_text" class="form-control" rows="15" placeholder="Generated content will appear here. You can edit it directly or generate new content using the buttons below.">{{ section_data.generated_text if section_data.generated_text else completed_sections.get(section_name, '') }}</textarea>
+                                
+                                <div class="mt-3">
+                                    <label for="feedback" class="form-label">
+                                        <i class="fas fa-comment me-2"></i>Request Specific Changes
+                                    </label>
+                                    <textarea name="feedback" class="form-control" rows="3" placeholder="Example: Make the background section more detailed, add information about recent developments in the field, or focus more on the clinical relevance..."></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Extracted Info Tab -->
+                            {% if section_data.extracted_info %}
+                            <div class="tab-pane fade" id="extracted" role="tabpanel">
+                                <h6><i class="fas fa-extract me-2"></i>Information Extracted from Your Documents:</h6>
+                                <div class="bg-light p-3 rounded">
+                                    <pre style="white-space: pre-wrap; font-family: inherit;">{{ section_data.extracted_info }}</pre>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Lab Context Tab -->
+                            {% if section_data.rag_context %}
+                            <div class="tab-pane fade" id="context" role="tabpanel">
+                                <h6><i class="fas fa-database me-2"></i>Relevant Lab Information:</h6>
+                                <div class="bg-light p-3 rounded">
+                                    <pre style="white-space: pre-wrap; font-family: inherit;">{{ section_data.rag_context }}</pre>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <button type="submit" name="action" value="generate" class="btn btn-primary me-2">
+                                <i class="fas fa-magic me-2"></i>Generate Section
+                            </button>
+                            {% if section_data.generated_text %}
+                            <button type="submit" name="action" value="refine" class="btn btn-warning me-2">
+                                <i class="fas fa-tools me-2"></i>Refine with Feedback
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="submit" name="action" value="save" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>Save & Continue
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Navigation Buttons -->
+                <div class="row mt-4 pt-3 border-top">
+                    <div class="col-md-6">
+                        {% if progress.current_index > 0 %}
+                        <a href="{{ url_for('navigate_section', direction='prev') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Previous Section
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <a href="{{ url_for('grant_overview') }}" class="btn btn-outline-info me-2">
+                            <i class="fas fa-eye me-2"></i>View Overview
+                        </a>
+                        {% if progress.current_index < progress.total_sections - 1 %}
+                        <a href="{{ url_for('navigate_section', direction='next') }}" class="btn btn-outline-secondary">
+                            Next Section<i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('finalize') }}" class="btn btn-info">
+                            <i class="fas fa-flag-checkered me-2"></i>Finalize Grant
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show generation status when generating
+        document.getElementById('sectionForm').addEventListener('submit', function(e) {
+            const action = e.submitter.value;
+            if (action === 'generate' || action === 'refine') {
+                document.getElementById('generationStatus').style.display = 'block';
+                document.getElementById('mainContent').style.display = 'none';
+            }
+        });
+
+        // Auto-save functionality
+        let autoSaveTimer;
+        const textarea = document.querySelector('textarea[name="section_text"]');
+        
+        if (textarea) {
+            textarea.addEventListener('input', function() {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(function() {
+                    // Auto-save to localStorage
+                    localStorage.setItem('section_{{ section_name }}_draft', textarea.value);
+                }, 2000);
+            });
+
+            // Load draft on page load
+            const savedDraft = localStorage.getItem('section_{{ section_name }}_draft');
+            if (savedDraft && !textarea.value.trim()) {
+                textarea.value = savedDraft;
+            }
+        }
+
+        // Clear draft when saving
+        document.querySelector('button[value="save"]').addEventListener('click', function() {
+            localStorage.removeItem('section_{{ section_name }}_draft');
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        document.querySelector('button[value="save"]').click();
+                        break;
+                    case 'g':
+                        e.preventDefault();
+                        document.querySelector('button[value="generate"]').click();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html> 
