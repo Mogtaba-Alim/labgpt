@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabGPT Model Training - Training in Progress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin: 50px auto;
+            max-width: 1000px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .progress-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1rem 0;
+        }
+        .status-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .log-container {
+            background: #212529;
+            color: #00ff00;
+            border-radius: 10px;
+            padding: 1rem;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.2;
+        }
+        .stage-indicator {
+            display: flex;
+            align-items: center;
+            margin: 1rem 0;
+        }
+        .stage-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 18px;
+        }
+        .stage-active {
+            background: #4CAF50;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+        .stage-completed {
+            background: #28a745;
+            color: white;
+        }
+        .stage-pending {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+        .stage-error {
+            background: #dc3545;
+            color: white;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+        .training-info {
+            background: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1><i class="fas fa-brain me-3"></i>Model Training Pipeline</h1>
+            <p class="mb-0">Fine-tuning your AI model with custom datasets...</p>
+        </div>
+        
+        <div class="content">
+            <!-- Current Status -->
+            <div class="status-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1">Current Status</h4>
+                        <p class="text-muted mb-0" id="statusMessage">Initializing...</p>
+                    </div>
+                    <div class="text-end">
+                        <div class="spinner-border text-primary" role="status" id="loadingSpinner">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="mt-3">
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-gradient" id="progressBar" role="progressbar" style="width: 0%">
+                            <span id="progressText">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Information -->
+            <div class="training-info">
+                <h5><i class="fas fa-info-circle me-2"></i>Training Information</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li><strong>Model Name:</strong> <span id="modelName">-</span></li>
+                            <li><strong>Training File:</strong> <span id="trainFile">-</span></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li><strong>Validation File:</strong> <span id="valFile">-</span></li>
+                            <li><strong>Start Time:</strong> <span id="startTime">-</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage Indicators -->
+            <div class="progress-section">
+                <h5 class="mb-3">Training Stages</h5>
+                
+                <div class="stage-indicator">
+                    <div class="stage-icon stage-pending" id="stage1Icon">
+                        <i class="fas fa-file-check"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Data Validation & File Check</h6>
+                        <small class="text-muted">Validating input files and checking dataset integrity</small>
+                    </div>
+                </div>
+                
+                <div class="stage-indicator">
+                    <div class="stage-icon stage-pending" id="stage2Icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Training Environment Setup</h6>
+                        <small class="text-muted">Preparing model configuration and training parameters</small>
+                    </div>
+                </div>
+                
+                <div class="stage-indicator">
+                    <div class="stage-icon stage-pending" id="stage3Icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Model Fine-Tuning</h6>
+                        <small class="text-muted">Training the model on your custom dataset</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Training Logs -->
+            <div class="status-card">
+                <h5 class="mb-3">Live Training Logs</h5>
+                <div class="log-container" id="logContainer">
+                    <div>Waiting for training to begin...</div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        Training logs will appear here in real-time. Model training may take several hours depending on your dataset size and hardware.
+                    </small>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <button class="btn btn-secondary me-2" onclick="location.href='/'" id="backButton">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Home
+                </button>
+                <button class="btn btn-success" onclick="location.href='/results'" id="resultsButton" style="display: none;">
+                    <i class="fas fa-check-circle me-2"></i>View Results
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let lastLogCount = 0;
+
+        function updateStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update status message
+                    document.getElementById('statusMessage').textContent = data.message || 'Processing...';
+                    
+                    // Update progress bar
+                    document.getElementById('progressBar').style.width = data.progress + '%';
+                    document.getElementById('progressText').textContent = data.progress + '%';
+                    
+                    // Update training information
+                    if (data.model_name) {
+                        document.getElementById('modelName').textContent = data.model_name;
+                        document.getElementById('trainFile').textContent = data.train_file.split('/').pop();
+                        document.getElementById('valFile').textContent = data.val_file.split('/').pop();
+                    }
+                    
+                    if (data.start_time) {
+                        const startTime = new Date(data.start_time).toLocaleString();
+                        document.getElementById('startTime').textContent = startTime;
+                    }
+                    
+                    // Update stage icons
+                    updateStageIcons(data.current_stage, data.progress);
+                    
+                    // Update logs
+                    if (data.logs && data.logs.length > lastLogCount) {
+                        const logContainer = document.getElementById('logContainer');
+                        const newLogs = data.logs.slice(lastLogCount);
+                        
+                        newLogs.forEach(log => {
+                            const logDiv = document.createElement('div');
+                            logDiv.textContent = log;
+                            logContainer.appendChild(logDiv);
+                        });
+                        
+                        // Auto-scroll to bottom
+                        logContainer.scrollTop = logContainer.scrollHeight;
+                        lastLogCount = data.logs.length;
+                    }
+                    
+                    // Handle completion or error
+                    if (data.current_stage === 'Completed') {
+                        document.getElementById('loadingSpinner').style.display = 'none';
+                        document.getElementById('resultsButton').style.display = 'inline-block';
+                        clearInterval(statusInterval);
+                    } else if (data.current_stage === 'Error') {
+                        document.getElementById('loadingSpinner').style.display = 'none';
+                        document.getElementById('progressBar').classList.add('bg-danger');
+                        clearInterval(statusInterval);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
+                });
+        }
+
+        function updateStageIcons(currentStage, progress) {
+            // Reset all stages
+            const stages = ['stage1Icon', 'stage2Icon', 'stage3Icon'];
+            stages.forEach(stageId => {
+                const element = document.getElementById(stageId);
+                element.className = 'stage-icon stage-pending';
+            });
+
+            // Update based on current stage
+            if (currentStage === 'Validating Input Files' || progress >= 10) {
+                document.getElementById('stage1Icon').className = 'stage-icon stage-active';
+            }
+            if (currentStage === 'Preparing Training Environment' || progress >= 30) {
+                document.getElementById('stage1Icon').className = 'stage-icon stage-completed';
+                document.getElementById('stage2Icon').className = 'stage-icon stage-active';
+            }
+            if (currentStage === 'Model Training in Progress' || progress >= 50) {
+                document.getElementById('stage1Icon').className = 'stage-icon stage-completed';
+                document.getElementById('stage2Icon').className = 'stage-icon stage-completed';
+                document.getElementById('stage3Icon').className = 'stage-icon stage-active';
+            }
+            if (currentStage === 'Completed') {
+                document.getElementById('stage1Icon').className = 'stage-icon stage-completed';
+                document.getElementById('stage2Icon').className = 'stage-icon stage-completed';
+                document.getElementById('stage3Icon').className = 'stage-icon stage-completed';
+            }
+            if (currentStage === 'Error') {
+                const activeStage = progress < 30 ? 'stage1Icon' : progress < 50 ? 'stage2Icon' : 'stage3Icon';
+                document.getElementById(activeStage).className = 'stage-icon stage-error';
+            }
+        }
+
+        // Start polling for status updates
+        const statusInterval = setInterval(updateStatus, 2000);
+        updateStatus(); // Initial call
+    </script>
+</body>
+</html> 
