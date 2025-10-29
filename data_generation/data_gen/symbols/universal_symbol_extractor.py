@@ -1,8 +1,8 @@
 """
-Symbol Extractor for Code Analysis
+Universal Symbol Extractor for Multi-Language Code Analysis
 
-This module provides high-level extraction of code symbols from files using the AST parser,
-with intelligent filtering, token budget management, and symbol ranking.
+This module provides high-level extraction of code symbols from files in multiple programming
+languages (Python, R, C, C++) with intelligent filtering, token budget management, and symbol ranking.
 """
 
 import os
@@ -12,58 +12,60 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import logging
 
-from .ast_parser import ASTParser, CodeSymbol, SymbolType
+from .multi_language_parser import MultiLanguageParser, UniversalCodeSymbol, Language
 
 
 @dataclass
-class ExtractionConfig:
-    """Configuration for symbol extraction."""
-    token_budget: Tuple[int, int] = (200, 400)  # (min_tokens, max_tokens)
-    max_symbols_per_file: int = 10
-    complexity_filter: Optional[str] = None  # "simple", "moderate", "complex", "very_complex"
+class UniversalExtractionConfig:
+    """Configuration for universal symbol extraction."""
+    min_tokens: int = 30
+    max_symbols_per_file: int = 30
     include_private: bool = False
-    include_methods: bool = True
-    include_classes: bool = True
-    include_functions: bool = True
     min_lines_of_code: int = 3
-    max_lines_of_code: int = 100
-    supported_extensions: Tuple[str, ...] = ('.py',)
+    supported_languages: List[Language] = field(default_factory=lambda: [
+        Language.PYTHON, Language.R, Language.C, Language.CPP
+    ])
 
 
 @dataclass
-class ExtractionStats:
-    """Statistics from symbol extraction process."""
+class UniversalExtractionStats:
+    """Statistics from universal symbol extraction process."""
     files_processed: int = 0
     files_with_errors: int = 0
     total_symbols_found: int = 0
     symbols_after_filtering: int = 0
     symbols_by_type: Dict[str, int] = field(default_factory=dict)
+    symbols_by_language: Dict[str, int] = field(default_factory=dict)
     complexity_distribution: Dict[str, int] = field(default_factory=dict)
     token_distribution: Dict[str, int] = field(default_factory=dict)
     errors: List[str] = field(default_factory=list)
 
 
-class SymbolExtractor:
-    """High-level symbol extractor for code analysis."""
+class UniversalSymbolExtractor:
+    """Universal symbol extractor for multi-language code analysis."""
     
-    def __init__(self, config: Optional[ExtractionConfig] = None):
-        """Initialize the symbol extractor with configuration."""
-        self.config = config or ExtractionConfig()
-        self.parser = ASTParser(token_budget=self.config.token_budget)
-        self.stats = ExtractionStats()
+    def __init__(self, config: Optional[UniversalExtractionConfig] = None):
+        """Initialize the universal symbol extractor with configuration."""
+        self.config = config or UniversalExtractionConfig()
+        self.parser = MultiLanguageParser()
+        self.stats = UniversalExtractionStats()
         self.logger = logging.getLogger(__name__)
     
-    def extract_from_file(self, file_path: str) -> List[CodeSymbol]:
+    def extract_from_file(self, file_path: str) -> List[UniversalCodeSymbol]:
         """
-        Extract symbols from a single Python file.
+        Extract symbols from a single file.
         
         Args:
-            file_path: Path to the Python file
+            file_path: Path to the source file
             
         Returns:
             List of extracted and filtered code symbols
         """
         try:
+            # Check if file is supported
+            if not self.parser.is_supported(file_path):
+                return []
+            
             # Read file content
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                 source_code = f.read()
@@ -92,9 +94,9 @@ class SymbolExtractor:
         finally:
             self.stats.files_processed += 1
     
-    def extract_from_directory(self, directory_path: str, recursive: bool = True) -> List[CodeSymbol]:
+    def extract_from_directory(self, directory_path: str, recursive: bool = True) -> List[UniversalCodeSymbol]:
         """
-        Extract symbols from all Python files in a directory.
+        Extract symbols from all supported files in a directory.
         
         Args:
             directory_path: Path to the directory
@@ -105,9 +107,11 @@ class SymbolExtractor:
         """
         all_symbols = []
         
-        # Find all Python files
+        # Find all supported files
+        supported_extensions = self.parser.get_supported_extensions()
         pattern = "**/*" if recursive else "*"
-        for ext in self.config.supported_extensions:
+        
+        for ext in supported_extensions:
             file_pattern = os.path.join(directory_path, f"{pattern}{ext}")
             for file_path in glob.glob(file_pattern, recursive=recursive):
                 if os.path.isfile(file_path):
@@ -117,7 +121,7 @@ class SymbolExtractor:
         self.logger.info(f"Extracted {len(all_symbols)} total symbols from {directory_path}")
         return all_symbols
     
-    def extract_from_repo(self, repo_path: str) -> Dict[str, List[CodeSymbol]]:
+    def extract_from_repo(self, repo_path: str) -> Dict[str, List[UniversalCodeSymbol]]:
         """
         Extract symbols from a repository, organized by file.
         
@@ -128,8 +132,9 @@ class SymbolExtractor:
             Dictionary mapping file paths to extracted symbols
         """
         symbols_by_file = {}
+        supported_extensions = self.parser.get_supported_extensions()
         
-        for ext in self.config.supported_extensions:
+        for ext in supported_extensions:
             file_pattern = os.path.join(repo_path, f"**/*{ext}")
             for file_path in glob.glob(file_pattern, recursive=True):
                 if os.path.isfile(file_path):
@@ -140,53 +145,32 @@ class SymbolExtractor:
         
         return symbols_by_file
     
-    def _filter_symbols(self, symbols: List[CodeSymbol]) -> List[CodeSymbol]:
+    def _filter_symbols(self, symbols: List[UniversalCodeSymbol]) -> List[UniversalCodeSymbol]:
         """Filter symbols based on configuration criteria."""
         filtered = []
-        
+
         for symbol in symbols:
-            # Filter by symbol type
-            if not self._should_include_symbol_type(symbol):
+            # Filter by language
+            if symbol.language not in self.config.supported_languages:
                 continue
-            
+
             # Filter by visibility
             if symbol.is_private and not self.config.include_private:
                 continue
-            
-            # Filter by complexity
-            if self.config.complexity_filter:
-                complexity_tier = self.parser.get_complexity_tier(symbol)
-                if complexity_tier != self.config.complexity_filter:
-                    continue
-            
-            # Filter by lines of code
-            if not (self.config.min_lines_of_code <= 
-                   symbol.complexity.lines_of_code <= 
-                   self.config.max_lines_of_code):
+
+            # Filter by minimum lines of code
+            if symbol.complexity.lines_of_code < self.config.min_lines_of_code:
                 continue
-            
-            # Filter by token budget (already done in parser, but double-check)
-            if not (self.config.token_budget[0] <= 
-                   symbol.token_count <= 
-                   self.config.token_budget[1]):
+
+            # Filter by minimum token count
+            if symbol.complexity.token_count < self.config.min_tokens:
                 continue
-            
+
             filtered.append(symbol)
-        
+
         return filtered
-    
-    def _should_include_symbol_type(self, symbol: CodeSymbol) -> bool:
-        """Check if symbol type should be included based on configuration."""
-        if symbol.symbol_type == SymbolType.FUNCTION and not self.config.include_functions:
-            return False
-        if symbol.symbol_type == SymbolType.CLASS and not self.config.include_classes:
-            return False
-        if symbol.symbol_type in (SymbolType.METHOD, SymbolType.STATIC_METHOD, 
-                                SymbolType.CLASS_METHOD, SymbolType.PROPERTY) and not self.config.include_methods:
-            return False
-        return True
-    
-    def _rank_and_limit_symbols(self, symbols: List[CodeSymbol]) -> List[CodeSymbol]:
+
+    def _rank_and_limit_symbols(self, symbols: List[UniversalCodeSymbol]) -> List[UniversalCodeSymbol]:
         """Rank symbols by importance and limit to max_symbols_per_file."""
         if len(symbols) <= self.config.max_symbols_per_file:
             return symbols
@@ -201,19 +185,16 @@ class SymbolExtractor:
         scored_symbols.sort(key=lambda x: x[0], reverse=True)
         return [symbol for _, symbol in scored_symbols[:self.config.max_symbols_per_file]]
     
-    def _calculate_importance_score(self, symbol: CodeSymbol) -> float:
+    def _calculate_importance_score(self, symbol: UniversalCodeSymbol) -> float:
         """Calculate importance score for ranking symbols."""
         score = 0.0
         
         # Base score by symbol type
         type_scores = {
-            SymbolType.CLASS: 10.0,
-            SymbolType.FUNCTION: 8.0,
-            SymbolType.METHOD: 6.0,
-            SymbolType.ASYNC_FUNCTION: 7.0,
-            SymbolType.PROPERTY: 4.0,
-            SymbolType.STATIC_METHOD: 5.0,
-            SymbolType.CLASS_METHOD: 5.0,
+            'class': 10.0,
+            'function': 8.0,
+            'method': 6.0,
+            'struct': 9.0,
         }
         score += type_scores.get(symbol.symbol_type, 5.0)
         
@@ -221,26 +202,29 @@ class SymbolExtractor:
         if symbol.is_public_api:
             score += 5.0
         
-        # Docstring bonus
+        # Documentation bonus
         if symbol.docstring:
             score += 3.0
-            # Longer docstrings indicate more important functions
             score += min(len(symbol.docstring) / 100, 2.0)
         
+        # Comments bonus
+        if symbol.comments:
+            score += len(symbol.comments) * 0.5
+        
         # Complexity bonus (moderate complexity is preferred)
-        complexity_tier = self.parser.get_complexity_tier(symbol)
+        complexity_tier = self.get_complexity_tier(symbol)
         complexity_bonuses = {
-            "simple": 2.0,
-            "moderate": 4.0,  # Sweet spot
+            "simple": 1.0,
+            "moderate": 4.0,
             "complex": 3.0,
-            "very_complex": 1.0
+            "very_complex": 2.0
         }
         score += complexity_bonuses.get(complexity_tier, 0.0)
         
         # Parameter count bonus (functions with parameters are more interesting)
         score += min(symbol.complexity.num_parameters * 0.5, 3.0)
         
-        # Function call bonus (functions that call other functions are more complex)
+        # Function call bonus
         score += min(symbol.complexity.num_function_calls * 0.1, 2.0)
         
         # Lines of code bonus (moderate size preferred)
@@ -250,34 +234,62 @@ class SymbolExtractor:
         elif 5 <= loc <= 50:
             score += 1.0
         
-        # Penalize very private functions (double underscore)
-        if symbol.name.startswith('__') and not symbol.name.endswith('__'):
+        # Language-specific adjustments
+        language_bonuses = {
+            Language.PYTHON: 1.0,
+            Language.R: 1.2,  # R functions might be rarer
+            Language.C: 1.1,
+            Language.CPP: 1.1,
+        }
+        score += language_bonuses.get(symbol.language, 1.0)
+        
+        # Penalize very private functions
+        if symbol.name.startswith('__') or symbol.name.startswith('_.'):
             score -= 2.0
         
         return score
     
-    def _update_stats(self, all_symbols: List[CodeSymbol], 
-                     filtered_symbols: List[CodeSymbol], 
-                     final_symbols: List[CodeSymbol]):
+    def get_complexity_tier(self, symbol: UniversalCodeSymbol) -> str:
+        """Determine complexity tier for symbol."""
+        score = symbol.complexity.complexity_score
+        
+        if score < 10:
+            return "simple"
+        elif score < 25:
+            return "moderate"
+        elif score < 50:
+            return "complex"
+        else:
+            return "very_complex"
+    
+    def _update_stats(self, all_symbols: List[UniversalCodeSymbol], 
+                     filtered_symbols: List[UniversalCodeSymbol], 
+                     final_symbols: List[UniversalCodeSymbol]):
         """Update extraction statistics."""
         self.stats.total_symbols_found += len(all_symbols)
         self.stats.symbols_after_filtering += len(final_symbols)
         
-        # Update type distribution
+        # Update type and language distribution
         for symbol in final_symbols:
-            symbol_type_str = symbol.symbol_type.value
-            self.stats.symbols_by_type[symbol_type_str] = (
-                self.stats.symbols_by_type.get(symbol_type_str, 0) + 1
+            # Type distribution
+            self.stats.symbols_by_type[symbol.symbol_type] = (
+                self.stats.symbols_by_type.get(symbol.symbol_type, 0) + 1
             )
             
-            # Update complexity distribution
-            complexity_tier = self.parser.get_complexity_tier(symbol)
+            # Language distribution
+            language_str = symbol.language.value
+            self.stats.symbols_by_language[language_str] = (
+                self.stats.symbols_by_language.get(language_str, 0) + 1
+            )
+            
+            # Complexity distribution
+            complexity_tier = self.get_complexity_tier(symbol)
             self.stats.complexity_distribution[complexity_tier] = (
                 self.stats.complexity_distribution.get(complexity_tier, 0) + 1
             )
             
-            # Update token distribution
-            token_range = self._get_token_range(symbol.token_count)
+            # Token distribution
+            token_range = self._get_token_range(symbol.complexity.token_count)
             self.stats.token_distribution[token_range] = (
                 self.stats.token_distribution.get(token_range, 0) + 1
             )
@@ -295,15 +307,15 @@ class SymbolExtractor:
         else:
             return "400+"
     
-    def get_stats(self) -> ExtractionStats:
+    def get_stats(self) -> UniversalExtractionStats:
         """Get extraction statistics."""
         return self.stats
     
     def reset_stats(self):
         """Reset extraction statistics."""
-        self.stats = ExtractionStats()
+        self.stats = UniversalExtractionStats()
     
-    def export_symbols(self, symbols: List[CodeSymbol], output_path: str, format: str = "json"):
+    def export_symbols(self, symbols: List[UniversalCodeSymbol], output_path: str, format: str = "json"):
         """
         Export symbols to a file.
         
@@ -323,7 +335,7 @@ class SymbolExtractor:
         else:
             raise ValueError(f"Unsupported export format: {format}")
     
-    def _export_json(self, symbols: List[CodeSymbol], output_path: str):
+    def _export_json(self, symbols: List[UniversalCodeSymbol], output_path: str):
         """Export symbols to JSON format."""
         import json
         from dataclasses import asdict
@@ -331,14 +343,15 @@ class SymbolExtractor:
         data = []
         for symbol in symbols:
             symbol_dict = asdict(symbol)
-            # Convert sets to lists for JSON serialization
+            # Convert sets to lists and enums to strings for JSON serialization
             symbol_dict['dependencies'] = list(symbol_dict['dependencies'])
+            symbol_dict['language'] = symbol_dict['language'].value
             data.append(symbol_dict)
         
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
     
-    def _export_yaml(self, symbols: List[CodeSymbol], output_path: str):
+    def _export_yaml(self, symbols: List[UniversalCodeSymbol], output_path: str):
         """Export symbols to YAML format."""
         try:
             import yaml
@@ -348,6 +361,7 @@ class SymbolExtractor:
             for symbol in symbols:
                 symbol_dict = asdict(symbol)
                 symbol_dict['dependencies'] = list(symbol_dict['dependencies'])
+                symbol_dict['language'] = symbol_dict['language'].value
                 data.append(symbol_dict)
             
             with open(output_path, 'w', encoding='utf-8') as f:
@@ -355,7 +369,7 @@ class SymbolExtractor:
         except ImportError:
             raise ImportError("PyYAML is required for YAML export")
     
-    def _export_csv(self, symbols: List[CodeSymbol], output_path: str):
+    def _export_csv(self, symbols: List[UniversalCodeSymbol], output_path: str):
         """Export symbols to CSV format (simplified)."""
         import csv
         
@@ -364,52 +378,66 @@ class SymbolExtractor:
             
             # Write header
             writer.writerow([
-                'name', 'type', 'start_line', 'end_line', 'token_count',
+                'name', 'type', 'language', 'start_line', 'end_line', 'token_count',
                 'complexity_tier', 'lines_of_code', 'num_parameters',
-                'has_docstring', 'is_public_api', 'parent_class'
+                'has_docstring', 'has_comments', 'is_public_api', 'parent_scope'
             ])
             
             # Write data
             for symbol in symbols:
-                complexity_tier = self.parser.get_complexity_tier(symbol)
+                complexity_tier = self.get_complexity_tier(symbol)
                 writer.writerow([
                     symbol.name,
-                    symbol.symbol_type.value,
+                    symbol.symbol_type,
+                    symbol.language.value,
                     symbol.start_line,
                     symbol.end_line,
-                    symbol.token_count,
+                    symbol.complexity.token_count,
                     complexity_tier,
                     symbol.complexity.lines_of_code,
                     symbol.complexity.num_parameters,
                     bool(symbol.docstring),
+                    bool(symbol.comments),
                     symbol.is_public_api,
-                    symbol.parent_class or ""
+                    symbol.parent_scope or ""
                 ])
 
 
-def create_extraction_config(
-    complexity_level: str = "moderate",
+def create_universal_extraction_config(
     include_private: bool = False,
-    max_symbols: int = 10,
-    token_range: Tuple[int, int] = (200, 400)
-) -> ExtractionConfig:
+    max_symbols: int = 30,
+    min_tokens: int = 30,
+    languages: Optional[List[str]] = None
+) -> UniversalExtractionConfig:
     """
-    Create a pre-configured extraction config for common use cases.
-    
+    Create a pre-configured universal extraction config for common use cases.
+
     Args:
-        complexity_level: Target complexity ("simple", "moderate", "complex", "all")
         include_private: Whether to include private symbols
         max_symbols: Maximum symbols per file
-        token_range: (min_tokens, max_tokens)
-        
+        min_tokens: Minimum tokens per symbol
+        languages: List of language names to support
+
     Returns:
-        Configured ExtractionConfig
+        Configured UniversalExtractionConfig
     """
-    config = ExtractionConfig(
-        token_budget=token_range,
+    supported_languages = [Language.PYTHON, Language.R, Language.C, Language.CPP]
+    if languages:
+        language_map = {
+            'python': Language.PYTHON,
+            'r': Language.R,
+            'c': Language.C,
+            'cpp': Language.CPP,
+            'c++': Language.CPP,
+        }
+        supported_languages = [language_map[lang.lower()] for lang in languages
+                             if lang.lower() in language_map]
+
+    config = UniversalExtractionConfig(
+        min_tokens=min_tokens,
         max_symbols_per_file=max_symbols,
         include_private=include_private,
-        complexity_filter=complexity_level if complexity_level != "all" else None
+        supported_languages=supported_languages
     )
-    
-    return config 
+
+    return config

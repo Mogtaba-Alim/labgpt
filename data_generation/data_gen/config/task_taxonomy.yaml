@@ -13,30 +13,18 @@ symbol_types:
   function:
     enabled: true
     priority: 8
-    
+
   class:
     enabled: true
     priority: 10
-    
+
   method:
     enabled: true
     priority: 6
-    
-  async_function:
+
+  struct:
     enabled: true
-    priority: 7
-    
-  property:
-    enabled: true
-    priority: 4
-    
-  static_method:
-    enabled: true
-    priority: 5
-    
-  class_method:
-    enabled: true
-    priority: 5
+    priority: 9
 
 # Complexity-based task distribution
 complexity_levels:
@@ -51,30 +39,12 @@ complexity_levels:
         - "What does the {symbol_type} {symbol_name} do?"
         - "What parameters does {symbol_name} accept?"
         - "What does {symbol_name} return?"
-        
-    completion_tasks:
-      count: 1
-      focus_areas:
-        - "simple_usage"
-      
+
     debugging_tasks:
       count: 1
       focus_areas:
         - "parameter_validation"
         - "return_type_errors"
-        
-    refactoring_tasks:
-      count: 1
-      focus_areas:
-        - "readability_improvement"
-        - "variable_naming"
-        
-    docstring_tasks:
-      count: 1
-      requirements:
-        - "include_parameters"
-        - "include_return_type"
-        - "basic_description"
 
   moderate:
     description: "Moderate complexity symbols (10-25 complexity score)"
@@ -90,34 +60,13 @@ complexity_levels:
         - "What is the algorithm used in {symbol_name}?"
         - "What are the dependencies of {symbol_name}?"
         - "When should {symbol_name} be used?"
-        
-    completion_tasks:
-      count: 2
-      focus_areas:
-        - "partial_implementation"
-        - "error_handling"
-        
+
     debugging_tasks:
       count: 2
       focus_areas:
         - "logic_errors"
         - "boundary_conditions"
         - "exception_handling"
-        
-    refactoring_tasks:
-      count: 2
-      focus_areas:
-        - "performance_optimization"
-        - "code_structure"
-        - "error_handling_improvement"
-        
-    docstring_tasks:
-      count: 1
-      requirements:
-        - "detailed_parameters"
-        - "return_description"
-        - "examples"
-        - "exception_documentation"
 
   complex:
     description: "Complex symbols (25-50 complexity score)"
@@ -134,14 +83,7 @@ complexity_levels:
         - "How does {symbol_name} handle performance concerns?"
         - "What are the integration points for {symbol_name}?"
         - "How does {symbol_name} ensure thread safety?"
-        
-    completion_tasks:
-      count: 2
-      focus_areas:
-        - "complex_logic"
-        - "state_management"
-        - "async_patterns"
-        
+
     debugging_tasks:
       count: 3
       focus_areas:
@@ -149,22 +91,6 @@ complexity_levels:
         - "memory_management"
         - "performance_bottlenecks"
         - "race_conditions"
-        
-    refactoring_tasks:
-      count: 2
-      focus_areas:
-        - "architectural_improvement"
-        - "separation_of_concerns"
-        - "dependency_injection"
-        
-    docstring_tasks:
-      count: 1
-      requirements:
-        - "comprehensive_parameters"
-        - "detailed_examples"
-        - "performance_notes"
-        - "thread_safety_notes"
-        - "side_effects_documentation"
 
   very_complex:
     description: "Very complex symbols (> 50 complexity score)"
@@ -181,14 +107,7 @@ complexity_levels:
         - "What security considerations apply to {symbol_name}?"
         - "How does {symbol_name} handle distributed concerns?"
         - "What monitoring capabilities does {symbol_name} provide?"
-        
-    completion_tasks:
-      count: 3
-      focus_areas:
-        - "system_integration"
-        - "fault_handling"
-        - "monitoring_implementation"
-        
+
     debugging_tasks:
       count: 3
       focus_areas:
@@ -196,22 +115,6 @@ complexity_levels:
         - "performance_profiling"
         - "security_vulnerabilities"
         - "resource_leaks"
-        
-    refactoring_tasks:
-      count: 3
-      focus_areas:
-        - "system_decomposition"
-        - "microservice_extraction"
-        - "observability_improvement"
-        
-    docstring_tasks:
-      count: 2
-      requirements:
-        - "architectural_overview"
-        - "comprehensive_examples"
-        - "performance_characteristics"
-        - "security_implications"
-        - "operational_considerations"
 
 # Task-specific configurations
 task_configs:
@@ -220,12 +123,7 @@ task_configs:
     max_answer_tokens: 500
     require_code_citations: true
     allowed_not_in_context: false
-    
-  completion_tasks:
-    partial_percentage_range: [30, 70]  # How much of the code to show as partial
-    require_syntactic_correctness: true
-    include_context_lines: 3
-    
+
   debugging_tasks:
     introduce_realistic_bugs: true
     bug_types:
@@ -235,22 +133,6 @@ task_configs:
       - "logic_error"
       - "boundary_condition"
     require_fix_explanation: true
-    
-  refactoring_tasks:
-    preserve_functionality: true
-    improvement_categories:
-      - "readability"
-      - "performance"
-      - "maintainability"
-      - "testability"
-    require_before_after: true
-    require_explanation: true
-    
-  docstring_tasks:
-    style: "google"  # "google", "numpy", "sphinx"
-    require_examples: true
-    include_type_hints: true
-    max_docstring_length: 1000
 
 # Quality thresholds
 quality_thresholds:

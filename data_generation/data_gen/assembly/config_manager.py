@@ -27,10 +27,7 @@ class ComplexityConfig:
     """Configuration for a complexity level."""
     description: str
     qa_pairs: TaskConfig
-    completion_tasks: TaskConfig
     debugging_tasks: TaskConfig
-    refactoring_tasks: TaskConfig
-    docstring_tasks: TaskConfig
 
 
 @dataclass
@@ -144,10 +141,7 @@ class ConfigManager:
             complexity_levels[level] = ComplexityConfig(
                 description=config.get('description', ''),
                 qa_pairs=self._parse_task_config(config.get('qa_pairs', {})),
-                completion_tasks=self._parse_task_config(config.get('completion_tasks', {})),
-                debugging_tasks=self._parse_task_config(config.get('debugging_tasks', {})),
-                refactoring_tasks=self._parse_task_config(config.get('refactoring_tasks', {})),
-                docstring_tasks=self._parse_task_config(config.get('docstring_tasks', {}))
+                debugging_tasks=self._parse_task_config(config.get('debugging_tasks', {}))
             )
         
         # Parse task configs (keep as dict for flexibility)
@@ -234,84 +228,78 @@ class ConfigManager:
     def get_task_distribution(self, symbol_type: str, complexity_level: str) -> Dict[str, int]:
         """
         Get the task distribution for a given symbol type and complexity level.
-        
+
         Args:
-            symbol_type: Type of symbol (function, class, method, etc.)
+            symbol_type: Type of symbol (function, class, method, struct)
             complexity_level: Complexity level (simple, moderate, complex, very_complex)
-            
+
         Returns:
             Dictionary mapping task types to counts
         """
         if not self.config:
             raise ValueError("Configuration not loaded")
-        
+
         # Check if symbol type is enabled
         symbol_config = self.config.symbol_types.get(symbol_type)
         if not symbol_config or not symbol_config.enabled:
             return {}
-        
+
         # Get complexity configuration
         complexity_config = self.config.complexity_levels.get(complexity_level)
         if not complexity_config:
             self.logger.warning(f"Unknown complexity level: {complexity_level}")
             return {}
-        
+
         # Build task distribution
         distribution = {
             'qa_pairs': complexity_config.qa_pairs.count,
-            'completion_tasks': complexity_config.completion_tasks.count,
-            'debugging_tasks': complexity_config.debugging_tasks.count,
-            'refactoring_tasks': complexity_config.refactoring_tasks.count,
-            'docstring_tasks': complexity_config.docstring_tasks.count
+            'debugging_tasks': complexity_config.debugging_tasks.count
         }
-        
+
         # Apply global limits
         total_tasks = sum(distribution.values())
         max_tasks = self.config.global_config.max_total_tasks_per_symbol
         min_tasks = self.config.global_config.min_total_tasks_per_symbol
-        
+
         if total_tasks > max_tasks:
             # Scale down proportionally
             scale_factor = max_tasks / total_tasks
             for task_type in distribution:
                 distribution[task_type] = max(1, int(distribution[task_type] * scale_factor))
-        
+
         elif total_tasks < min_tasks:
             # Scale up, preferring QA pairs
             additional_tasks = min_tasks - total_tasks
             distribution['qa_pairs'] += additional_tasks
-        
+
         return distribution
     
     def get_task_config(self, task_type: str, complexity_level: str) -> TaskConfig:
         """
         Get the task configuration for a specific task type and complexity level.
-        
+
         Args:
-            task_type: Type of task (qa_pairs, completion_tasks, etc.)
+            task_type: Type of task (qa_pairs, debugging_tasks)
             complexity_level: Complexity level
-            
+
         Returns:
             TaskConfig object
         """
         if not self.config:
             raise ValueError("Configuration not loaded")
-        
+
         complexity_config = self.config.complexity_levels.get(complexity_level)
         if not complexity_config:
             raise ValueError(f"Unknown complexity level: {complexity_level}")
-        
+
         task_configs = {
             'qa_pairs': complexity_config.qa_pairs,
-            'completion_tasks': complexity_config.completion_tasks,
-            'debugging_tasks': complexity_config.debugging_tasks,
-            'refactoring_tasks': complexity_config.refactoring_tasks,
-            'docstring_tasks': complexity_config.docstring_tasks
+            'debugging_tasks': complexity_config.debugging_tasks
         }
-        
+
         if task_type not in task_configs:
             raise ValueError(f"Unknown task type: {task_type}")
-        
+
         return task_configs[task_type]
     
     def get_quality_thresholds(self) -> QualityThresholds:
@@ -399,21 +387,9 @@ class ConfigManager:
                     'focus_areas': config.qa_pairs.focus_areas,
                     'templates': config.qa_pairs.templates
                 },
-                'completion_tasks': {
-                    'count': config.completion_tasks.count,
-                    'focus_areas': config.completion_tasks.focus_areas
-                },
                 'debugging_tasks': {
                     'count': config.debugging_tasks.count,
                     'focus_areas': config.debugging_tasks.focus_areas
-                },
-                'refactoring_tasks': {
-                    'count': config.refactoring_tasks.count,
-                    'focus_areas': config.refactoring_tasks.focus_areas
-                },
-                'docstring_tasks': {
-                    'count': config.docstring_tasks.count,
-                    'requirements': config.docstring_tasks.requirements
                 }
             }
         

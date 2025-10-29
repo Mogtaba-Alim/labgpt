@@ -19,3 +19,4 @@ data_generation/final_combined_train_dataset.json
 data_generation/final_combined_val_dataset.json
 data_generation/test_datasets/
 data_generation/test_repos/
+data_generation/data_generation_comprehensive_guide.md

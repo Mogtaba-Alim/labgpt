@@ -1,33 +1,31 @@
 """
 Symbol extraction package for code analysis.
 
-This package provides AST-based parsing and extraction of code symbols
-(functions, classes, methods) with detailed complexity metrics.
+This package provides multi-language parsing and extraction of code symbols
+(functions, classes, methods, structs) with detailed complexity metrics.
 """
 
-from .ast_parser import (
-    ASTParser,
-    CodeSymbol,
-    SymbolType,
-    ComplexityMetrics,
-    ComplexityAnalyzer
+from .universal_symbol_extractor import (
+    UniversalSymbolExtractor,
+    UniversalExtractionConfig,
+    UniversalExtractionStats,
+    create_universal_extraction_config
 )
 
-from .symbol_extractor import (
-    SymbolExtractor,
-    ExtractionConfig,
-    ExtractionStats,
-    create_extraction_config
+from .multi_language_parser import (
+    MultiLanguageParser,
+    UniversalCodeSymbol,
+    UniversalComplexityMetrics,
+    Language
 )
 
 __all__ = [
-    'ASTParser',
-    'CodeSymbol', 
-    'SymbolType',
-    'ComplexityMetrics',
-    'ComplexityAnalyzer',
-    'SymbolExtractor',
-    'ExtractionConfig',
-    'ExtractionStats',
-    'create_extraction_config'
+    'UniversalSymbolExtractor',
+    'UniversalExtractionConfig',
+    'UniversalExtractionStats',
+    'create_universal_extraction_config',
+    'MultiLanguageParser',
+    'UniversalCodeSymbol',
+    'UniversalComplexityMetrics',
+    'Language'
 ] 

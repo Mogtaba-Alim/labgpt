@@ -109,7 +109,7 @@ class QADeduplicator:
         
         for qa in qa_pairs:
             # Create group key from attributes
-            group_key = f"{qa.complexity_level}_{qa.task_focus_area}_{qa.is_negative_example}"
+            group_key = f"{qa.complexity_level}_{qa.task_focus_area}_{getattr(qa, 'is_negative_example', False)}"
             groups[group_key].append(qa)
         
         return dict(groups)
@@ -249,9 +249,9 @@ class QADeduplicator:
             
             # Confidence score weight (most important)
             score += qa.confidence_score * 5.0
-            
+
             # Prefer positive examples
-            if not qa.is_negative_example:
+            if not getattr(qa, 'is_negative_example', False):
                 score += 2.0
             
             # Has citations bonus
@@ -348,8 +348,8 @@ class QADeduplicator:
             analysis['complexity_distribution'][qa.complexity_level] += 1
             analysis['focus_area_distribution'][qa.task_focus_area] += 1
             analysis['symbol_type_distribution'][qa.context_symbol_type] += 1
-            
-            if qa.is_negative_example:
+
+            if getattr(qa, 'is_negative_example', False):
                 analysis['negative_example_count'] += 1
             
             # Unique tracking

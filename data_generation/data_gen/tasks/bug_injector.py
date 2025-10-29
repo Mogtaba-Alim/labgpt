@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import logging
 
-from ..symbols import CodeSymbol
+from ..symbols import UniversalCodeSymbol
 
 
 class BugType(Enum):
@@ -140,8 +140,33 @@ class BugInjector:
                 (r'\bvalue\b', r'val'),     # Abbreviation inconsistency
             ]
         }
+        
+        # Initialize C-specific bug patterns
+        self.c_bug_patterns = {
+            BugType.OFF_BY_ONE: [
+                # C/C++ for loop boundary errors
+                (r'for\s*\([^;]+;\s*(\w+)\s*<\s*(\w+)\s*;', r'for(int i = 0; \1 <= \2;'),  # < to <=
+                (r'for\s*\([^;]+;\s*(\w+)\s*<=\s*(\w+)\s*;', r'for(int i = 0; \1 < \2;'),  # <= to <
+                (r'\[(\w+)\]', r'[\1 + 1]'),  # Array indexing
+                (r'\[(\w+)\s*-\s*1\]', r'[\1]'),  # arr[i-1] -> arr[i]
+            ],
+            BugType.VARIABLE_NAME: [
+                # C/C++ variable name errors
+                (r'\bi\b', r'j'),  # Loop variable confusion
+                (r'\bn\b', r'm'),  # Common variable name confusion
+                (r'\bsize\b', r'sz'),  # Size variable typo
+                (r'\bcount\b', r'cnt'),  # Count variable typo
+            ],
+            BugType.OPERATOR_ERROR: [
+                # C/C++ operator errors
+                (r'==', r'='),  # Assignment instead of comparison
+                (r'\+\+', r'--'),  # Increment vs decrement
+                (r'&&', r'||'),  # AND vs OR
+                (r'!=', r'=='),  # Not equal vs equal
+            ]
+        }
     
-    def inject_bug(self, symbol: CodeSymbol, 
+    def inject_bug(self, symbol: UniversalCodeSymbol,
                   bug_type: Optional[BugType] = None) -> Optional[BugInjection]:
         """
         Inject a bug into a code symbol.
@@ -160,10 +185,19 @@ class BugInjector:
             if bug_type is None:
                 bug_type = random.choice(self.enabled_bug_types)
             
-            # Select injection method based on bug type
-            injection_method = getattr(self, f'_inject_{bug_type.value}', None)
-            if injection_method is None:
-                injection_method = self._inject_generic_pattern
+            # Detect language from symbol (if available)
+            language = getattr(symbol, 'language', None)
+            language_str = language.value if language else 'python'
+            
+            # Select injection method based on language and bug type
+            if language_str in ['c', 'cpp']:
+                injection_method = getattr(self, f'_inject_{bug_type.value}_c', None)
+                if injection_method is None:
+                    injection_method = self._inject_generic_c_pattern
+            else:
+                injection_method = getattr(self, f'_inject_{bug_type.value}', None)
+                if injection_method is None:
+                    injection_method = self._inject_generic_pattern
             
             # Attempt injection
             injection = injection_method(symbol, bug_type)
@@ -183,7 +217,7 @@ class BugInjector:
             self.logger.error(f"Error injecting bug: {e}")
             return None
     
-    def _inject_generic_pattern(self, symbol: CodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
+    def _inject_generic_pattern(self, symbol: UniversalCodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
         """Inject bug using pattern matching."""
         if bug_type not in self.bug_patterns:
             return None
@@ -208,7 +242,31 @@ class BugInjector:
         
         return None
     
-    def _inject_off_by_one(self, symbol: CodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
+    def _inject_generic_c_pattern(self, symbol: UniversalCodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
+        """Inject bug using C/C++ specific pattern matching."""
+        patterns = self.c_bug_patterns.get(bug_type, [])
+        if not patterns:
+            # Fallback to generic patterns
+            return self._inject_generic_pattern(symbol, bug_type)
+        
+        original_code = symbol.source_code
+        
+        for pattern, replacement in patterns:
+            if re.search(pattern, original_code):
+                buggy_code = re.sub(pattern, replacement, original_code, count=1)
+                
+                # Find the line where change occurred
+                bug_location = self._find_change_location(original_code, buggy_code)
+                
+                # For C/C++, we don't validate syntax as it requires compilation
+                return self._create_bug_injection(
+                    symbol, bug_type, original_code, buggy_code, bug_location
+                )
+        
+        # Fallback to generic patterns if no C-specific patterns matched
+        return self._inject_generic_pattern(symbol, bug_type)
+    
+    def _inject_off_by_one(self, symbol: UniversalCodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
         """Inject off-by-one errors."""
         original_code = symbol.source_code
         lines = original_code.split('\n')
@@ -244,7 +302,7 @@ class BugInjector:
         
         return None
     
-    def _inject_logic_error(self, symbol: CodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
+    def _inject_logic_error(self, symbol: UniversalCodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
         """Inject logic errors like condition inversions."""
         original_code = symbol.source_code
         lines = original_code.split('\n')
@@ -287,7 +345,7 @@ class BugInjector:
         
         return None
     
-    def _inject_variable_name(self, symbol: CodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
+    def _inject_variable_name(self, symbol: UniversalCodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
         """Inject variable name errors (typos, scope issues)."""
         original_code = symbol.source_code
         
@@ -330,7 +388,7 @@ class BugInjector:
         
         return None
     
-    def _inject_type_mismatch(self, symbol: CodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
+    def _inject_type_mismatch(self, symbol: UniversalCodeSymbol, bug_type: BugType) -> Optional[BugInjection]:
         """Inject type mismatch errors."""
         original_code = symbol.source_code
         lines = original_code.split('\n')
@@ -421,8 +479,8 @@ class BugInjector:
         except SyntaxError:
             return False
     
-    def _create_bug_injection(self, symbol: CodeSymbol, bug_type: BugType,
-                            original_code: str, buggy_code: str, 
+    def _create_bug_injection(self, symbol: UniversalCodeSymbol, bug_type: BugType,
+                            original_code: str, buggy_code: str,
                             bug_location: int) -> BugInjection:
         """Create a BugInjection object with metadata."""
         
@@ -474,7 +532,7 @@ class BugInjector:
             self.stats.bugs_by_severity.get(injection.severity, 0) + 1
         )
     
-    def inject_multiple_bugs(self, symbol: CodeSymbol, 
+    def inject_multiple_bugs(self, symbol: UniversalCodeSymbol,
                            count: int = 1) -> List[BugInjection]:
         """Inject multiple different bugs into a symbol."""
         injections = []

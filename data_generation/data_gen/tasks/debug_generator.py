@@ -10,7 +10,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
 import logging
 
-from ..symbols import CodeSymbol, SymbolType
+from ..symbols import UniversalCodeSymbol
 from ..assembly.config_manager import ConfigManager, TaskConfig
 from .bug_injector import BugInjector, BugInjection, BugType, create_bug_injector
 
@@ -101,7 +101,7 @@ class DebugGenerator:
             }
         }
     
-    def generate_debug_tasks(self, symbol: CodeSymbol, complexity_level: str) -> List[DebugTask]:
+    def generate_debug_tasks(self, symbol: UniversalCodeSymbol, complexity_level: str) -> List[DebugTask]:
         """
         Generate debugging tasks for a code symbol.
         
@@ -158,7 +158,7 @@ class DebugGenerator:
         else:
             return random.sample(all_task_types, k=min(2, len(all_task_types)))
     
-    def _create_debug_task(self, symbol: CodeSymbol, bug_injection: BugInjection,
+    def _create_debug_task(self, symbol: UniversalCodeSymbol, bug_injection: BugInjection,
                           task_type: str, complexity_level: str) -> Optional[DebugTask]:
         """Create a specific debugging task."""
         try:
@@ -182,7 +182,7 @@ class DebugGenerator:
                 original_code=bug_injection.original_code,
                 buggy_code=bug_injection.buggy_code,
                 context_symbol_name=symbol.name,
-                context_symbol_type=symbol.symbol_type.value,
+                context_symbol_type=symbol.symbol_type,
                 context_start_line=symbol.start_line,
                 context_end_line=symbol.end_line,
                 bug_injection=bug_injection,
@@ -199,30 +199,30 @@ class DebugGenerator:
             self.logger.error(f"Error creating debug task: {e}")
             return None
     
-    def _generate_question(self, template: Dict[str, Any], symbol: CodeSymbol,
+    def _generate_question(self, template: Dict[str, Any], symbol: UniversalCodeSymbol,
                           bug_injection: BugInjection, task_type: str) -> str:
         """Generate a question for the debugging task."""
         base_question = template["question_template"]
         
         # Customize question based on task type and symbol
         if task_type == "find_bug":
-            question = f"Analyze this {symbol.symbol_type.value} and identify any bugs:\n\n```python\n{bug_injection.buggy_code}\n```\n\n{base_question}"
+            question = f"Analyze this {symbol.symbol_type} and identify any bugs:\n\n```python\n{bug_injection.buggy_code}\n```\n\n{base_question}"
         
         elif task_type == "fix_bug":
-            question = f"This {symbol.symbol_type.value} contains a bug:\n\n```python\n{bug_injection.buggy_code}\n```\n\n{base_question}"
+            question = f"This {symbol.symbol_type} contains a bug:\n\n```python\n{bug_injection.buggy_code}\n```\n\n{base_question}"
         
         elif task_type == "explain_bug":
-            question = f"Review this {symbol.symbol_type.value}:\n\n```python\n{bug_injection.buggy_code}\n```\n\n{base_question}"
+            question = f"Review this {symbol.symbol_type}:\n\n```python\n{bug_injection.buggy_code}\n```\n\n{base_question}"
         
         elif task_type == "identify_symptom":
-            question = f"If you run this {symbol.symbol_type.value}:\n\n```python\n{bug_injection.buggy_code}\n```\n\n{base_question}"
+            question = f"If you run this {symbol.symbol_type}:\n\n```python\n{bug_injection.buggy_code}\n```\n\n{base_question}"
         
         else:
-            question = f"Debug this {symbol.symbol_type.value}:\n\n```python\n{bug_injection.buggy_code}\n```\n\n{base_question}"
+            question = f"Debug this {symbol.symbol_type}:\n\n```python\n{bug_injection.buggy_code}\n```\n\n{base_question}"
         
         return question
     
-    def _generate_answer(self, template: Dict[str, Any], symbol: CodeSymbol,
+    def _generate_answer(self, template: Dict[str, Any], symbol: UniversalCodeSymbol,
                         bug_injection: BugInjection, task_type: str) -> str:
         """Generate the expected answer for the debugging task."""
         answer_template = template["answer_template"]
@@ -284,10 +284,10 @@ class DebugGenerator:
         
         return hints
     
-    def _generate_test_cases(self, symbol: CodeSymbol, bug_injection: BugInjection,
+    def _generate_test_cases(self, symbol: UniversalCodeSymbol, bug_injection: BugInjection,
                            task_type: str) -> List[Dict[str, Any]]:
         """Generate test cases for the debugging task."""
-        if symbol.symbol_type not in [SymbolType.FUNCTION, SymbolType.METHOD]:
+        if symbol.symbol_type not in ["function", "method"]:
             return []
         
         test_cases = []
@@ -311,7 +311,7 @@ class DebugGenerator:
         
         return test_cases
     
-    def generate_comparative_debug_task(self, symbol: CodeSymbol, 
+    def generate_comparative_debug_task(self, symbol: UniversalCodeSymbol, 
                                       complexity_level: str) -> Optional[DebugTask]:
         """Generate a task comparing correct vs buggy code."""
         # Inject a bug
@@ -319,7 +319,7 @@ class DebugGenerator:
         if not bug_injection:
             return None
         
-        question = f"""Compare these two versions of the same {symbol.symbol_type.value}:
+        question = f"""Compare these two versions of the same {symbol.symbol_type}:
 
 **Version A (Original):**
 ```python
@@ -347,7 +347,7 @@ Question: What is the difference between Version A and Version B? Which version 
             original_code=bug_injection.original_code,
             buggy_code=bug_injection.buggy_code,
             context_symbol_name=symbol.name,
-            context_symbol_type=symbol.symbol_type.value,
+            context_symbol_type=symbol.symbol_type,
             context_start_line=symbol.start_line,
             context_end_line=symbol.end_line,
             bug_injection=bug_injection,
@@ -358,7 +358,7 @@ Question: What is the difference between Version A and Version B? Which version 
             task_focus_area="debugging"
         )
     
-    def generate_progressive_debug_task(self, symbol: CodeSymbol,
+    def generate_progressive_debug_task(self, symbol: UniversalCodeSymbol,
                                       complexity_level: str) -> List[DebugTask]:
         """Generate a progressive debugging task (multiple related bugs)."""
         tasks = []
@@ -372,7 +372,7 @@ Question: What is the difference between Version A and Version B? Which version 
             if not bug_injection:
                 break
             
-            question = f"""This is step {i+1} of debugging the {symbol.symbol_type.value} `{symbol.name}`:
+            question = f"""This is step {i+1} of debugging the {symbol.symbol_type} `{symbol.name}`:
 
 ```python
 {bug_injection.buggy_code}
@@ -395,7 +395,7 @@ Corrected code:
                 original_code=bug_injection.original_code,
                 buggy_code=bug_injection.buggy_code,
                 context_symbol_name=symbol.name,
-                context_symbol_type=symbol.symbol_type.value,
+                context_symbol_type=symbol.symbol_type,
                 context_start_line=symbol.start_line,
                 context_end_line=symbol.end_line,
                 bug_injection=bug_injection,

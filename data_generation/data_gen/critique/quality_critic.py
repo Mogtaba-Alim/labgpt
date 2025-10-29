@@ -199,30 +199,33 @@ Return ONLY a valid JSON object with scores:
 
 Be strict in your evaluation. High scores should be reserved for truly excellent Q&A pairs."""
 
+        # Handle both regular QA pairs and NegativeExample objects
+        answer_text = getattr(qa_pair, 'answer', getattr(qa_pair, 'expected_response', 'NOT_IN_CONTEXT'))
+        
         user_prompt = f"""QUESTION: {qa_pair.question}
 
-ANSWER: {qa_pair.answer}
+ANSWER: {answer_text}
 
 CODE CONTEXT:
 ```python
-{qa_pair.context_symbol_text}
+{getattr(qa_pair, 'context_symbol_text', getattr(qa_pair, 'context_code', ''))}
 ```
 
 CONTEXT INFO:
 - Symbol: {qa_pair.context_symbol_name}
 - Type: {qa_pair.context_symbol_type}
-- Lines: {qa_pair.context_start_line}-{qa_pair.context_end_line}
-- Focus Area: {qa_pair.task_focus_area}
-- Complexity: {qa_pair.complexity_level}
-- Is Negative Example: {qa_pair.is_negative_example}
+- Lines: {getattr(qa_pair, 'context_start_line', 0)}-{getattr(qa_pair, 'context_end_line', 0)}
+- Focus Area: {getattr(qa_pair, 'task_focus_area', 'general')}
+- Complexity: {getattr(qa_pair, 'complexity_level', getattr(qa_pair, 'difficulty_level', 'moderate'))}
+- Is Negative Example: {getattr(qa_pair, 'is_negative_example', hasattr(qa_pair, 'negative_type'))}
 
 Evaluate this Q&A pair according to the criteria above and return only the JSON scores:"""
 
         try:
             response = self.llm_client.messages.create(
-                model="claude-3-5-sonnet-20240620",
+                model="claude-sonnet-4-20250514",
+                system=system_prompt,
                 messages=[
-                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
                 max_tokens=500,
@@ -304,17 +307,20 @@ Evaluate this Q&A pair according to the criteria above and return only the JSON 
     
     def _analyze_citations(self, qa_pair: GroundedQA) -> Dict[str, Any]:
         """Analyze citations in the Q&A pair."""
+        # Handle objects without citations (like NegativeExample)
+        citations = getattr(qa_pair, 'citations', [])
+
         analysis = {
-            'has_citations': len(qa_pair.citations) > 0,
-            'citation_count': len(qa_pair.citations),
+            'has_citations': len(citations) > 0,
+            'citation_count': len(citations),
             'citation_types': [],
             'code_coverage': 0.0,
             'line_references': 0,
             'code_snippets': 0
         }
-        
+
         # Analyze citation types
-        for citation in qa_pair.citations:
+        for citation in citations:
             if citation.startswith('line'):
                 analysis['citation_types'].append('line_reference')
                 analysis['line_references'] += 1
@@ -323,10 +329,13 @@ Evaluate this Q&A pair according to the criteria above and return only the JSON 
                 analysis['code_snippets'] += 1
         
         # Calculate code coverage (rough estimate)
-        if qa_pair.answer and qa_pair.context_symbol_text:
+        answer_text = getattr(qa_pair, 'answer', getattr(qa_pair, 'expected_response', ''))
+        context_text = getattr(qa_pair, 'context_symbol_text', getattr(qa_pair, 'context_code', ''))
+        
+        if answer_text and context_text:
             # Count how many words from the answer appear in the context
-            answer_words = set(re.findall(r'\w+', qa_pair.answer.lower()))
-            context_words = set(re.findall(r'\w+', qa_pair.context_symbol_text.lower()))
+            answer_words = set(re.findall(r'\w+', answer_text.lower()))
+            context_words = set(re.findall(r'\w+', context_text.lower()))
             
             if answer_words:
                 overlap = len(answer_words.intersection(context_words))
@@ -370,7 +379,7 @@ Evaluate this Q&A pair according to the criteria above and return only the JSON 
             suggestions.append("Focus on more educationally valuable aspects of the code")
         
         # Analyze citations
-        if not citation_analysis['has_citations'] and not qa_pair.is_negative_example:
+        if not citation_analysis['has_citations'] and not getattr(qa_pair, 'is_negative_example', False):
             weaknesses.append("Answer lacks proper citations to the code")
             suggestions.append("Include line references or code snippets to support claims")
         elif citation_analysis['has_citations']:
@@ -416,8 +425,11 @@ Evaluate this Q&A pair according to the criteria above and return only the JSON 
             guidance = "Regenerate with focus on: " + ", ".join(guidance_parts)
         
         # Special check for NOT_IN_CONTEXT answers
-        if qa_pair.answer == "NOT_IN_CONTEXT":
-            if not qa_pair.is_negative_example:
+        answer_text = getattr(qa_pair, 'answer', getattr(qa_pair, 'expected_response', ''))
+        is_negative = getattr(qa_pair, 'is_negative_example', hasattr(qa_pair, 'negative_type'))
+        
+        if answer_text == "NOT_IN_CONTEXT":
+            if not is_negative:
                 should_regenerate = True
                 guidance = "Question seems to require external knowledge. Consider simplifying or changing the question to be answerable from context."
         

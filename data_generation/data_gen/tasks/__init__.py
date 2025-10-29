@@ -40,13 +40,6 @@ from .paper_qa_generator import (
     create_paper_qa_generator
 )
 
-from .selective_questioner import (
-    SelectiveQuestioner,
-    QuestionTemplate,
-    QuestionCategory,
-    create_selective_questioner
-)
-
 __all__ = [
     # P1 Components
     'GroundedQAGenerator',
@@ -76,11 +69,5 @@ __all__ = [
     'PaperChunk',
     'MultiChunkQA',
     'SectionType',
-    'create_paper_qa_generator',
-    
-    # P2 Components - Selective Questioning
-    'SelectiveQuestioner',
-    'QuestionTemplate',
-    'QuestionCategory',
-    'create_selective_questioner'
+    'create_paper_qa_generator'
 ] 

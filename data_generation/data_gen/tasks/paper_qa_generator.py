@@ -102,26 +102,119 @@ class MultiChunkPaperQAGenerator:
         """Generate integrative Q&A pairs that span multiple chunks."""
         qa_pairs = []
         
-        for _ in range(count):
-            # Select 2-3 random chunks
-            selected_chunks = random.sample(paper_chunks, min(2, len(paper_chunks)))
+        for i in range(count):
+            # Select 2-3 random chunks for integration
+            num_chunks = min(random.randint(2, 3), len(paper_chunks))
+            selected_chunks = random.sample(paper_chunks, num_chunks)
             
-            question = f"How do the concepts in {selected_chunks[0].section_title} relate to those in {selected_chunks[1].section_title}?"
-            answer = "This requires analysis across multiple sections of the paper."
+            # Generate question and answer using GPT-4o
+            question, answer = self._generate_integrative_question_answer(selected_chunks)
             
-            qa_pair = MultiChunkQA(
-                question=question,
-                answer=answer,
-                source_chunks=selected_chunks,
-                chunk_indices=[chunk.chunk_index for chunk in selected_chunks],
-                integration_type="comparison",
-                question_type="integrative",
-                difficulty_level="medium",
-                requires_cross_reference=True
-            )
-            qa_pairs.append(qa_pair)
+            if question and answer:
+                qa_pair = MultiChunkQA(
+                    question=question,
+                    answer=answer,
+                    source_chunks=selected_chunks,
+                    chunk_indices=[chunk.chunk_index for chunk in selected_chunks],
+                    integration_type=self._determine_integration_type(selected_chunks),
+                    question_type="integrative",
+                    difficulty_level="medium",
+                    requires_cross_reference=len(selected_chunks) > 1,
+                    section_types_involved=[chunk.section_type.value for chunk in selected_chunks]
+                )
+                qa_pairs.append(qa_pair)
         
         return qa_pairs
+    
+    def _generate_integrative_question_answer(self, chunks: List[PaperChunk]) -> tuple[str, str]:
+        """Generate an integrative question and answer using GPT-4o."""
+        
+        system_prompt = """You are a research expert who creates high-quality questions and answers about academic papers. 
+        
+        Your task is to generate integrative questions that require synthesizing information across multiple sections of a research paper. The questions should:
+        1. Require understanding of concepts from multiple sections
+        2. Test comprehension of relationships between different parts of the paper
+        3. Be answerable based on the provided content
+        4. Be educational and valuable for training a research assistant AI
+        
+        Generate exactly one question and one comprehensive answer based on the provided paper sections."""
+        
+        # Prepare context from chunks
+        chunk_contexts = []
+        for i, chunk in enumerate(chunks):
+            chunk_contexts.append(f"**Section {i+1} ({chunk.section_type.value}):**\n{chunk.content[:1000]}...")
+        
+        user_prompt = f"""Based on the following sections from a research paper:
+
+{chr(10).join(chunk_contexts)}
+
+Generate:
+1. One integrative question that requires understanding multiple sections
+2. One comprehensive answer that synthesizes information from the sections
+
+Format your response as:
+QUESTION: [your question]
+ANSWER: [your detailed answer]"""
+
+        try:
+            response = self.llm_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                max_tokens=800,
+                temperature=0.2
+            )
+            
+            response_text = response.choices[0].message.content.strip()
+            
+            # Parse question and answer
+            question, answer = self._parse_question_answer(response_text)
+            return question, answer
+            
+        except Exception as e:
+            self.logger.error(f"Error generating integrative QA: {e}")
+            return "", ""
+    
+    def _parse_question_answer(self, response_text: str) -> tuple[str, str]:
+        """Parse question and answer from GPT-4o response."""
+        try:
+            lines = response_text.split('\n')
+            question = ""
+            answer = ""
+            current_section = None
+            
+            for line in lines:
+                if line.strip().startswith('QUESTION:'):
+                    current_section = 'question'
+                    question = line.replace('QUESTION:', '').strip()
+                elif line.strip().startswith('ANSWER:'):
+                    current_section = 'answer'
+                    answer = line.replace('ANSWER:', '').strip()
+                elif current_section == 'question' and line.strip():
+                    question += ' ' + line.strip()
+                elif current_section == 'answer' and line.strip():
+                    answer += ' ' + line.strip()
+            
+            return question.strip(), answer.strip()
+            
+        except Exception as e:
+            self.logger.error(f"Error parsing QA response: {e}")
+            return "", ""
+    
+    def _determine_integration_type(self, chunks: List[PaperChunk]) -> str:
+        """Determine the type of integration based on chunk sections."""
+        section_types = [chunk.section_type for chunk in chunks]
+        
+        if SectionType.INTRODUCTION in section_types and SectionType.CONCLUSION in section_types:
+            return "contextual"
+        elif SectionType.METHODS in section_types and SectionType.RESULTS in section_types:
+            return "sequential"
+        elif len(set(section_types)) == len(section_types):
+            return "synthesis"
+        else:
+            return "comparison"
 
 
 def create_paper_qa_generator(config_manager: ConfigManager, llm_client) -> MultiChunkPaperQAGenerator:

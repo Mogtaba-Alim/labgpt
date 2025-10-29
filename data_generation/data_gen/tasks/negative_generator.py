@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import logging
 
-from ..symbols import CodeSymbol, SymbolType
+from ..symbols import UniversalCodeSymbol
 from ..assembly.config_manager import ConfigManager, NegativeExampleConfig
 
 
@@ -214,7 +214,7 @@ class EnhancedNegativeGenerator:
             ]
         }
     
-    def generate_negative_examples(self, symbol: CodeSymbol, 
+    def generate_negative_examples(self, symbol: UniversalCodeSymbol,
                                  complexity_level: str,
                                  count: Optional[int] = None) -> List[NegativeExample]:
         """
@@ -252,25 +252,25 @@ class EnhancedNegativeGenerator:
         
         return negative_examples
     
-    def _select_negative_types(self, symbol: CodeSymbol, complexity_level: str, 
+    def _select_negative_types(self, symbol: UniversalCodeSymbol, complexity_level: str,
                              count: int) -> List[NegativeExampleType]:
         """Select appropriate negative example types."""
-        
+
         # Base types that work for all symbols
         base_types = [
             NegativeExampleType.OUT_OF_SCOPE_DOMAIN,
             NegativeExampleType.EXTERNAL_DEPENDENCY,
             NegativeExampleType.HISTORICAL_QUESTION
         ]
-        
+
         # Add symbol-specific types
-        if symbol.symbol_type == SymbolType.FUNCTION:
+        if symbol.symbol_type == "function":
             base_types.extend([
                 NegativeExampleType.IMPOSSIBLE_PARAMETER,
                 NegativeExampleType.PERFORMANCE_BENCHMARK
             ])
         
-        elif symbol.symbol_type == SymbolType.CLASS:
+        elif symbol.symbol_type == "class":
             base_types.extend([
                 NegativeExampleType.NONEXISTENT_METHOD,
                 NegativeExampleType.IMPLEMENTATION_DETAIL
@@ -292,7 +292,7 @@ class EnhancedNegativeGenerator:
         unique_types = list(set(base_types))
         return random.sample(unique_types, min(count, len(unique_types)))
     
-    def _generate_negative_example(self, symbol: CodeSymbol, 
+    def _generate_negative_example(self, symbol: UniversalCodeSymbol,
                                  neg_type: NegativeExampleType,
                                  complexity_level: str) -> Optional[NegativeExample]:
         """Generate a specific negative example."""
@@ -320,7 +320,7 @@ class EnhancedNegativeGenerator:
                 expected_response=self.negative_config.expected_response,
                 negative_type=neg_type,
                 context_symbol_name=symbol.name,
-                context_symbol_type=symbol.symbol_type.value,
+                context_symbol_type=symbol.symbol_type,
                 context_code=symbol.source_code,
                 difficulty_level=complexity_level,
                 explanation=explanation,
@@ -332,13 +332,13 @@ class EnhancedNegativeGenerator:
             self.logger.error(f"Error generating negative example: {e}")
             return None
     
-    def _format_question_template(self, template_data: Dict[str, Any], 
-                                symbol: CodeSymbol) -> str:
+    def _format_question_template(self, template_data: Dict[str, Any],
+                                symbol: UniversalCodeSymbol) -> str:
         """Format a question template with symbol data."""
         template = template_data["template"]
         
-        # Basic substitutions
-        question = template.format(symbol_name=symbol.name)
+        # Build all format arguments at once to avoid sequential formatting issues
+        format_args = {"symbol_name": symbol.name}
         
         # Handle fake parameters
         if "fake_params" in template_data:
@@ -346,75 +346,71 @@ class EnhancedNegativeGenerator:
             # Ensure fake parameter doesn't exist in real parameters
             while fake_param in symbol.parameters:
                 fake_param = random.choice(template_data["fake_params"])
-            question = question.format(fake_param=fake_param)
+            format_args["fake_param"] = fake_param
         
         # Handle fake values
         if "fake_values" in template_data:
-            fake_value = random.choice(template_data["fake_values"])
-            question = question.format(fake_value=fake_value)
+            format_args["fake_value"] = random.choice(template_data["fake_values"])
         
         # Handle fake methods
         if "fake_methods" in template_data:
-            fake_method = random.choice(template_data["fake_methods"])
-            question = question.format(fake_method=fake_method)
+            format_args["fake_method"] = random.choice(template_data["fake_methods"])
             
             # For comparison questions, add a real method if available
-            if "real_method" in template:
+            if "{real_method}" in template:
                 real_methods = self._extract_real_methods(symbol)
                 if real_methods:
-                    real_method = random.choice(real_methods)
-                    question = question.format(real_method=real_method)
+                    format_args["real_method"] = random.choice(real_methods)
         
         # Handle domains
         if "domains" in template_data:
-            domain = random.choice(template_data["domains"])
-            question = question.format(domain=domain)
+            format_args["domain"] = random.choice(template_data["domains"])
         
         # Handle domain concepts
         if "domain_concepts" in template_data:
-            domain_concept = random.choice(template_data["domain_concepts"])
-            question = question.format(domain_concept=domain_concept)
+            format_args["domain_concept"] = random.choice(template_data["domain_concepts"])
         
         # Handle libraries
         if "libraries" in template_data:
-            library = random.choice(template_data["libraries"])
-            question = question.format(library=library)
+            format_args["library"] = random.choice(template_data["libraries"])
         
         # Handle external systems
         if "external_systems" in template_data:
-            external_system = random.choice(template_data["external_systems"])
-            question = question.format(external_system=external_system)
+            format_args["external_system"] = random.choice(template_data["external_systems"])
         
         # Handle operations
         if "operations" in template_data:
-            operation = random.choice(template_data["operations"])
-            question = question.format(operation=operation)
+            format_args["operation"] = random.choice(template_data["operations"])
         
         # Handle design choices
         if "design_choices" in template_data:
-            design_choice = random.choice(template_data["design_choices"])
-            question = question.format(design_choice=design_choice)
+            format_args["design_choice"] = random.choice(template_data["design_choices"])
         
         # Handle data sizes
         if "data_sizes" in template_data:
-            data_size = random.choice(template_data["data_sizes"])
-            question = question.format(data_size=data_size)
+            format_args["data_size"] = random.choice(template_data["data_sizes"])
         
         # Handle alternatives
         if "alternatives" in template_data:
-            alternative = random.choice(template_data["alternatives"])
-            question = question.format(alternative=alternative)
+            format_args["alternative"] = random.choice(template_data["alternatives"])
         
         # Handle languages
         if "languages" in template_data:
-            language = random.choice(template_data["languages"])
-            question = question.format(language=language)
+            format_args["language"] = random.choice(template_data["languages"])
+        
+        # Format with all arguments at once, using partial formatting to ignore missing keys
+        try:
+            question = template.format(**format_args)
+        except KeyError as e:
+            self.logger.warning(f"Missing format key {e} in template: {template}")
+            # Return a fallback question
+            question = f"What can you tell me about `{symbol.name}`?"
         
         return question
     
-    def _extract_real_methods(self, symbol: CodeSymbol) -> List[str]:
+    def _extract_real_methods(self, symbol: UniversalCodeSymbol) -> List[str]:
         """Extract real method names from class code."""
-        if symbol.symbol_type != SymbolType.CLASS:
+        if symbol.symbol_type != "class":
             return []
         
         # Simple regex to find method definitions
@@ -424,7 +420,7 @@ class EnhancedNegativeGenerator:
         # Filter out special methods
         return [m for m in methods if not m.startswith('__')]
     
-    def _identify_trap_indicators(self, question: str, symbol: CodeSymbol, 
+    def _identify_trap_indicators(self, question: str, symbol: UniversalCodeSymbol,
                                 neg_type: NegativeExampleType) -> List[str]:
         """Identify what makes this question tempting to answer incorrectly."""
         traps = []
@@ -451,7 +447,7 @@ class EnhancedNegativeGenerator:
         
         return traps
     
-    def _identify_abstention_cues(self, question: str, symbol: CodeSymbol,
+    def _identify_abstention_cues(self, question: str, symbol: UniversalCodeSymbol,
                                 neg_type: NegativeExampleType) -> List[str]:
         """Identify cues that should trigger abstention."""
         cues = []
@@ -480,11 +476,11 @@ class EnhancedNegativeGenerator:
         
         return cues
     
-    def generate_adversarial_examples(self, symbol: CodeSymbol,
+    def generate_adversarial_examples(self, symbol: UniversalCodeSymbol,
                                     complexity_level: str) -> List[NegativeExample]:
         """Generate adversarial examples designed to be particularly tricky."""
         adversarial_examples = []
-        
+
         # Create questions that seem answerable but require external knowledge
         adversarial_templates = [
             f"Based on the code structure, what design pattern does `{symbol.name}` implement?",
@@ -493,14 +489,14 @@ class EnhancedNegativeGenerator:
             f"What testing strategy would be most appropriate for `{symbol.name}`?",
             f"How does `{symbol.name}` handle edge cases in production?",
         ]
-        
+
         for template in adversarial_templates[:2]:  # Limit to 2 adversarial examples
             example = NegativeExample(
                 question=template,
                 expected_response=self.negative_config.expected_response,
                 negative_type=NegativeExampleType.IMPLEMENTATION_DETAIL,
                 context_symbol_name=symbol.name,
-                context_symbol_type=symbol.symbol_type.value,
+                context_symbol_type=symbol.symbol_type,
                 context_code=symbol.source_code,
                 difficulty_level="hard",  # Adversarial examples are always hard
                 explanation="Question appears answerable from code but requires external analysis",

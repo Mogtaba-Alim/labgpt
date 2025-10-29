@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional, Tuple, Union
 from dataclasses import dataclass, field
 import logging
 
-from ..symbols import CodeSymbol, SymbolType
+from ..symbols import UniversalCodeSymbol
 from ..assembly.config_manager import ConfigManager, TaskConfig
 
 
@@ -61,14 +61,14 @@ class GroundedQAGenerator:
         self.logger = logging.getLogger(__name__)
         self.stats = QAGenerationStats()
     
-    def generate_qa_pairs(self, symbol: CodeSymbol, complexity_level: str) -> List[GroundedQA]:
+    def generate_qa_pairs(self, symbol: UniversalCodeSymbol, complexity_level: str) -> List[GroundedQA]:
         """
         Generate grounded Q&A pairs for a code symbol.
-        
+
         Args:
             symbol: Code symbol to generate Q&A pairs for
             complexity_level: Complexity level of the symbol
-            
+
         Returns:
             List of grounded Q&A pairs
         """
@@ -91,7 +91,7 @@ class GroundedQAGenerator:
         
         return qa_pairs
     
-    def _generate_positive_qa_pairs(self, symbol: CodeSymbol, complexity_level: str, 
+    def _generate_positive_qa_pairs(self, symbol: UniversalCodeSymbol, complexity_level: str,
                                   task_config: TaskConfig) -> List[GroundedQA]:
         """Generate positive (grounded) Q&A pairs."""
         qa_pairs = []
@@ -114,17 +114,17 @@ class GroundedQAGenerator:
         
         return qa_pairs[:task_config.count]  # Ensure we don't exceed the count
     
-    def _generate_from_templates(self, symbol: CodeSymbol, complexity_level: str, 
+    def _generate_from_templates(self, symbol: UniversalCodeSymbol, complexity_level: str,
                                task_config: TaskConfig) -> List[GroundedQA]:
         """Generate Q&A pairs from predefined templates."""
         qa_pairs = []
-        
+
         for template in task_config.templates:
             # Fill template with symbol information
             question = template.format(
                 symbol_name=symbol.name,
-                symbol_type=symbol.symbol_type.value,
-                parent_class=symbol.parent_class or "",
+                symbol_type=symbol.symbol_type,
+                parent_class=symbol.parent_scope or "",
                 num_parameters=symbol.complexity.num_parameters
             )
             
@@ -138,7 +138,7 @@ class GroundedQAGenerator:
                     answer=answer,
                     context_symbol_text=symbol.source_code,
                     context_symbol_name=symbol.name,
-                    context_symbol_type=symbol.symbol_type.value,
+                    context_symbol_type=symbol.symbol_type,
                     context_start_line=symbol.start_line,
                     context_end_line=symbol.end_line,
                     citations=citations,
@@ -149,7 +149,7 @@ class GroundedQAGenerator:
         
         return qa_pairs
     
-    def _generate_focus_area_questions(self, symbol: CodeSymbol, complexity_level: str, 
+    def _generate_focus_area_questions(self, symbol: UniversalCodeSymbol, complexity_level: str,
                                      task_config: TaskConfig) -> List[GroundedQA]:
         """Generate questions based on focus areas."""
         qa_pairs = []
@@ -166,7 +166,7 @@ class GroundedQAGenerator:
                         answer=answer,
                         context_symbol_text=symbol.source_code,
                         context_symbol_name=symbol.name,
-                        context_symbol_type=symbol.symbol_type.value,
+                        context_symbol_type=symbol.symbol_type,
                         context_start_line=symbol.start_line,
                         context_end_line=symbol.end_line,
                         citations=citations,
@@ -177,12 +177,12 @@ class GroundedQAGenerator:
         
         return qa_pairs
     
-    def _create_focus_area_question(self, symbol: CodeSymbol, focus_area: str, 
+    def _create_focus_area_question(self, symbol: UniversalCodeSymbol, focus_area: str,
                                   complexity_level: str) -> Optional[str]:
         """Create a question based on a specific focus area."""
         focus_area_templates = {
             "basic_functionality": [
-                f"What does the {symbol.symbol_type.value} `{symbol.name}` do?",
+                f"What does the {symbol.symbol_type} `{symbol.name}` do?",
                 f"What is the purpose of `{symbol.name}`?",
                 f"How does `{symbol.name}` work?"
             ],
@@ -224,11 +224,11 @@ class GroundedQAGenerator:
         # Generic fallback
         return f"Explain the {focus_area} of `{symbol.name}`."
     
-    def _generate_general_questions(self, symbol: CodeSymbol, complexity_level: str, 
+    def _generate_general_questions(self, symbol: UniversalCodeSymbol, complexity_level: str,
                                   count: int) -> List[GroundedQA]:
         """Generate general questions for the symbol."""
         qa_pairs = []
-        
+
         general_templates = [
             f"What does `{symbol.name}` return?",
             f"What are the side effects of `{symbol.name}`?",
@@ -241,16 +241,16 @@ class GroundedQAGenerator:
             f"What are the postconditions of `{symbol.name}`?",
             f"How does `{symbol.name}` handle errors?"
         ]
-        
+
         # Add symbol-specific questions
-        if symbol.symbol_type == SymbolType.CLASS:
+        if symbol.symbol_type == "class":
             general_templates.extend([
                 f"What attributes does class `{symbol.name}` have?",
                 f"What methods are available in class `{symbol.name}`?",
                 f"How is class `{symbol.name}` initialized?",
                 f"What is the inheritance hierarchy of `{symbol.name}`?"
             ])
-        elif symbol.symbol_type in (SymbolType.FUNCTION, SymbolType.METHOD):
+        elif symbol.symbol_type in ("function", "method"):
             general_templates.extend([
                 f"What is the signature of `{symbol.name}`?",
                 f"What validation does `{symbol.name}` perform?",
@@ -273,7 +273,7 @@ class GroundedQAGenerator:
                     answer=answer,
                     context_symbol_text=symbol.source_code,
                     context_symbol_name=symbol.name,
-                    context_symbol_type=symbol.symbol_type.value,
+                    context_symbol_type=symbol.symbol_type,
                     context_start_line=symbol.start_line,
                     context_end_line=symbol.end_line,
                     citations=citations,
@@ -284,7 +284,7 @@ class GroundedQAGenerator:
         
         return qa_pairs
     
-    def _generate_negative_qa_pairs(self, symbol: CodeSymbol, complexity_level: str) -> List[GroundedQA]:
+    def _generate_negative_qa_pairs(self, symbol: UniversalCodeSymbol, complexity_level: str) -> List[GroundedQA]:
         """Generate negative examples that should result in NOT_IN_CONTEXT."""
         qa_pairs = []
         
@@ -325,7 +325,7 @@ class GroundedQAGenerator:
                 answer=negative_config.expected_response,
                 context_symbol_text=symbol.source_code,
                 context_symbol_name=symbol.name,
-                context_symbol_type=symbol.symbol_type.value,
+                context_symbol_type=symbol.symbol_type,
                 context_start_line=symbol.start_line,
                 context_end_line=symbol.end_line,
                 citations=[],
@@ -337,7 +337,7 @@ class GroundedQAGenerator:
         
         return qa_pairs
     
-    def _generate_impossible_questions(self, symbol: CodeSymbol) -> List[str]:
+    def _generate_impossible_questions(self, symbol: UniversalCodeSymbol) -> List[str]:
         """Generate questions about non-existent elements."""
         questions = []
         
@@ -351,7 +351,7 @@ class GroundedQAGenerator:
             questions.append(f"How is the `{param}` parameter validated in `{symbol.name}`?")
         
         # Ask about non-existent methods (for classes)
-        if symbol.symbol_type == SymbolType.CLASS:
+        if symbol.symbol_type == "class":
             fake_methods = ["initialize", "configure", "setup", "teardown", "validate"]
             for method in fake_methods[:2]:
                 questions.append(f"How does the `{method}` method work in class `{symbol.name}`?")
@@ -362,7 +362,7 @@ class GroundedQAGenerator:
         
         return questions
     
-    def _generate_out_of_scope_questions(self, symbol: CodeSymbol) -> List[str]:
+    def _generate_out_of_scope_questions(self, symbol: UniversalCodeSymbol) -> List[str]:
         """Generate questions outside the scope of the symbol."""
         questions = [
             f"What database does `{symbol.name}` connect to?",
@@ -379,7 +379,7 @@ class GroundedQAGenerator:
         
         return random.sample(questions, min(3, len(questions)))
     
-    def _generate_insufficient_context_questions(self, symbol: CodeSymbol) -> List[str]:
+    def _generate_insufficient_context_questions(self, symbol: UniversalCodeSymbol) -> List[str]:
         """Generate questions requiring external knowledge."""
         questions = [
             f"What was the original motivation for creating `{symbol.name}`?",
@@ -396,9 +396,9 @@ class GroundedQAGenerator:
         
         return random.sample(questions, min(2, len(questions)))
     
-    def _generate_grounded_answer(self, question: str, symbol: CodeSymbol) -> str:
+    def _generate_grounded_answer(self, question: str, symbol: UniversalCodeSymbol) -> str:
         """Generate a grounded answer using the LLM with strict instructions."""
-        
+
         system_prompt = """You are a code analysis expert. Answer questions about the provided code symbol with strict grounding requirements.
 
 CRITICAL INSTRUCTIONS:
@@ -411,7 +411,7 @@ CRITICAL INSTRUCTIONS:
 
 The code symbol provided is the ONLY context available. Do not reference external knowledge."""
 
-        user_prompt = f"""Code Symbol: {symbol.name} (Type: {symbol.symbol_type.value})
+        user_prompt = f"""Code Symbol: {symbol.name} (Type: {symbol.symbol_type})
 Location: Lines {symbol.start_line}-{symbol.end_line}
 
 Code:
@@ -425,9 +425,9 @@ Answer (following the strict grounding requirements above):"""
 
         try:
             response = self.llm_client.messages.create(
-                model="claude-3-5-sonnet-20240620",
+                model="claude-sonnet-4-20250514",
+                system=system_prompt,
                 messages=[
-                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
                 max_tokens=500,
@@ -446,7 +446,7 @@ Answer (following the strict grounding requirements above):"""
             self.logger.error(f"Error generating answer: {e}")
             return "NOT_IN_CONTEXT"
     
-    def _requires_external_knowledge(self, answer: str, symbol: CodeSymbol) -> bool:
+    def _requires_external_knowledge(self, answer: str, symbol: UniversalCodeSymbol) -> bool:
         """Check if the answer requires knowledge not in the symbol."""
         
         # If answer is already NOT_IN_CONTEXT, it's correctly grounded
@@ -478,7 +478,7 @@ Answer (following the strict grounding requirements above):"""
         
         return False
     
-    def _extract_citations(self, answer: str, symbol: CodeSymbol) -> List[str]:
+    def _extract_citations(self, answer: str, symbol: UniversalCodeSymbol) -> List[str]:
         """Extract citations/line references from the answer."""
         citations = []
         
@@ -509,9 +509,9 @@ Answer (following the strict grounding requirements above):"""
     def _update_stats(self, qa_pairs: List[GroundedQA], complexity_level: str):
         """Update generation statistics."""
         self.stats.total_questions_generated += len(qa_pairs)
-        
+
         for qa in qa_pairs:
-            if qa.is_negative_example:
+            if getattr(qa, 'is_negative_example', False):
                 self.stats.negative_examples += 1
             else:
                 self.stats.grounded_questions += 1
