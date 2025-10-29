@@ -1,476 +1,480 @@
-#!/usr/bin/env python3
 """
 hybrid_retriever.py
 
-Main hybrid retriever combining dense (FAISS) and sparse (BM25) retrieval
-with configurable fusion and re-ranking.
+Hybrid retrieval combining dense (FAISS) and sparse (BM25) search with RRF fusion.
+Lean V2 implementation following leaner_rag_V2.md architecture.
 """
 
 import logging
-import time
-from typing import List, Dict, Tuple, Optional, Any
-import concurrent.futures
-from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Optional, Dict, Any
+import json
+import pickle
 
 import numpy as np
 import faiss
-from sentence_transformers import SentenceTransformer
 from rank_bm25 import BM25Okapi
-import nltk
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
+from sklearn.metrics.pairwise import cosine_similarity
 
-from ..ingestion.chunk_objects import ChunkMetadata, ChunkStore
-from .retrieval_config import RetrievalConfig
-from .query_processor import QueryProcessor
-from .reranker import CrossEncoderReranker
-from .fusion import ResultFusion
+from ..models import Chunk, RetrievalResult
 
 logger = logging.getLogger(__name__)
 
-# Ensure NLTK data
-try:
-    nltk.data.find('tokenizers/punkt')
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download(['punkt', 'stopwords'], quiet=True)
-
-@dataclass
-class RetrievalResult:
-    """Result from retrieval with metadata"""
-    chunk_id: str
-    chunk: ChunkMetadata
-    score: float
-    retrieval_method: str  # "dense", "sparse", "hybrid"
-    rank: int
-    metadata: Dict[str, Any] = None
 
 class HybridRetriever:
     """
-    Hybrid retrieval system combining dense and sparse search with re-ranking
+    Hybrid retrieval system combining FAISS (dense) + BM25 (sparse) with RRF fusion.
+
+    Features:
+    - Dense retrieval using FAISS HNSW index
+    - Sparse retrieval using BM25
+    - RRF (Reciprocal Rank Fusion) for result combination
+    - Diversity deduplication
+    - Persistent storage of indices
     """
-    
-    def __init__(self, 
-                 chunk_store: ChunkStore,
-                 config: RetrievalConfig,
-                 embedding_model: Optional[SentenceTransformer] = None):
-        
-        self.chunk_store = chunk_store
-        self.config = config
-        
-        # Initialize components
-        self.embedding_model = embedding_model or SentenceTransformer(
-            config.models.embedding_model,
-            device=self._get_device()
-        )
-        
-        self.query_processor = QueryProcessor(config)
-        self.reranker = CrossEncoderReranker(config) if config.reranking.enable_reranking else None
-        self.result_fusion = ResultFusion(config)
-        
-        # Initialize retrieval indices
+
+    def __init__(self,
+                 embedding_model,
+                 reranker_model,
+                 index_dir: str):
+        """
+        Initialize hybrid retriever.
+
+        Args:
+            embedding_model: SentenceTransformer model for dense embeddings
+            reranker_model: CrossEncoder model for reranking
+            index_dir: Directory to save/load indices
+        """
+        self.embedding_model = embedding_model
+        self.reranker_model = reranker_model
+        self.index_dir = Path(index_dir)
+        self.index_dir.mkdir(parents=True, exist_ok=True)
+
+        # Retrieval indices
         self.dense_index = None
         self.sparse_index = None
-        self.chunk_lookup = {}  # chunk_id -> ChunkMetadata
-        
-        # Text preprocessing for BM25
-        self.stemmer = PorterStemmer() if config.sparse.use_stemming else None
-        try:
-            self.stopwords = set(stopwords.words('english')) if config.sparse.remove_stopwords else set()
-        except:
-            self.stopwords = set()
-        
-        self._build_indices()
-    
-    def _get_device(self) -> str:
-        """Determine device for models"""
-        if self.config.models.device == "auto":
-            import torch
-            return "cuda" if torch.cuda.is_available() else "cpu"
-        return self.config.models.device
-    
-    def _build_indices(self) -> None:
-        """Build both dense and sparse indices"""
-        logger.info("Building retrieval indices...")
-        
-        # Load chunk store data
-        if not hasattr(self.chunk_store, '_chunks') or not self.chunk_store._chunks:
-            self.chunk_store.load()
-        
-        chunks = list(self.chunk_store._chunks.values())
-        if not chunks:
-            logger.warning("No chunks found in chunk store")
-            return
-        
-        # Build chunk lookup
-        self.chunk_lookup = {chunk.chunk_id: chunk for chunk in chunks}
-        
-        # Build dense index
-        self._build_dense_index(chunks)
-        
-        # Build sparse index
-        self._build_sparse_index(chunks)
-        
-        logger.info(f"Built indices for {len(chunks)} chunks")
-    
-    def _build_dense_index(self, chunks: List[ChunkMetadata]) -> None:
-        """Build FAISS dense index"""
-        logger.info("Building dense (FAISS) index...")
-        
-        # Get embeddings
-        embeddings = self.chunk_store.get_all_embeddings()
-        
-        if embeddings is None or len(embeddings) == 0:
-            logger.error("No embeddings found in chunk store")
-            return
-        
-        # Ensure float32 format
-        embeddings = embeddings.astype('float32')
-        
-        # Create FAISS index
-        dimension = embeddings.shape[1]
-        
-        if self.config.dense.index_type == "flat":
-            self.dense_index = faiss.IndexFlatIP(dimension)
-        elif self.config.dense.index_type == "ivf":
-            quantizer = faiss.IndexFlatIP(dimension)
-            nlist = min(int(np.sqrt(len(embeddings))), 1000)
-            self.dense_index = faiss.IndexIVFFlat(quantizer, dimension, nlist)
-            self.dense_index.train(embeddings)
-        else:  # hnsw (default)
-            M = 32
-            self.dense_index = faiss.IndexHNSWFlat(dimension, M)
-            self.dense_index.hnsw.efConstruction = 40
-        
-        # Add embeddings
-        self.dense_index.add(embeddings)
-        
-        logger.info(f"Dense index built with {self.dense_index.ntotal} vectors")
-    
-    def _build_sparse_index(self, chunks: List[ChunkMetadata]) -> None:
-        """Build BM25 sparse index"""
-        logger.info("Building sparse (BM25) index...")
-        
-        # Preprocess documents for BM25
-        processed_docs = []
-        for chunk in chunks:
-            tokens = self._preprocess_text_for_bm25(chunk.text)
-            processed_docs.append(tokens)
-        
-        # Create BM25 index
-        if processed_docs:
-            self.sparse_index = BM25Okapi(
-                processed_docs,
-                k1=self.config.sparse.k1,
-                b=self.config.sparse.b
-            )
-            logger.info(f"BM25 index built with {len(processed_docs)} documents")
-        else:
-            logger.warning("No documents to index for BM25")
-    
-    def _preprocess_text_for_bm25(self, text: str) -> List[str]:
-        """Preprocess text for BM25 indexing"""
-        # Tokenize
-        try:
-            tokens = word_tokenize(text.lower())
-        except:
-            tokens = text.lower().split()
-        
-        # Remove non-alphabetic tokens
-        tokens = [token for token in tokens if token.isalpha()]
-        
-        # Remove stopwords
-        if self.stopwords:
-            tokens = [token for token in tokens if token not in self.stopwords]
-        
-        # Apply stemming
-        if self.stemmer:
-            tokens = [self.stemmer.stem(token) for token in tokens]
-        
-        return tokens
-    
-    def retrieve(self, 
-                query: str, 
-                top_k: Optional[int] = None,
-                filters: Optional[Dict[str, Any]] = None) -> List[RetrievalResult]:
+        self.chunks = []
+        self.chunk_lookup = {}  # chunk_id -> Chunk
+
+        # BM25 preprocessing
+        self.stemmer = PorterStemmer()
+        self.tokenized_corpus = []
+
+        # Try to load existing indices
+        self._load_indices()
+
+    def build_index(self, chunks: List[Chunk]) -> None:
         """
-        Main retrieval method combining dense and sparse search
-        
+        Build dense (FAISS) and sparse (BM25) indices from chunks.
+
+        Args:
+            chunks: List of Chunk objects to index
+        """
+        if not chunks:
+            logger.warning("No chunks provided for indexing")
+            return
+
+        logger.info(f"Building indices for {len(chunks)} chunks")
+
+        self.chunks = chunks
+        self.chunk_lookup = {chunk.chunk_id: chunk for chunk in chunks}
+
+        # Build dense index (FAISS HNSW)
+        self._build_dense_index(chunks)
+
+        # Build sparse index (BM25)
+        self._build_sparse_index(chunks)
+
+        # Save indices to disk
+        self._save_indices()
+
+        logger.info(f"Indices built successfully: {len(chunks)} chunks indexed")
+
+    def _build_dense_index(self, chunks: List[Chunk]) -> None:
+        """Build FAISS HNSW index for dense retrieval."""
+        logger.info("Building FAISS HNSW index...")
+
+        # Collect embeddings
+        embeddings = []
+        for chunk in chunks:
+            if hasattr(chunk, 'embedding') and chunk.embedding is not None:
+                embeddings.append(chunk.embedding)
+            else:
+                # Generate embedding if not present
+                emb = self.embedding_model.encode(
+                    chunk.text,
+                    convert_to_tensor=False,
+                    show_progress_bar=False
+                )
+                chunk.embedding = emb
+                embeddings.append(emb)
+
+        embeddings_array = np.array(embeddings, dtype=np.float32)
+
+        # Normalize for cosine similarity (inner product after normalization)
+        faiss.normalize_L2(embeddings_array)
+
+        # Build HNSW index
+        dimension = embeddings_array.shape[1]
+        self.dense_index = faiss.IndexHNSWFlat(dimension, 32)  # M=32 connections
+        self.dense_index.hnsw.efConstruction = 40
+        self.dense_index.hnsw.efSearch = 64
+
+        self.dense_index.add(embeddings_array)
+
+        logger.info(f"FAISS index built: {self.dense_index.ntotal} vectors, {dimension}-dim")
+
+    def _build_sparse_index(self, chunks: List[Chunk]) -> None:
+        """Build BM25 index for sparse retrieval."""
+        logger.info("Building BM25 index...")
+
+        # Tokenize and preprocess corpus
+        self.tokenized_corpus = []
+        for chunk in chunks:
+            tokens = self._preprocess_text(chunk.text)
+            self.tokenized_corpus.append(tokens)
+
+        # Build BM25 index
+        self.sparse_index = BM25Okapi(
+            self.tokenized_corpus,
+            k1=1.2,  # Term frequency saturation
+            b=0.75   # Length normalization
+        )
+
+        logger.info(f"BM25 index built: {len(self.tokenized_corpus)} documents")
+
+    def _preprocess_text(self, text: str) -> List[str]:
+        """
+        Preprocess text for BM25.
+
+        No stemming by default (preserves scientific terms like "protein").
+        No stopword removal (better for scientific queries).
+        """
+        # Tokenize and lowercase
+        tokens = word_tokenize(text.lower())
+
+        # Filter out non-alphabetic tokens
+        tokens = [t for t in tokens if t.isalpha() and len(t) > 1]
+
+        return tokens
+
+    def retrieve(self,
+                query: str,
+                top_k: int = 10,
+                method: Optional[str] = None,
+                diversity_threshold: float = 0.85) -> List[RetrievalResult]:
+        """
+        Retrieve relevant chunks using hybrid search.
+
         Args:
             query: Search query
-            top_k: Number of results to return (uses config default if None)
-            filters: Optional filters for chunks
-            
+            top_k: Number of results to return
+            method: "dense", "sparse", or None for hybrid
+            diversity_threshold: Cosine similarity threshold for deduplication
+
         Returns:
-            List of RetrievalResult objects
+            List of RetrievalResult objects sorted by score
         """
-        start_time = time.time()
-        
-        if top_k is None:
-            top_k = self.config.reranking.final_top_k
-        
-        # Process query (expansion, rewriting)
-        processed_queries = self.query_processor.process_query(query)
-        
-        # Perform parallel retrieval if configured
-        if self.config.parallel_retrieval and len(processed_queries) > 1:
-            all_results = self._parallel_retrieve(processed_queries, filters)
+        if not self.is_built():
+            logger.error("Indices not built. Call build_index() first.")
+            return []
+
+        # Retrieve from both indices
+        if method == "sparse":
+            results = self._sparse_retrieve(query, top_k)
+        elif method == "dense":
+            results = self._dense_retrieve(query, top_k)
         else:
-            all_results = []
-            for proc_query in processed_queries:
-                results = self._single_query_retrieve(proc_query, filters)
-                all_results.extend(results)
-        
-        # Fuse results from different queries and methods
-        fused_results = self.result_fusion.fuse_results(all_results)
-        
-        # Apply re-ranking if enabled
-        if self.reranker and len(fused_results) > 1:
-            rerank_candidates = fused_results[:self.config.reranking.rerank_top_k]
-            reranked_results = self.reranker.rerank(query, rerank_candidates)
-            fused_results = reranked_results + fused_results[len(rerank_candidates):]
-        
-        # Apply final filtering and top-k
-        final_results = self._apply_final_filtering(fused_results, filters)
-        final_results = final_results[:top_k]
-        
-        # Log retrieval statistics
-        retrieval_time = time.time() - start_time
-        logger.info(f"Retrieved {len(final_results)} results in {retrieval_time:.3f}s")
-        
-        return final_results
-    
-    def _single_query_retrieve(self, 
-                              query: str,
-                              filters: Optional[Dict[str, Any]] = None) -> List[RetrievalResult]:
-        """Retrieve results for a single query using both dense and sparse methods"""
-        results = []
-        
-        # Dense retrieval
-        if self.dense_index is not None:
-            dense_results = self._dense_retrieve(query)
-            results.extend(dense_results)
-        
-        # Sparse retrieval
-        if self.sparse_index is not None:
-            sparse_results = self._sparse_retrieve(query)
-            results.extend(sparse_results)
-        
+            # Hybrid: both methods + RRF fusion
+            dense_results = self._dense_retrieve(query, top_k * 2)
+            sparse_results = self._sparse_retrieve(query, top_k * 2)
+            results = self._rrf_fusion(dense_results, sparse_results, top_k * 2)
+
+        # Apply diversity deduplication
+        if diversity_threshold < 1.0:
+            results = self._apply_diversity_filtering(results, diversity_threshold)
+
+        # Trim to top_k
+        results = results[:top_k]
+
+        # Update ranks
+        for i, result in enumerate(results):
+            result.rank = i + 1
+
         return results
-    
-    def _dense_retrieve(self, query: str) -> List[RetrievalResult]:
-        """Perform dense retrieval using FAISS"""
+
+    def _dense_retrieve(self, query: str, top_k: int) -> List[RetrievalResult]:
+        """Dense retrieval using FAISS."""
         # Encode query
-        query_embedding = self.embedding_model.encode([query])
-        query_embedding = query_embedding.astype('float32')
-        
-        # Search index
-        scores, indices = self.dense_index.search(
-            query_embedding, 
-            self.config.dense.top_k
+        query_emb = self.embedding_model.encode(
+            query,
+            convert_to_tensor=False,
+            show_progress_bar=False
         )
-        
-        # Convert to RetrievalResult objects
+        query_emb = np.array([query_emb], dtype=np.float32)
+
+        # Normalize for cosine similarity
+        faiss.normalize_L2(query_emb)
+
+        # Search
+        scores, indices = self.dense_index.search(query_emb, min(top_k, len(self.chunks)))
+
+        # Build results
         results = []
-        chunk_ids = self.chunk_store.get_chunk_ids_ordered()
-        
-        for i, (score, idx) in enumerate(zip(scores[0], indices[0])):
-            if idx < len(chunk_ids) and score >= self.config.dense.score_threshold:
-                chunk_id = chunk_ids[idx]
-                chunk = self.chunk_lookup.get(chunk_id)
-                
-                if chunk:
-                    result = RetrievalResult(
-                        chunk_id=chunk_id,
-                        chunk=chunk,
-                        score=float(score),
-                        retrieval_method="dense",
-                        rank=i + 1,
-                        metadata={"original_query": query}
-                    )
-                    results.append(result)
-        
-        return results
-    
-    def _sparse_retrieve(self, query: str) -> List[RetrievalResult]:
-        """Perform sparse retrieval using BM25"""
-        if self.sparse_index is None:
-            return []
-        
-        # Preprocess query
-        query_tokens = self._preprocess_text_for_bm25(query)
-        
-        if not query_tokens:
-            return []
-        
-        # Get BM25 scores
-        scores = self.sparse_index.get_scores(query_tokens)
-        
-        # Get top-k results
-        top_indices = np.argsort(scores)[::-1][:self.config.sparse.top_k]
-        
-        # Convert to RetrievalResult objects
-        results = []
-        chunk_ids = list(self.chunk_lookup.keys())
-        
-        for i, idx in enumerate(top_indices):
-            if idx < len(chunk_ids):
-                score = scores[idx]
-                chunk_id = chunk_ids[idx]
-                chunk = self.chunk_lookup[chunk_id]
-                
-                result = RetrievalResult(
-                    chunk_id=chunk_id,
+        for score, idx in zip(scores[0], indices[0]):
+            if idx < len(self.chunks):
+                chunk = self.chunks[idx]
+                results.append(RetrievalResult(
+                    chunk_id=chunk.chunk_id,
                     chunk=chunk,
                     score=float(score),
-                    retrieval_method="sparse",
-                    rank=i + 1,
-                    metadata={"original_query": query}
-                )
-                results.append(result)
-        
+                    retrieval_method="dense",
+                    rank=len(results) + 1
+                ))
+
         return results
-    
-    def _parallel_retrieve(self, 
-                          queries: List[str],
-                          filters: Optional[Dict[str, Any]] = None) -> List[RetrievalResult]:
-        """Perform parallel retrieval for multiple queries"""
-        all_results = []
-        
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            future_to_query = {
-                executor.submit(self._single_query_retrieve, query, filters): query 
-                for query in queries
-            }
-            
-            for future in concurrent.futures.as_completed(future_to_query):
-                try:
-                    results = future.result()
-                    all_results.extend(results)
-                except Exception as e:
-                    query = future_to_query[future]
-                    logger.error(f"Error retrieving for query '{query}': {e}")
-        
-        return all_results
-    
-    def _apply_final_filtering(self, 
-                              results: List[RetrievalResult],
-                              filters: Optional[Dict[str, Any]] = None) -> List[RetrievalResult]:
-        """Apply final filtering to results"""
-        if not results:
-            return results
-        
-        filtered_results = []
-        
-        for result in results:
-            chunk = result.chunk
-            
-            # Quality filter
-            if chunk.quality_score < self.config.filtering.min_chunk_quality:
-                continue
-            
-            # Document type filter
-            if (self.config.filtering.allowed_doc_types and 
-                chunk.doc_type not in self.config.filtering.allowed_doc_types):
-                continue
-            
-            # Section filter
-            if (self.config.filtering.excluded_sections and 
-                chunk.section and 
-                any(excluded in chunk.section.lower() 
-                    for excluded in self.config.filtering.excluded_sections)):
-                continue
-            
-            # Custom filters
-            if filters:
-                if 'doc_id' in filters and chunk.doc_id != filters['doc_id']:
-                    continue
-                if 'doc_type' in filters and chunk.doc_type != filters['doc_type']:
-                    continue
-                if 'min_score' in filters and result.score < filters['min_score']:
-                    continue
-            
-            filtered_results.append(result)
-        
-        # Apply diversity filtering if configured
-        if self.config.filtering.diversity_threshold < 1.0:
-            filtered_results = self._apply_diversity_filtering(filtered_results)
-        
-        return filtered_results
-    
-    def _apply_diversity_filtering(self, results: List[RetrievalResult]) -> List[RetrievalResult]:
-        """Apply diversity filtering to avoid too similar results"""
+
+    def _sparse_retrieve(self, query: str, top_k: int) -> List[RetrievalResult]:
+        """Sparse retrieval using BM25."""
+        # Preprocess query
+        query_tokens = self._preprocess_text(query)
+
+        # Get BM25 scores
+        scores = self.sparse_index.get_scores(query_tokens)
+
+        # Get top-k indices
+        top_indices = np.argsort(scores)[::-1][:min(top_k, len(self.chunks))]
+
+        # Build results
+        results = []
+        for idx in top_indices:
+            chunk = self.chunks[idx]
+            results.append(RetrievalResult(
+                chunk_id=chunk.chunk_id,
+                chunk=chunk,
+                score=float(scores[idx]),
+                retrieval_method="sparse",
+                rank=len(results) + 1
+            ))
+
+        return results
+
+    def _rrf_fusion(self,
+                   dense_results: List[RetrievalResult],
+                   sparse_results: List[RetrievalResult],
+                   top_k: int) -> List[RetrievalResult]:
+        """
+        Reciprocal Rank Fusion (RRF) for combining dense and sparse results.
+
+        Formula: score(chunk) = Σ [1 / (k + rank)]
+        where k=60 is the smoothing parameter.
+        """
+        k = 60  # RRF smoothing parameter
+
+        # Collect all unique chunks
+        chunk_scores = {}
+
+        # Add dense scores
+        for rank, result in enumerate(dense_results, 1):
+            chunk_id = result.chunk_id
+            if chunk_id not in chunk_scores:
+                chunk_scores[chunk_id] = {'chunk': result.chunk, 'score': 0.0}
+            chunk_scores[chunk_id]['score'] += 1.0 / (k + rank)
+
+        # Add sparse scores
+        for rank, result in enumerate(sparse_results, 1):
+            chunk_id = result.chunk_id
+            if chunk_id not in chunk_scores:
+                chunk_scores[chunk_id] = {'chunk': result.chunk, 'score': 0.0}
+            chunk_scores[chunk_id]['score'] += 1.0 / (k + rank)
+
+        # Sort by RRF score
+        sorted_chunks = sorted(
+            chunk_scores.items(),
+            key=lambda x: x[1]['score'],
+            reverse=True
+        )
+
+        # Build results
+        results = []
+        for rank, (chunk_id, data) in enumerate(sorted_chunks[:top_k], 1):
+            results.append(RetrievalResult(
+                chunk_id=chunk_id,
+                chunk=data['chunk'],
+                score=data['score'],
+                retrieval_method="hybrid",
+                rank=rank
+            ))
+
+        return results
+
+    def _apply_diversity_filtering(self,
+                                   results: List[RetrievalResult],
+                                   threshold: float) -> List[RetrievalResult]:
+        """
+        Remove near-duplicate results based on text similarity.
+
+        Args:
+            results: List of retrieval results
+            threshold: Cosine similarity threshold (0.85 = keep if < 85% similar)
+
+        Returns:
+            Filtered list of results
+        """
         if len(results) <= 1:
             return results
-        
-        diverse_results = [results[0]]  # Always include top result
-        threshold = self.config.filtering.diversity_threshold
-        
+
+        filtered = [results[0]]  # Always keep top result
+
         for result in results[1:]:
             # Check similarity with already selected results
             is_diverse = True
-            for selected in diverse_results:
-                similarity = self._calculate_text_similarity(
-                    result.chunk.text, 
-                    selected.chunk.text
-                )
-                if similarity > threshold:
+            for selected in filtered:
+                similarity = self._embedding_similarity_between_chunks(result.chunk, selected.chunk)
+                if similarity >= threshold:
                     is_diverse = False
                     break
-            
+
             if is_diverse:
-                diverse_results.append(result)
-        
-        return diverse_results
-    
-    def _calculate_text_similarity(self, text1: str, text2: str) -> float:
-        """Calculate simple text similarity using word overlap"""
-        words1 = set(text1.lower().split())
-        words2 = set(text2.lower().split())
-        
-        if not words1 or not words2:
+                filtered.append(result)
+
+        return filtered
+
+    def _embedding_similarity_between_chunks(self, chunk1: Chunk, chunk2: Chunk) -> float:
+        """Calculate cosine similarity between two chunks using their stored embeddings.
+
+        Falls back to on-the-fly encoding once if an embedding is missing, then caches it on the chunk.
+        """
+        # Ensure embeddings exist (fallback once if needed)
+        if not hasattr(chunk1, 'embedding') or chunk1.embedding is None:
+            chunk1.embedding = self.embedding_model.encode(
+                chunk1.text, convert_to_tensor=False, show_progress_bar=False
+            )
+        if not hasattr(chunk2, 'embedding') or chunk2.embedding is None:
+            chunk2.embedding = self.embedding_model.encode(
+                chunk2.text, convert_to_tensor=False, show_progress_bar=False
+            )
+
+        emb1 = np.asarray(chunk1.embedding, dtype=np.float32)
+        emb2 = np.asarray(chunk2.embedding, dtype=np.float32)
+
+        # Cosine similarity
+        norm1 = np.linalg.norm(emb1)
+        norm2 = np.linalg.norm(emb2)
+        if norm1 == 0.0 or norm2 == 0.0:
             return 0.0
-        
-        intersection = len(words1.intersection(words2))
-        union = len(words1.union(words2))
-        
-        return intersection / union if union > 0 else 0.0
-    
-    def get_retrieval_statistics(self) -> Dict[str, Any]:
-        """Get statistics about the retrieval system"""
-        stats = {
-            "dense_index": {
-                "type": self.config.dense.index_type,
-                "total_vectors": self.dense_index.ntotal if self.dense_index else 0,
-                "dimension": self.dense_index.d if self.dense_index else 0
-            },
-            "sparse_index": {
-                "type": "BM25",
-                "total_documents": len(self.sparse_index.corpus) if self.sparse_index else 0,
-                "average_doc_length": self.sparse_index.avgdl if self.sparse_index else 0
-            },
-            "chunk_store": self.chunk_store.get_statistics(),
-            "config": self.config.to_dict()
+        return float(np.dot(emb1, emb2) / (norm1 * norm2))
+
+    def is_built(self) -> bool:
+        """Check if indices are built."""
+        return (self.dense_index is not None and
+                self.sparse_index is not None and
+                len(self.chunks) > 0)
+
+    def clear_index(self) -> None:
+        """Clear all indices and cached data."""
+        self.dense_index = None
+        self.sparse_index = None
+        self.chunks = []
+        self.chunk_lookup = {}
+        self.tokenized_corpus = []
+
+        # Delete saved files
+        for file in ['chunks.json', 'faiss.index', 'bm25.pkl']:
+            file_path = self.index_dir / file
+            if file_path.exists():
+                file_path.unlink()
+
+        logger.info("Index cleared")
+
+    def _save_indices(self) -> None:
+        """Save indices to disk."""
+        logger.info(f"Saving indices to {self.index_dir}")
+
+        # Save chunks
+        chunks_data = []
+        for chunk in self.chunks:
+            chunk_dict = {
+                'chunk_id': chunk.chunk_id,
+                'doc_id': chunk.doc_id,
+                'text': chunk.text,
+                'source_path': chunk.source_path,
+                'token_count': chunk.token_count,
+                'section': chunk.section,
+                'page_number': chunk.page_number,
+                'embedding': chunk.embedding.tolist() if hasattr(chunk, 'embedding') else None
+            }
+            chunks_data.append(chunk_dict)
+
+        with open(self.index_dir / 'chunks.json', 'w', encoding='utf-8') as f:
+            json.dump(chunks_data, f)
+
+        # Save FAISS index
+        faiss.write_index(self.dense_index, str(self.index_dir / 'faiss.index'))
+
+        # Save BM25 index
+        bm25_data = {
+            'tokenized_corpus': self.tokenized_corpus,
+            'doc_len': self.sparse_index.doc_len,
+            'avgdl': self.sparse_index.avgdl,
+            'idf': self.sparse_index.idf
         }
-        
-        return stats
-    
-    def update_index(self, new_chunks: List[ChunkMetadata], new_embeddings: np.ndarray) -> None:
-        """Update indices with new chunks (for incremental updates)"""
-        logger.info(f"Updating indices with {len(new_chunks)} new chunks")
-        
-        # Update chunk lookup
-        for chunk in new_chunks:
-            self.chunk_lookup[chunk.chunk_id] = chunk
-        
-        # Update dense index
-        if self.dense_index is not None and new_embeddings is not None:
-            self.dense_index.add(new_embeddings.astype('float32'))
-        
-        # Update sparse index (requires rebuild for BM25)
-        if self.sparse_index is not None:
-            all_chunks = list(self.chunk_lookup.values())
-            self._build_sparse_index(all_chunks)
-        
-        logger.info("Index update completed") 
+        with open(self.index_dir / 'bm25.pkl', 'wb') as f:
+            pickle.dump(bm25_data, f)
+
+        logger.info("Indices saved successfully")
+
+    def _load_indices(self) -> None:
+        """Load indices from disk if they exist."""
+        chunks_file = self.index_dir / 'chunks.json'
+        faiss_file = self.index_dir / 'faiss.index'
+        bm25_file = self.index_dir / 'bm25.pkl'
+
+        if not all([chunks_file.exists(), faiss_file.exists(), bm25_file.exists()]):
+            logger.debug("No existing indices found")
+            return
+
+        try:
+            logger.info(f"Loading indices from {self.index_dir}")
+
+            # Load chunks
+            with open(chunks_file, 'r', encoding='utf-8') as f:
+                chunks_data = json.load(f)
+
+            self.chunks = []
+            for chunk_dict in chunks_data:
+                chunk = Chunk(
+                    chunk_id=chunk_dict['chunk_id'],
+                    doc_id=chunk_dict['doc_id'],
+                    text=chunk_dict['text'],
+                    source_path=chunk_dict['source_path'],
+                    token_count=chunk_dict['token_count'],
+                    section=chunk_dict.get('section'),
+                    page_number=chunk_dict.get('page_number')
+                )
+                if chunk_dict.get('embedding'):
+                    chunk.embedding = np.array(chunk_dict['embedding'], dtype=np.float32)
+                self.chunks.append(chunk)
+
+            self.chunk_lookup = {chunk.chunk_id: chunk for chunk in self.chunks}
+
+            # Load FAISS index
+            self.dense_index = faiss.read_index(str(faiss_file))
+
+            # Load BM25 index
+            with open(bm25_file, 'rb') as f:
+                bm25_data = pickle.load(f)
+
+            self.tokenized_corpus = bm25_data['tokenized_corpus']
+            self.sparse_index = BM25Okapi(self.tokenized_corpus)
+
+            logger.info(f"Indices loaded successfully: {len(self.chunks)} chunks")
+
+        except Exception as e:
+            logger.error(f"Failed to load indices: {e}")
+            self.dense_index = None
+            self.sparse_index = None
+            self.chunks = []
+            self.chunk_lookup = {}

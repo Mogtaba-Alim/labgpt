@@ -11,7 +11,7 @@ test_production/
 test_basic/
 rag_demo_storage/
 
-final_test/
+RAG/rag_comprehensive_guide.md
 
 data_generation/Paper_Outputs_with_chunks/
 data_generation/repos/
@@ -20,3 +20,7 @@ data_generation/final_combined_val_dataset.json
 data_generation/test_datasets/
 data_generation/test_repos/
 data_generation/data_generation_comprehensive_guide.md
+
+.venv/
+CLAUDE.md
+final_rag_output/

@@ -18,7 +18,7 @@ import nltk
 from nltk.tokenize import sent_tokenize
 import re
 
-from .chunk_objects import DocumentMetadata
+from ..models import DocumentMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -52,30 +52,23 @@ class DocumentLoader:
             raise ValueError(f"Unsupported file type: {extension}")
         
         # Extract basic file metadata
-        file_stats = file_path.stat()
         doc_metadata = DocumentMetadata(
             doc_id=self._generate_doc_id(file_path),
             source_path=str(file_path),
-            doc_type=extension[1:],  # Remove leading dot
-            creation_date=datetime.fromtimestamp(file_stats.st_ctime),
-            file_size=file_stats.st_size
+            doc_type=extension[1:]  # Remove leading dot
         )
-        
+
         # Extract content based on file type
         if extension == '.pdf':
             content, pdf_metadata = self._load_pdf(file_path)
-            # Merge PDF-specific metadata
+            # Merge PDF-specific metadata (only fields that exist in DocumentMetadata)
             doc_metadata.title = pdf_metadata.get('title')
-            doc_metadata.authors = pdf_metadata.get('authors')
             doc_metadata.page_count = pdf_metadata.get('page_count')
         else:
             content = self._load_text_file(file_path)
             # Try to extract title from content for text files
             doc_metadata.title = self._extract_title_from_text(content)
-        
-        # Generate content hash
-        doc_metadata.content_hash = hashlib.md5(content.encode()).hexdigest()
-        
+
         logger.info(f"Loaded document: {file_path.name} ({len(content)} chars)")
         return content, doc_metadata
     

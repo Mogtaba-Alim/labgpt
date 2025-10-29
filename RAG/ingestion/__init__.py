@@ -1,26 +1,24 @@
-#!/usr/bin/env python3
 """
 Ingestion Package for LabGPT RAG System
 
-This package provides enhanced document ingestion capabilities including:
-- Structured chunk objects with metadata
+This package provides document ingestion capabilities including:
+- Multi-format document loading
 - Semantic and structural text splitting
-- Document structure extraction
-- Quality-based filtering
+- Document-type specific chunking strategies
+- Lightweight quality filtering
+- SHA256-based embedding caching
 """
 
-from .chunk_objects import ChunkMetadata, DocumentMetadata, ChunkStore
 from .document_loader import DocumentLoader
 from .text_splitter import SemanticStructuralSplitter
-from .metadata_extractor import MetadataExtractor
-from .quality_filter import QualityFilter
+from .doc_type_adapter import DocTypeAdapter
+from .minimal_filter import MinimalFilter
+from .embedding_manager import EmbeddingManager
 
 __all__ = [
-    'ChunkMetadata',
-    'DocumentMetadata', 
-    'ChunkStore',
     'DocumentLoader',
     'SemanticStructuralSplitter',
-    'MetadataExtractor',
-    'QualityFilter'
-] 
+    'DocTypeAdapter',
+    'MinimalFilter',
+    'EmbeddingManager'
+]

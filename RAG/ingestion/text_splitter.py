@@ -15,7 +15,7 @@ import nltk
 from nltk.tokenize import sent_tokenize
 import tiktoken
 
-from .chunk_objects import ChunkMetadata
+from ..models import Chunk
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class SemanticStructuralSplitter:
     def split_document(self, 
                       content: str, 
                       doc_metadata: Dict,
-                      document_structure: Optional[Dict] = None) -> List[ChunkMetadata]:
+                      document_structure: Optional[Dict] = None) -> List[Chunk]:
         """
         Split document into semantically coherent chunks
         
@@ -69,7 +69,7 @@ class SemanticStructuralSplitter:
             document_structure: Optional structure information from document loader
             
         Returns:
-            List of ChunkMetadata objects
+            List of Chunk objects
         """
         chunks = []
         
@@ -89,7 +89,7 @@ class SemanticStructuralSplitter:
     def _split_with_structure(self, 
                              content: str, 
                              doc_metadata: Dict, 
-                             structure: Dict) -> List[ChunkMetadata]:
+                             structure: Dict) -> List[Chunk]:
         """Split document using structural information"""
         chunks = []
         sections = structure.get('sections', [])
@@ -117,7 +117,7 @@ class SemanticStructuralSplitter:
         
         return chunks
     
-    def _split_semantic(self, content: str, doc_metadata: Dict) -> List[ChunkMetadata]:
+    def _split_semantic(self, content: str, doc_metadata: Dict) -> List[Chunk]:
         """Split document using semantic approach without structure"""
         # First, split into sentences
         sentences = self._split_into_sentences(content)
@@ -131,7 +131,7 @@ class SemanticStructuralSplitter:
                               section_content: str,
                               doc_metadata: Dict,
                               section_title: str,
-                              hierarchy_path: List[str]) -> List[ChunkMetadata]:
+                              hierarchy_path: List[str]) -> List[Chunk]:
         """Split a single section into chunks"""
         # Split section into sentences
         sentences = self._split_into_sentences(section_content)
@@ -166,7 +166,7 @@ class SemanticStructuralSplitter:
                                    sentences: List[str],
                                    doc_metadata: Dict,
                                    section_title: Optional[str] = None,
-                                   hierarchy_path: Optional[List[str]] = None) -> List[ChunkMetadata]:
+                                   hierarchy_path: Optional[List[str]] = None) -> List[Chunk]:
         """Pack sentences into token-budget chunks"""
         chunks = []
         current_chunk_sentences = []
@@ -240,22 +240,21 @@ class SemanticStructuralSplitter:
                                     doc_metadata: Dict,
                                     section_title: Optional[str],
                                     hierarchy_path: Optional[List[str]],
-                                    chunk_index: int) -> ChunkMetadata:
-        """Create a ChunkMetadata object from sentences"""
+                                    chunk_index: int) -> Chunk:
+        """Create a Chunk object from sentences"""
         text = ' '.join(sentences)
         token_count = self._count_tokens(text)
-        
-        chunk = ChunkMetadata(
+
+        # Use Chunk.create factory method to auto-generate chunk_id
+        chunk = Chunk.create(
             doc_id=doc_metadata.get('doc_id', ''),
             text=text,
-            token_count=token_count,
-            doc_type=doc_metadata.get('doc_type', ''),
             source_path=doc_metadata.get('source_path', ''),
+            token_count=token_count,
             section=section_title,
-            hierarchy_path=hierarchy_path or [],
-            chunk_index=chunk_index
+            page_number=None  # Can be extracted from structure if needed
         )
-        
+
         return chunk
     
     def _get_overlap_sentences(self, sentences: List[str], overlap_tokens: int) -> List[str]:
@@ -317,7 +316,7 @@ class SemanticStructuralSplitter:
         
         return hierarchy
     
-    def _post_process_chunks(self, chunks: List[ChunkMetadata]) -> List[ChunkMetadata]:
+    def _post_process_chunks(self, chunks: List[Chunk]) -> List[Chunk]:
         """Post-process chunks to ensure quality and consistency"""
         processed_chunks = []
         
@@ -364,7 +363,7 @@ class SemanticStructuralSplitter:
         
         return text
     
-    def split_text_simple(self, text: str, doc_id: str = "unknown") -> List[ChunkMetadata]:
+    def split_text_simple(self, text: str, doc_id: str = "unknown") -> List[Chunk]:
         """
         Simple splitting method for quick use cases
         
@@ -373,7 +372,7 @@ class SemanticStructuralSplitter:
             doc_id: Document identifier
             
         Returns:
-            List of ChunkMetadata objects
+            List of Chunk objects
         """
         doc_metadata = {
             'doc_id': doc_id,
@@ -383,7 +382,7 @@ class SemanticStructuralSplitter:
         
         return self._split_semantic(text, doc_metadata)
     
-    def get_splitting_stats(self, chunks: List[ChunkMetadata]) -> Dict:
+    def get_splitting_stats(self, chunks: List[Chunk]) -> Dict:
         """Get statistics about the splitting results"""
         if not chunks:
             return {"status": "no_chunks"}
