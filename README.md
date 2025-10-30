@@ -72,27 +72,24 @@ cd labgpt
 
 ### Step 2: Install Dependencies
 
-Install dependencies for all pipelines:
+Install all dependencies from the unified requirements file:
 
 ```bash
-# RAG pipeline dependencies
-pip install -r RAG/requirements.txt
-
-# Data generation dependencies
-pip install -r data_generation/requirements.txt
-
-# Training pipeline dependencies
-pip install -r training/requirements.txt
+pip install -r requirements.txt
 ```
 
-**Note:** Some packages may have version conflicts. For a unified installation, we recommend using conda to manage dependencies:
+**Note:** For better dependency management, we recommend using a virtual environment:
 
 ```bash
+# Using conda
 conda create -n labgpt python=3.10
 conda activate labgpt
-pip install -r RAG/requirements.txt
-pip install -r data_generation/requirements.txt
-pip install -r training/requirements.txt
+pip install -r requirements.txt
+
+# Or using venv
+python -m venv labgpt-env
+source labgpt-env/bin/activate  # On Windows: labgpt-env\Scripts\activate
+pip install -r requirements.txt
 ```
 
 ### Step 3: Set Up Environment Variables
@@ -105,13 +102,7 @@ CLAUDE_API_KEY=your_claude_api_key
 OPENAI_API_KEY=your_openai_api_key
 
 # For Training (optional, for uploading to Hugging Face Hub)
-HUGGINGFACE_TOKEN=your_huggingface_token
-```
-
-### Step 4: Make CLI Executable (Optional)
-
-```bash
-chmod +x labgpt_cli.py
+HF_TOKEN=your_huggingface_token
 ```
 
 ---
@@ -755,13 +746,7 @@ CUDA_VISIBLE_DEVICES="" python labgpt_cli.py train \
 ```bash
 conda create -n labgpt python=3.10
 conda activate labgpt
-
-# Install in specific order
-pip install torch==2.0.0
-pip install transformers==4.33.0
-pip install -r RAG/requirements.txt
-pip install -r data_generation/requirements.txt
-pip install -r training/requirements.txt
+pip install -r requirements.txt
 ```
 
 ---
@@ -787,7 +772,7 @@ CLAUDE_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
 
 # Hugging Face (optional, for model upload)
-HUGGINGFACE_TOKEN=hf_...
+HF_TOKEN=hf_...
 
 # Custom model paths (optional)
 LOCAL_MODEL_PATH=/path/to/llama-3.1-8b
@@ -796,47 +781,6 @@ LOCAL_MODEL_PATH=/path/to/llama-3.1-8b
 CUDA_VISIBLE_DEVICES=0,1,2,3
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 ```
-
----
-
-## Next Steps
-
-After completing the pipeline:
-
-1. **Test the RAG System:**
-   ```bash
-   python -m RAG.cli interactive --index ./labgpt-output/rag-index
-   ```
-
-2. **Evaluate the Training Data:**
-   ```python
-   import json
-   with open('./labgpt-output/data_generation/combined_instruct_train.jsonl') as f:
-       for line in f:
-           example = json.loads(line)
-           print(example['messages'])
-           break
-   ```
-
-3. **Test the Fine-tuned Model:**
-   ```python
-   from transformers import AutoModelForCausalLM, AutoTokenizer
-   from peft import PeftModel
-
-   base_model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.1-8B")
-   model = PeftModel.from_pretrained(base_model, "./labgpt-output/model")
-   tokenizer = AutoTokenizer.from_pretrained("./labgpt-output/model")
-
-   # Generate response
-   inputs = tokenizer("How does the code work?", return_tensors="pt")
-   outputs = model.generate(**inputs, max_length=200)
-   print(tokenizer.decode(outputs[0]))
-   ```
-
-4. **Deploy the Model:**
-   - Upload to Hugging Face Hub
-   - Serve via API (vLLM, TGI, etc.)
-   - Integrate into lab workflow
 
 ---
 
