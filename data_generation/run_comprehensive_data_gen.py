@@ -171,26 +171,77 @@ def split_train_val(items: List[Any], train_ratio: float) -> tuple[List[Any], Li
     return items[:k], items[k:]
 
 
-def build_llm_clients():
-    """Initialize real Anthropic and OpenAI clients for production use."""
+def build_llm_clients(
+    privacy_mode: bool = False,
+    local_model_path: Optional[str] = None,
+    device: Optional[str] = None
+):
+    """
+    Initialize LLM clients for production use or privacy mode.
+
+    Args:
+        privacy_mode: If True, use local Llama 3.1 8B instead of API clients
+        local_model_path: Path or HF model ID for local model (privacy mode only)
+        device: Device to use for local model ('cuda', 'cpu', or None for auto-detect)
+
+    Returns:
+        Tuple of (claude_client, openai_client) or wrapped local clients in privacy mode
+    """
     # Load environment variables
     load_dotenv()
-    
-    # Get API keys from environment
-    anthropic_key = os.getenv('CLAUDE_API_KEY') or os.getenv('ANTHROPIC_API_KEY')
-    openai_key = os.getenv('OPENAI_KEY') or os.getenv('OPENAI_API_KEY')
-    
-    if not anthropic_key:
-        raise ValueError("CLAUDE_API_KEY or ANTHROPIC_API_KEY environment variable is required")
-    if not openai_key:
-        raise ValueError("OPENAI_KEY or OPENAI_API_KEY environment variable is required")
-    
-    # Initialize clients
-    anthropic_client = anthropic.Anthropic(api_key=anthropic_key)
-    openai_client = OpenAI(api_key=openai_key)
-    
-    logging.info("Initialized production LLM clients (Anthropic Claude + OpenAI)")
-    return anthropic_client, openai_client
+
+    if privacy_mode:
+        # Use local Llama 3.1 8B model
+        logging.info("=" * 60)
+        logging.info("PRIVACY MODE ENABLED")
+        logging.info("Using local Llama 3.1 8B - No data sent to external APIs")
+        logging.info("=" * 60)
+
+        from data_gen.llm import create_privacy_mode_client
+
+        # Get HF token from environment
+        hf_token = os.getenv('HUGGINGFACE_TOKEN')
+        if not hf_token:
+            logging.warning(
+                "HUGGINGFACE_TOKEN not set. This is required for gated models like Llama 3.1. "
+                "Get your token from: https://huggingface.co/settings/tokens"
+            )
+
+        # Use default model path if not specified
+        if local_model_path is None:
+            local_model_path = os.getenv('LOCAL_MODEL_PATH', 'meta-llama/Meta-Llama-3.1-8B-Instruct')
+
+        # Create privacy mode clients
+        anthropic_client, openai_client = create_privacy_mode_client(
+            model_path=local_model_path,
+            load_in_8bit=True,  # Use 8-bit quantization for memory efficiency
+            device=device,
+            hf_token=hf_token
+        )
+
+        logging.info("Privacy mode clients initialized successfully")
+        logging.info(f"Model: {local_model_path}")
+        logging.info("All code and papers will be processed locally")
+
+        return anthropic_client, openai_client
+
+    else:
+        # Use production API clients
+        # Get API keys from environment
+        anthropic_key = os.getenv('CLAUDE_API_KEY') or os.getenv('ANTHROPIC_API_KEY')
+        openai_key = os.getenv('OPENAI_KEY') or os.getenv('OPENAI_API_KEY')
+
+        if not anthropic_key:
+            raise ValueError("CLAUDE_API_KEY or ANTHROPIC_API_KEY environment variable is required")
+        if not openai_key:
+            raise ValueError("OPENAI_KEY or OPENAI_API_KEY environment variable is required")
+
+        # Initialize clients
+        anthropic_client = anthropic.Anthropic(api_key=anthropic_key)
+        openai_client = OpenAI(api_key=openai_key)
+
+        logging.info("Initialized production LLM clients (Anthropic Claude + OpenAI)")
+        return anthropic_client, openai_client
 
 
 def extract_bug_type(debug_task):
@@ -221,6 +272,9 @@ def generate_from_code(
     include_negatives: bool,
     apply_critic: bool,
     apply_dedup: bool,
+    privacy_mode: bool = False,
+    local_model_path: Optional[str] = None,
+    device: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """Process a code repository and return a list of dataset entries."""
 
@@ -231,9 +285,13 @@ def generate_from_code(
         languages=languages
     )
     extractor = UniversalSymbolExtractor(extract_config)
-    
-    # Initialize production LLM clients
-    anthropic_client, openai_client = build_llm_clients()
+
+    # Initialize LLM clients (production APIs or local model)
+    anthropic_client, openai_client = build_llm_clients(
+        privacy_mode=privacy_mode,
+        local_model_path=local_model_path,
+        device=device
+    )
     
     qa_gen = GroundedQAGenerator(config_manager, anthropic_client)
     debug_gen = create_debug_generator(config_manager, anthropic_client)
@@ -356,13 +414,25 @@ def generate_from_code(
     return dataset
 
 
-def generate_from_papers(papers_dir: Path, config_manager, apply_critic: bool) -> List[Dict[str, Any]]:
+def generate_from_papers(
+    papers_dir: Path,
+    config_manager,
+    apply_critic: bool,
+    privacy_mode: bool = False,
+    local_model_path: Optional[str] = None,
+    device: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     """Generate QA pairs from research papers using semantic chunking."""
     if not papers_dir.exists():
         logging.warning(f"Papers directory {papers_dir} does not exist")
         return []
 
-    _, openai_client = build_llm_clients()
+    # Initialize LLM clients (production APIs or local model)
+    _, openai_client = build_llm_clients(
+        privacy_mode=privacy_mode,
+        local_model_path=local_model_path,
+        device=device
+    )
     paper_gen = create_paper_qa_generator(config_manager, openai_client)
 
     # Initialize paper loading and chunking components
@@ -490,7 +560,15 @@ Examples:
     parser.add_argument("--no_negatives", action="store_true", help="Disable extra negative examples.")
     parser.add_argument("--no_critic", action="store_true", help="Disable critic filtering.")
     parser.add_argument("--no_dedup", action="store_true", help="Disable deduplication.")
-    
+
+    # Privacy Mode - Local LLM
+    parser.add_argument("--privacy", action="store_true",
+                       help="Enable privacy mode - use local Llama 3.1 8B instead of API clients")
+    parser.add_argument("--local_model_path", type=str, default=None,
+                       help="Path or HF model ID for local model (default: meta-llama/Meta-Llama-3.1-8B-Instruct)")
+    parser.add_argument("--device", type=str, choices=["cuda", "cpu"], default=None,
+                       help="Device to use for local model (default: auto-detect)")
+
     # Debugging
     parser.add_argument("--log_level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"],
                        help="Logging level")
@@ -549,6 +627,9 @@ Examples:
                     include_negatives=not args.no_negatives,
                     apply_critic=not args.no_critic,
                     apply_dedup=not args.no_dedup,
+                    privacy_mode=args.privacy,
+                    local_model_path=args.local_model_path,
+                    device=args.device,
                 )
         finally:
             # Clean up temporary directory if created
@@ -563,7 +644,14 @@ Examples:
     papers_dataset: List[Dict[str, Any]] = []
     if args.papers:
         logging.info(f"Processing papers directory: {args.papers}")
-        papers_dataset = generate_from_papers(Path(args.papers), config_manager, apply_critic=not args.no_critic)
+        papers_dataset = generate_from_papers(
+            Path(args.papers),
+            config_manager,
+            apply_critic=not args.no_critic,
+            privacy_mode=args.privacy,
+            local_model_path=args.local_model_path,
+            device=args.device,
+        )
     
     # Split datasets
     code_train, code_val = split_train_val(code_dataset, args.train_ratio) if code_dataset else ([], [])
