@@ -103,12 +103,12 @@ class ModelArguments:
 class DataArguments:
     """Arguments for data configuration."""
     train_file: str = field(
-        default="final_combined_train_dataset.json",
-        metadata={"help": "Path to training data file"}
+        default="combined_instruct_train.jsonl",
+        metadata={"help": "Path to training data file (JSONL format with messages)"}
     )
     val_file: str = field(
-        default="final_combined_val_dataset.json",
-        metadata={"help": "Path to validation data file"}
+        default="",
+        metadata={"help": "Path to validation data file (JSONL format with messages, optional)"}
     )
     max_seq_length: int = field(
         default=8192,
@@ -201,268 +201,6 @@ class TrainingArguments(transformers.TrainingArguments):
     )
 
 
-class CustomDataset(Dataset):
-    """Custom dataset for handling code and research paper data in various formats."""
-    
-    def __init__(self, file_path: str, tokenizer, max_length: int = 8192):
-        self.tokenizer = tokenizer
-        self.max_length = max_length
-        self.examples = []
-        
-        logger.info(f"Loading data from {file_path}")
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            
-            logger.info(f"Successfully loaded {len(data)} items from {file_path}")
-        except Exception as e:
-            logger.error(f"Error loading data from {file_path}: {str(e)}")
-            raise
-        
-        skipped_items = 0
-        logger.info(f"Processing {len(data)} examples")
-        
-        for idx, item in enumerate(data):
-            try:
-                examples_before = len(self.examples)
-                self._process_item(item)
-                examples_added = len(self.examples) - examples_before
-                
-                if examples_added == 0:
-                    skipped_items += 1
-                    if skipped_items <= 5:  # Only log the first few skipped items to avoid flooding logs
-                        logger.warning(f"Item {idx} did not generate any examples. Keys: {list(item.keys())}")
-            except Exception as e:
-                logger.error(f"Error processing item {idx}: {str(e)}")
-                # Continue processing other items
-        
-        logger.info(f"Created {len(self.examples)} training examples from {len(data)} items. Skipped {skipped_items} items.")
-    
-    def _process_item(self, item: Dict[str, Any]) -> None:
-        """Process a single data item into training examples."""
-        
-        # Determine data type based on format
-        is_code_data = "language" in item and item["language"] not in ["research_paper"]
-        
-        # Process QA pairs
-        if item and "qa_pairs" in item and item["qa_pairs"] is not None:
-            qa_examples = []
-            for qa_pair in item["qa_pairs"]:
-                # Check for required keys
-                if "question" not in qa_pair or "answer" not in qa_pair:
-                    continue
-                
-                # Different formats for research papers
-                if not is_code_data and "chunk" in qa_pair:
-                    # Research paper format 1
-                    context = qa_pair.get("chunk", "")
-                    prompt = f"Context:\n{context}\n\nQuestion: {qa_pair['question']}\n\nAnswer:"
-                    response = qa_pair["answer"]
-                else:
-                    # Code format or Research paper format 2
-                    content = item.get("content", "")
-                    
-                    # For code data, use file content as context
-                    if is_code_data:
-                        if len(content) > 0:
-                            prompt = f"File content:\n```{item.get('language', '')}\n{content}\n```\n\nQuestion: {qa_pair['question']}\n\nAnswer:"
-                        else:
-                            prompt = f"Question: {qa_pair['question']}\n\nAnswer:"
-                    else:
-                        # For research papers without specific chunks
-                        prompt = f"Question about research paper '{item.get('file', '')}': {qa_pair['question']}\n\nAnswer:"
-                    
-                    response = qa_pair["answer"]
-                
-                qa_examples.append({"prompt": prompt, "response": response})
-            
-            self.examples.extend(qa_examples)
-        
-        # Process code completion tasks
-        if is_code_data and "completion_tasks" in item and item["completion_tasks"] is not None:
-            for task in item["completion_tasks"]:
-                if "partial" in task and ("complete" in task or "completion" in task):
-                    prompt = f"Complete the following code:\n```{item.get('language', '')}\n{task['partial']}\n```"
-                    # Some datasets might use 'completion' instead of 'complete'
-                    response = task.get("complete", task.get("completion", ""))
-                    self.examples.append({"prompt": prompt, "response": response})
-        
-        # Process debugging tasks
-        if is_code_data and "debugging_tasks" in item and item["debugging_tasks"] is not None:
-            for task in item["debugging_tasks"]:
-                if "bug_description" in task and "bug_fix" in task:
-                    prompt = f"Fix the following bug in the code:\nBug description: {task['bug_description']}\n```{item.get('language', '')}\n{item.get('content', '')}\n```"
-                    response = task["bug_fix"]
-                    self.examples.append({"prompt": prompt, "response": response})
-        
-        # Process refactoring tasks
-        if is_code_data and "refactoring_tasks" in item and item["refactoring_tasks"] is not None:
-            for task in item["refactoring_tasks"]:
-                if "original_snippet" in task and "refactored_snippet" in task:
-                    prompt = f"Refactor the following code:\n```{item.get('language', '')}\n{task['original_snippet']}\n```"
-                    explanation = task.get("explanation", "")
-                    response = f"```{item.get('language', '')}\n{task['refactored_snippet']}\n```"
-                    if explanation:
-                        response += f"\n\nExplanation: {explanation}"
-                    self.examples.append({"prompt": prompt, "response": response})
-        
-        # Process docstring tasks
-        if is_code_data and "docstring_tasks" in item and item["docstring_tasks"] is not None:
-            for task in item["docstring_tasks"]:
-                if "function_signature" in task and "docstring" in task:
-                    prompt = f"Write a docstring for the following function:\n```{item.get('language', '')}\n{task['function_signature']}\n```"
-                    response = task["docstring"]
-                    self.examples.append({"prompt": prompt, "response": response})
-    
-    def __len__(self) -> int:
-        return len(self.examples)
-    
-    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
-        example = self.examples[idx]
-        prompt = example["prompt"]
-        response = example["response"]
-        
-        # Format for Llama 3.1 chat format
-        formatted_prompt = f"<|begin_of_text|><|user|>\n{prompt}<|end_of_turn|>\n<|assistant|>\n"
-        formatted_response = f"{response}<|end_of_turn|>"
-        
-        full_text = formatted_prompt + formatted_response
-        
-        encoded = self.tokenizer(
-            full_text,
-            truncation=True,
-            max_length=self.max_length,
-            padding="max_length",
-            return_tensors="pt",
-        )
-        
-        # Create labels - we only want to compute loss on the assistant's response
-        input_ids = encoded["input_ids"][0]
-        labels = input_ids.clone()
-        
-        # Mask out the prompt tokens for loss calculation
-        prompt_encoded = self.tokenizer.encode(formatted_prompt, add_special_tokens=False)
-        labels[:len(prompt_encoded)] = -100
-        
-        return {
-            "input_ids": input_ids,
-            "attention_mask": encoded["attention_mask"][0],
-            "labels": labels,
-        }
-
-
-def format_for_trl(item: Dict[str, Any]) -> Dict[str, str]:
-    """Format an example for TRL's SFTTrainer."""
-    return {
-        "prompt": item["prompt"],
-        "completion": item["response"],
-    }
-
-
-def prepare_dataset_for_trl(file_path: str) -> List[Dict[str, str]]:
-    """Prepare dataset in the format expected by TRL's SFTTrainer."""
-    logger.info(f"Loading data from {file_path}")
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
-        logger.info(f"Successfully loaded {len(data)} items from {file_path}")
-    except Exception as e:
-        logger.error(f"Error loading data from {file_path}: {str(e)}")
-        raise
-    
-    formatted_data = []
-    skipped_items = 0
-    
-    for idx, item in enumerate(data):
-        try:
-            # Determine data type based on format
-            is_code_data = "language" in item and item["language"] not in ["research_paper"]
-            
-            examples_added = 0
-            
-            # Process QA pairs
-            if item and "qa_pairs" in item and item["qa_pairs"] is not None:
-                for qa_pair in item["qa_pairs"]:
-                    # Different formats for research papers
-                    if not is_code_data and "chunk" in qa_pair:
-                        # Research paper format 1
-                        context = qa_pair.get("chunk", "")
-                        prompt = f"Context:\n{context}\n\nQuestion: {qa_pair['question']}\n\nAnswer:"
-                        response = qa_pair["answer"]
-                    else:
-                        # Code format or Research paper format 2
-                        content = item.get("content", "")
-                        
-                        # For code data, use file content as context
-                        if is_code_data:
-                            if len(content) > 0:
-                                prompt = f"File content:\n```{item.get('language', '')}\n{content}\n```\n\nQuestion: {qa_pair['question']}\n\nAnswer:"
-                            else:
-                                prompt = f"Question: {qa_pair['question']}\n\nAnswer:"
-                        else:
-                            # For research papers without specific chunks
-                            prompt = f"Question about research paper '{item.get('file', '')}': {qa_pair['question']}\n\nAnswer:"
-                        
-                        response = qa_pair["answer"]
-                    
-                    formatted_data.append({"prompt": prompt, "completion": response})
-                    examples_added += 1
-            
-            # Process code completion tasks
-            if is_code_data and "completion_tasks" in item and item["completion_tasks"] is not None:
-                for task in item["completion_tasks"]:
-                    if "partial" in task and ("complete" in task or "completion" in task):
-                        prompt = f"Complete the following code:\n```{item.get('language', '')}\n{task['partial']}\n```"
-                        # Some datasets might use 'completion' instead of 'complete'
-                        response = task.get("complete", task.get("completion", ""))
-                        formatted_data.append({"prompt": prompt, "completion": response})
-                        examples_added += 1
-            
-            # Process debugging tasks
-            if is_code_data and "debugging_tasks" in item and item["debugging_tasks"] is not None:
-                for task in item["debugging_tasks"]:
-                    if "bug_description" in task and "bug_fix" in task:
-                        prompt = f"Fix the following bug in the code:\nBug description: {task['bug_description']}\n```{item.get('language', '')}\n{item.get('content', '')}\n```"
-                        response = task["bug_fix"]
-                        formatted_data.append({"prompt": prompt, "completion": response})
-                        examples_added += 1
-            
-            # Process refactoring tasks
-            if is_code_data and "refactoring_tasks" in item and item["refactoring_tasks"] is not None:
-                for task in item["refactoring_tasks"]:
-                    if "original_snippet" in task and "refactored_snippet" in task:
-                        prompt = f"Refactor the following code:\n```{item.get('language', '')}\n{task['original_snippet']}\n```"
-                        explanation = task.get("explanation", "")
-                        response = f"```{item.get('language', '')}\n{task['refactored_snippet']}\n```"
-                        if explanation:
-                            response += f"\n\nExplanation: {explanation}"
-                        formatted_data.append({"prompt": prompt, "completion": response})
-                        examples_added += 1
-            
-            # Process docstring tasks
-            if is_code_data and "docstring_tasks" in item and item["docstring_tasks"] is not None:
-                for task in item["docstring_tasks"]:
-                    if "function_signature" in task and "docstring" in task:
-                        prompt = f"Write a docstring for the following function:\n```{item.get('language', '')}\n{task['function_signature']}\n```"
-                        response = task["docstring"]
-                        formatted_data.append({"prompt": prompt, "completion": response})
-                        examples_added += 1
-            
-            if examples_added == 0:
-                skipped_items += 1
-                if skipped_items <= 5:  # Only log the first few skipped items to avoid flooding logs
-                    logger.warning(f"Item {idx} did not generate any examples. Keys: {list(item.keys())}")
-        
-        except Exception as e:
-            logger.error(f"Error processing item {idx}: {str(e)}")
-            # Continue processing other items
-    
-    logger.info(f"Created {len(formatted_data)} examples from {len(data)} items. Skipped {skipped_items} items.")
-    
-    return formatted_data
-
-
 def main():
     parser = argparse.ArgumentParser(description="Fine-tune Llama 3.1 on code and research paper data")
     parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
@@ -470,9 +208,15 @@ def main():
     
     # Set random seed for reproducibility
     set_seed(training_args.seed)
-    
+
+    # Detect GPU capabilities for bf16 and flash attention
+    has_cuda = torch.cuda.is_available()
+    cc_major = torch.cuda.get_device_capability(0)[0] if has_cuda else 0
+    use_bf16 = (cc_major >= 8)  # Ampere+ (A100, A6000, RTX 30/40 series) supports bf16 well
+    logger.info(f"CUDA available: {has_cuda}, Compute capability: {cc_major}, Using bf16: {use_bf16}")
+
     # Set up 4-bit quantization configuration if enabled
-    compute_dtype = getattr(torch, model_args.bnb_4bit_compute_dtype)
+    compute_dtype = torch.bfloat16 if use_bf16 else getattr(torch, model_args.bnb_4bit_compute_dtype)
     
     bnb_config = None
     if model_args.use_4bit:
@@ -484,12 +228,15 @@ def main():
         )
     
     # Load model with appropriate configuration
+    attn_impl = "flash_attention_2" if (model_args.use_flash_attn and has_cuda) else "eager"
+    logger.info(f"Using attention implementation: {attn_impl}")
+
     model = AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         quantization_config=bnb_config,
         use_cache=False,  # Gradient checkpointing requires this
         torch_dtype=compute_dtype,
-        attn_implementation="flash_attention_2" if model_args.use_flash_attn else "eager",
+        attn_implementation=attn_impl,
         device_map="auto",
     )
     
@@ -532,51 +279,68 @@ def main():
         model.print_trainable_parameters()
     
     logger.info("Model and tokenizer loaded successfully")
-    
-    # Prepare the datasets for training
-    logger.info(f"Processing training data from: {data_args.train_file}")
-    train_dataset_list = prepare_dataset_for_trl(data_args.train_file)
-    train_dataset = Dataset.from_list(train_dataset_list)
 
-    if data_args.val_file:
-        logger.info(f"Processing validation data from: {data_args.val_file}")
-        eval_dataset_list = prepare_dataset_for_trl(data_args.val_file)
-        eval_dataset = Dataset.from_list(eval_dataset_list)
-    else:
-        eval_dataset = None
+    # Prepare datasets (JSONL with {"messages":[...], "metadata":{...}})
+    logger.info(f"Loading JSONL train from: {data_args.train_file}")
+    train_ds = load_dataset("json", data_files=data_args.train_file, split="train")
+    eval_ds = load_dataset("json", data_files=data_args.val_file, split="train") if data_args.val_file else None
+
+    logger.info(f"Loaded {len(train_ds)} training examples")
+    if eval_ds:
+        logger.info(f"Loaded {len(eval_ds)} validation examples")
+
+    # Map messages -> single "text" using official chat template
+    def to_text(batch):
+        texts = []
+        for msgs in batch["messages"]:
+            text = tokenizer.apply_chat_template(
+                msgs,
+                tokenize=False,
+                add_generation_prompt=False  # we include assistant outputs in SFT
+            )
+            texts.append(text)
+        return {"text": texts}
+
+    logger.info("Applying chat template to training data...")
+    train_ds = train_ds.map(to_text, batched=True, remove_columns=train_ds.column_names)
+    if eval_ds is not None:
+        logger.info("Applying chat template to validation data...")
+        eval_ds = eval_ds.map(to_text, batched=True, remove_columns=eval_ds.column_names)
+
+    logger.info(f"Processed {len(train_ds)} training examples with chat template")
     
     # Create the SFT Trainer
     trainer = SFTTrainer(
-    model=model,
-    tokenizer=tokenizer,
-    train_dataset=train_dataset,
-    eval_dataset=eval_dataset,
-    args=SFTConfig(
-        output_dir=training_args.output_dir,
-        per_device_train_batch_size=training_args.per_device_train_batch_size,
-        per_device_eval_batch_size=training_args.per_device_eval_batch_size,
-        gradient_accumulation_steps=training_args.gradient_accumulation_steps,
-        learning_rate=training_args.learning_rate,
-        weight_decay=training_args.weight_decay,
-        num_train_epochs=training_args.num_train_epochs,
-        warmup_ratio=training_args.warmup_ratio,
-        lr_scheduler_type=training_args.lr_scheduler_type,
-        gradient_checkpointing=training_args.gradient_checkpointing,
-        fp16=training_args.fp16,
-        bf16=training_args.bf16,
-        optim=training_args.optim,
-        logging_steps=training_args.logging_steps,
-        eval_steps=training_args.eval_steps,
-        save_steps=training_args.save_steps,
-        save_total_limit=training_args.save_total_limit,
-        report_to=training_args.report_to,
-        seed=training_args.seed,
-        max_seq_length=data_args.max_seq_length,
-        dataset_num_proc=1,  # Adjust as needed
-        packing=False,
-        dataset_text_field="text",  # Include this if your text field is not the default "text"
-    ),
-)
+        model=model,
+        tokenizer=tokenizer,
+        train_dataset=train_ds,
+        eval_dataset=eval_ds,
+        args=SFTConfig(
+            output_dir=training_args.output_dir,
+            max_seq_length=data_args.max_seq_length,
+            per_device_train_batch_size=training_args.per_device_train_batch_size,
+            per_device_eval_batch_size=training_args.per_device_eval_batch_size,
+            gradient_accumulation_steps=training_args.gradient_accumulation_steps,
+            learning_rate=training_args.learning_rate,
+            weight_decay=training_args.weight_decay,
+            num_train_epochs=training_args.num_train_epochs,
+            warmup_ratio=training_args.warmup_ratio,
+            lr_scheduler_type=training_args.lr_scheduler_type,
+            gradient_checkpointing=training_args.gradient_checkpointing,
+            bf16=use_bf16,
+            fp16=not use_bf16,
+            optim=training_args.optim,
+            logging_steps=training_args.logging_steps,
+            eval_steps=max(200, training_args.eval_steps),
+            save_steps=max(200, training_args.save_steps),
+            save_total_limit=training_args.save_total_limit,
+            report_to=training_args.report_to,
+            seed=training_args.seed,
+            packing=True,                 # Enable packing for better throughput (set False if most samples are long ~>4k)
+            dataset_text_field="text",
+            dataset_num_proc=1,
+        ),
+    )
 
     
     # Train the model
