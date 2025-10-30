@@ -97,33 +97,100 @@ class MultiChunkPaperQAGenerator:
         
         return classified_chunks
     
-    def generate_integrative_qa_pairs(self, paper_chunks: List[PaperChunk], 
+    def generate_integrative_qa_pairs(self, paper_chunks: List[PaperChunk],
                                     count: int = 5) -> List[MultiChunkQA]:
-        """Generate integrative Q&A pairs that span multiple chunks."""
+        """
+        Generate integrative Q&A pairs that span multiple chunks.
+        Uses two strategies:
+        1. Random chunk combinations (2, 4, 6 chunks) with uniqueness tracking
+        2. Consecutive window sampling (2, 4, 6 chunk windows)
+        """
         qa_pairs = []
-        
-        for i in range(count):
-            # Select 2-3 random chunks for integration
-            num_chunks = min(random.randint(2, 3), len(paper_chunks))
-            selected_chunks = random.sample(paper_chunks, num_chunks)
-            
-            # Generate question and answer using GPT-4o
-            question, answer = self._generate_integrative_question_answer(selected_chunks)
-            
-            if question and answer:
-                qa_pair = MultiChunkQA(
-                    question=question,
-                    answer=answer,
-                    source_chunks=selected_chunks,
-                    chunk_indices=[chunk.chunk_index for chunk in selected_chunks],
-                    integration_type=self._determine_integration_type(selected_chunks),
-                    question_type="integrative",
-                    difficulty_level="medium",
-                    requires_cross_reference=len(selected_chunks) > 1,
-                    section_types_involved=[chunk.section_type.value for chunk in selected_chunks]
-                )
-                qa_pairs.append(qa_pair)
-        
+
+        # Track used chunk combinations to avoid duplicates
+        used_combinations: Set[Tuple[int, ...]] = set()
+
+        # Strategy 1: Random chunk combinations
+        # - Max 10 QAs using 2 chunks
+        # - Max 5 QAs using 4 chunks
+        # - Max 3 QAs using 6 chunks
+        random_qa_config = [
+            (2, min(10, count // 3)),      # 2 chunks, up to 10 QAs
+            (4, min(5, count // 4)),       # 4 chunks, up to 5 QAs
+            (6, min(3, count // 5))        # 6 chunks, up to 3 QAs
+        ]
+
+        for chunk_count, max_qa in random_qa_config:
+            generated_count = 0
+            attempts = 0
+            max_attempts = max_qa * 10  # Allow more attempts to find unique combinations
+
+            while generated_count < max_qa and attempts < max_attempts:
+                attempts += 1
+
+                # Randomly select chunks
+                selected_chunks = self._select_random_chunks(paper_chunks, chunk_count, used_combinations)
+
+                if not selected_chunks:
+                    continue
+
+                # Generate question and answer
+                question, answer = self._generate_integrative_question_answer(selected_chunks)
+
+                if question and answer:
+                    qa_pair = MultiChunkQA(
+                        question=question,
+                        answer=answer,
+                        source_chunks=selected_chunks,
+                        chunk_indices=[chunk.chunk_index for chunk in selected_chunks],
+                        integration_type=self._determine_integration_type(selected_chunks),
+                        question_type="integrative_random",
+                        difficulty_level=self._determine_difficulty(chunk_count),
+                        requires_cross_reference=True,
+                        section_types_involved=[chunk.section_type.value for chunk in selected_chunks]
+                    )
+                    qa_pairs.append(qa_pair)
+                    generated_count += 1
+
+                    # Mark this combination as used
+                    combo_tuple = tuple(sorted([chunk.chunk_index for chunk in selected_chunks]))
+                    used_combinations.add(combo_tuple)
+
+        # Strategy 2: Consecutive window sampling
+        # - 1 QA per 2-chunk window
+        # - 2 QAs per 4-chunk window
+        # - 3 QAs per 6-chunk window
+        window_qa_config = [
+            (2, 1),  # 2-chunk windows, 1 QA each
+            (4, 2),  # 4-chunk windows, 2 QAs each
+            (6, 3)   # 6-chunk windows, 3 QAs each
+        ]
+
+        for window_size, qa_per_window in window_qa_config:
+            windows = self._create_consecutive_windows(paper_chunks, window_size)
+
+            for window in windows:
+                if not window:
+                    continue
+
+                # Generate multiple QAs for this window
+                for _ in range(qa_per_window):
+                    question, answer = self._generate_integrative_question_answer(window)
+
+                    if question and answer:
+                        qa_pair = MultiChunkQA(
+                            question=question,
+                            answer=answer,
+                            source_chunks=window,
+                            chunk_indices=[chunk.chunk_index for chunk in window],
+                            integration_type=self._determine_integration_type(window),
+                            question_type="integrative_consecutive",
+                            difficulty_level=self._determine_difficulty(window_size),
+                            requires_cross_reference=True,
+                            section_types_involved=[chunk.section_type.value for chunk in window]
+                        )
+                        qa_pairs.append(qa_pair)
+
         return qa_pairs
     
     def _generate_integrative_question_answer(self, chunks: List[PaperChunk]) -> tuple[str, str]:
@@ -206,7 +273,7 @@ ANSWER: [your detailed answer]"""
     def _determine_integration_type(self, chunks: List[PaperChunk]) -> str:
         """Determine the type of integration based on chunk sections."""
         section_types = [chunk.section_type for chunk in chunks]
-        
+
         if SectionType.INTRODUCTION in section_types and SectionType.CONCLUSION in section_types:
             return "contextual"
         elif SectionType.METHODS in section_types and SectionType.RESULTS in section_types:
@@ -215,6 +282,54 @@ ANSWER: [your detailed answer]"""
             return "synthesis"
         else:
             return "comparison"
+
+    def _select_random_chunks(self, paper_chunks: List[PaperChunk],
+                             chunk_count: int,
+                             used_combinations: Set[Tuple[int, ...]]) -> List[PaperChunk]:
+        """
+        Randomly select chunk_count chunks from paper_chunks.
+        Ensures the combination hasn't been used before.
+        """
+        if len(paper_chunks) < chunk_count:
+            return []
+
+        # Try to find a unique combination
+        max_attempts = 50
+        for _ in range(max_attempts):
+            selected = random.sample(paper_chunks, chunk_count)
+            combo_tuple = tuple(sorted([chunk.chunk_index for chunk in selected]))
+
+            if combo_tuple not in used_combinations:
+                return selected
+
+        # If we couldn't find a unique combination, return empty
+        return []
+
+    def _create_consecutive_windows(self, paper_chunks: List[PaperChunk],
+                                   window_size: int) -> List[List[PaperChunk]]:
+        """
+        Create non-overlapping consecutive windows of chunks.
+        Each window contains window_size consecutive chunks.
+        """
+        windows = []
+
+        # Create non-overlapping windows by stepping through chunks
+        for i in range(0, len(paper_chunks), window_size):
+            window = paper_chunks[i:i + window_size]
+            # Only include complete windows
+            if len(window) == window_size:
+                windows.append(window)
+
+        return windows
+
+    def _determine_difficulty(self, chunk_count: int) -> str:
+        """Determine difficulty level based on number of chunks."""
+        if chunk_count <= 2:
+            return "medium"
+        elif chunk_count <= 4:
+            return "hard"
+        else:
+            return "very_hard"
 
 
 def create_paper_qa_generator(config_manager: ConfigManager, llm_client) -> MultiChunkPaperQAGenerator:

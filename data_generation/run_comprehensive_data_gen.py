@@ -66,6 +66,7 @@ from data_gen.tasks import (
 )
 from data_gen.critique import QualityCritic, create_deduplicator
 from data_gen.tasks.paper_qa_generator import create_paper_qa_generator
+from data_gen.paper_ingestion import PaperLoader, PaperSplitter, SplittingConfig
 
 
 def setup_logging(log_level: str = "INFO"):
@@ -356,47 +357,82 @@ def generate_from_code(
 
 
 def generate_from_papers(papers_dir: Path, config_manager, apply_critic: bool) -> List[Dict[str, Any]]:
-    """Generate QA pairs from research papers."""
+    """Generate QA pairs from research papers using semantic chunking."""
     if not papers_dir.exists():
         logging.warning(f"Papers directory {papers_dir} does not exist")
         return []
-    
+
     _, openai_client = build_llm_clients()
     paper_gen = create_paper_qa_generator(config_manager, openai_client)
-    
+
+    # Initialize paper loading and chunking components
+    paper_loader = PaperLoader()
+    paper_splitter = PaperSplitter(
+        config=SplittingConfig(
+            target_chunk_size=600,
+            max_chunk_size=800,
+            min_chunk_size=200,
+            chunk_overlap=50
+        )
+    )
+
     # Collect PDF and text files
     pdf_files = list(papers_dir.glob("**/*.pdf"))
     text_files = list(papers_dir.glob("**/*.txt"))
     all_files = pdf_files + text_files
     dataset: List[Dict[str, Any]] = []
-    
+
     logging.info(f"Found {len(pdf_files)} PDF files and {len(text_files)} text files in papers directory")
-    
+
     for file_path in all_files:
         try:
-            # Extract text based on file type
-            if file_path.suffix.lower() == '.pdf':
-                text_content = extract_text_from_pdf(file_path)
-            else:
-                text_content = read_text(file_path)
-                
-            chunks = [text_content]
-            if not chunks[0].strip():
+            logging.info(f"Processing paper: {file_path.name}")
+
+            # Load document with enhanced loading
+            content, metadata = paper_loader.load_document(str(file_path))
+
+            if not content.strip():
+                logging.warning(f"No content extracted from {file_path.name}")
                 continue
-                
-            classified = paper_gen.classify_chunks(chunks)
-            qa_pairs = paper_gen.generate_integrative_qa_pairs(classified, count=3)
-            
+
+            # Split into semantic chunks
+            paper_chunks = paper_splitter.split_document(content, metadata)
+            logging.info(f"Split {file_path.name} into {len(paper_chunks)} chunks")
+
+            if not paper_chunks:
+                logging.warning(f"No chunks generated for {file_path.name}")
+                continue
+
+            # Convert PaperChunk objects to simple chunk texts for classification
+            chunk_texts = [chunk.content for chunk in paper_chunks]
+
+            # Classify chunks
+            classified = paper_gen.classify_chunks(chunk_texts)
+
+            logging.info(f"Generating QA pairs from {len(paper_chunks)} chunks for {file_path.name}")
+            logging.info(f"  - Random combinations: up to 10 (2 chunks) + 5 (4 chunks) + 3 (6 chunks)")
+            logging.info(f"  - Consecutive windows: 2-chunk, 4-chunk, and 6-chunk windows")
+
+            # Generate integrative QA pairs using multi-strategy approach
+            # This will generate QAs using:
+            # 1. Random chunk combinations (2, 4, 6 chunks)
+            # 2. Consecutive windows (2, 4, 6 chunks)
+            qa_pairs = paper_gen.generate_integrative_qa_pairs(classified, count=len(paper_chunks))
+
+            logging.info(f"Generated {len(qa_pairs)} QA pairs for {file_path.name}")
+
+            # Create dataset entry
             entries = [
                 {
                     "repo": "research_papers",
                     "file": str(file_path.relative_to(papers_dir)),
                     "language": "research_paper",
+                    "chunk_count": len(paper_chunks),
                     "qa_pairs": [
                         {
                             "question": qa.question,
                             "answer": qa.answer,
-                            "chunk_indices": getattr(qa, 'chunk_indices', [0]),
+                            "chunk_indices": getattr(qa, 'chunk_indices', []),
                             "integration_type": getattr(qa, 'integration_type', 'synthesis'),
                             "requires_cross_reference": getattr(qa, 'requires_cross_reference', False),
                         }
@@ -406,11 +442,11 @@ def generate_from_papers(papers_dir: Path, config_manager, apply_critic: bool) -
                 for _ in [0]  # Single entry per file
             ]
             dataset.extend(entries)
-            
+
         except Exception as e:
-            logging.error(f"Error processing paper {file_path}: {e}")
-    
-    logging.info(f"Generated {len(dataset)} dataset entries from papers")
+            logging.error(f"Error processing paper {file_path}: {e}", exc_info=True)
+
+    logging.info(f"Generated {len(dataset)} dataset entries from {len(all_files)} papers")
     return dataset
 
 
