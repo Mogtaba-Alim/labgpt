@@ -1,23 +1,18 @@
-# Core LLM API clients
-anthropic==0.25.0
-openai==1.35.0
 
-# Web framework (for app.py)
+anthropic==0.71.0
+openai==2.6.1
+
+
 Flask==2.3.3
 
-# Environment and configuration
-python-dotenv==1.0.0
+python-dotenv==1.2.1
 PyYAML==6.0.1
-
-# PDF processing
+ 
 PyPDF2==3.0.1
 
-# ML/NLP for embeddings and deduplication
+
 sentence-transformers==2.2.2
 numpy>=1.24.0,<2.0.0
 
-# Required by sentence-transformers (implicit dependencies)
-torch>=2.0.0
-transformers>=4.30.0
-scikit-learn>=1.0.0
-scipy>=1.10.0
+transformers>=4.57.1
+scipy>=1.16.3
