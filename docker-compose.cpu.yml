@@ -1,0 +1,73 @@
+version: '3.8'
+
+# CPU-only version (no GPU requirements)
+# Use this if your VM doesn't have GPU support
+
+services:
+  # RAG Indexing Service
+  rag-indexer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: labgpt-rag-indexer
+    volumes:
+      - ./indices:/app/indices
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - RAG_STORAGE_DIR=/app/indices/rag_demo_storage
+    command: python -m RAG.cli ingest --docs /app/data/documents --index /app/indices/rag_demo_storage
+    profiles:
+      - indexing
+    networks:
+      - labgpt-network
+
+  # Inference Service (CPU-only)
+  inference:
+    build:
+      context: .
+      dockerfile: Dockerfile.inference
+    container_name: labgpt-inference
+    volumes:
+      - ./indices:/app/indices
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - RAG_STORAGE_DIR=/app/indices/rag_demo_storage
+      - CUDA_VISIBLE_DEVICES=""
+    command: python inference.py "What is CRISPR?" --index /app/indices/rag_demo_storage
+    networks:
+      - labgpt-network
+    stdin_open: true
+    tty: true
+
+  # Training Web App Service (CPU-only, slower)
+  training-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: labgpt-training-app
+    volumes:
+      - ./training:/app/training
+      - ./models:/app/models
+      - ./output:/app/output
+      - ./logs:/app/logs
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - FLASK_ENV=production
+      - CUDA_VISIBLE_DEVICES=""
+    ports:
+      - "5002:5002"
+    command: python training/app.py
+    networks:
+      - labgpt-network
+    profiles:
+      - web-apps
+
+networks:
+  labgpt-network:
+    driver: bridge
+

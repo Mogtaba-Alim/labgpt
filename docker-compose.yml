@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  # RAG Indexing Service
+  rag-indexer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: labgpt-rag-indexer
+    volumes:
+      - ./indices:/app/indices
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - RAG_STORAGE_DIR=/app/indices/rag_demo_storage
+    command: python -m RAG.cli ingest --docs /app/data/documents --index /app/indices/rag_demo_storage
+    profiles:
+      - indexing
+    networks:
+      - labgpt-network
+
+  # Inference Service (with GPU support)
+  inference:
+    build:
+      context: .
+      dockerfile: Dockerfile.inference
+    container_name: labgpt-inference
+    volumes:
+      - ./indices:/app/indices
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - RAG_STORAGE_DIR=/app/indices/rag_demo_storage
+      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: tail -f /dev/null
+    networks:
+      - labgpt-network
+    stdin_open: true
+    tty: true
+
+  # Training Web App Service
+  training-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: labgpt-training-app
+    volumes:
+      - ./training:/app/training
+      - ./models:/app/models
+      - ./output:/app/output
+      - ./logs:/app/logs
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - FLASK_ENV=production
+    ports:
+      - "5002:5002"
+    command: python training/app.py
+    networks:
+      - labgpt-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    profiles:
+      - web-apps
+
+  # Data Generation Web App Service
+  data-gen-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: labgpt-data-gen-app
+    volumes:
+      - ./data_generation:/app/data_generation
+      - ./output:/app/output
+      - ./logs:/app/logs
+      - ./data:/app/data
+    environment:
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - FLASK_ENV=production
+    ports:
+      - "5001:5001"
+    command: python data_generation/app.py
+    networks:
+      - labgpt-network
+    profiles:
+      - web-apps
+
+  # Grant Generation Web App Service
+  grant-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: labgpt-grant-app
+    volumes:
+      - ./grant_generation:/app/grant_generation
+      - ./indices:/app/indices
+      - ./output:/app/output
+      - ./logs:/app/logs
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - FLASK_ENV=production
+    ports:
+      - "5000:5000"
+    command: python grant_generation/enhanced_app.py
+    networks:
+      - labgpt-network
+    profiles:
+      - web-apps
+
+networks:
+  labgpt-network:
+    driver: bridge
+
+volumes:
+  models:
+    driver: local
+  indices:
+    driver: local
+  data:
+    driver: local
+

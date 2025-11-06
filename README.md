@@ -6,6 +6,7 @@ A comprehensive command-line interface for orchestrating all LabGPT pipelines: *
 
 - [Overview](#overview)
 - [Installation](#installation)
+- [Docker Deployment](#docker-deployment) 🐳
 - [Quick Start](#quick-start)
 - [Commands](#commands)
   - [run-all](#run-all-complete-pipeline)
@@ -104,6 +105,70 @@ OPENAI_API_KEY=your_openai_api_key
 # For Training (optional, for uploading to Hugging Face Hub)
 HF_TOKEN=your_huggingface_token
 ```
+
+---
+
+## Docker Deployment 🐳
+
+**Recommended for VM deployments!** LabGPT is fully containerized for easy deployment.
+
+### Quick Start with Docker
+
+```bash
+# 1. Set up environment variables
+cat > .env << EOF
+HF_TOKEN=your_huggingface_token
+CLAUDE_API_KEY=your_claude_api_key
+OPENAI_API_KEY=your_openai_api_key
+EOF
+
+# 2. Create directories
+mkdir -p indices models data output logs
+
+# 3. Index your documents
+make index DOCS=./data/documents
+
+# 4. Run inference
+make inference QUERY="What is CRISPR gene editing?"
+
+# Or use docker-compose directly
+docker-compose up inference
+```
+
+### Available Services
+
+- **Inference Service**: RAG-augmented question answering
+- **RAG Indexer**: Create vector databases from documents  
+- **Training App**: Web interface for model fine-tuning (port 5002)
+- **Data Generation App**: Web interface for data generation (port 5001)
+- **Grant App**: Grant writing assistant (port 5000)
+
+### Docker Commands
+
+```bash
+# Using Makefile (recommended)
+make build          # Build images
+make index DOCS=./data/documents  # Create RAG index
+make inference      # Run inference
+make web-apps       # Start web interfaces
+
+# Using docker-compose directly
+docker-compose up inference              # Start inference
+docker-compose --profile indexing run --rm rag-indexer  # Index documents
+docker-compose --profile web-apps up    # Start web apps
+```
+
+### CPU-Only Mode
+
+For VMs without GPU support:
+
+```bash
+docker-compose -f docker-compose.cpu.yml up inference
+# or
+make cpu
+```
+
+📖 **Full Docker Documentation**: See [DOCKER.md](DOCKER.md) for complete deployment guide, GPU setup, troubleshooting, and production configurations.
 
 ---
 

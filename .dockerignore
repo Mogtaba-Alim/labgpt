@@ -1,0 +1,64 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+*.env
+.env.local
+
+# Data and outputs (mounted as volumes)
+STORAGE/
+test_production/
+test_basic/
+rag_demo_storage/
+data_generation/Paper_Outputs_with_chunks/
+data_generation/repos/
+data_generation/final_combined_train_dataset.json
+data_generation/final_combined_val_dataset.json
+data_generation/test_datasets/
+data_generation/test_repos/
+*.log
+logs/
+output/
+models/
+indices/
+*.npy
+*.bin
+*.pkl
+
+# Documentation
+*.md
+!README.md
+CLAUDE.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
