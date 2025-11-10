@@ -260,6 +260,110 @@ def extract_bug_type(debug_task):
         return 'logic_error'
 
 
+def process_repo_documentation(
+    repo_path: Path,
+    config_manager,
+    openai_client,
+) -> List[Dict[str, Any]]:
+    """
+    Process documentation files (.md, .Rd) found in a code repository.
+    Uses the same pipeline as papers (chunking + QA generation).
+
+    Args:
+        repo_path: Path to code repository
+        config_manager: Configuration manager
+        openai_client: OpenAI client for paper Q&A generation
+
+    Returns:
+        List of dataset entries from documentation files
+    """
+    # Initialize paper processing components
+    paper_loader = PaperLoader()
+    paper_splitter = PaperSplitter(
+        config=SplittingConfig(
+            target_chunk_size=600,
+            max_chunk_size=800,
+            min_chunk_size=200,
+            chunk_overlap=50
+        )
+    )
+    paper_gen = create_paper_qa_generator(config_manager, openai_client)
+
+    # Discover documentation files in repo
+    md_files = list(repo_path.glob("**/*.md")) + list(repo_path.glob("**/*.MD"))
+    rd_files = list(repo_path.glob("**/*.Rd")) + list(repo_path.glob("**/*.rd"))
+    doc_files = md_files + rd_files
+
+    if not doc_files:
+        logging.info("No documentation files (.md, .Rd) found in repository")
+        return []
+
+    logging.info(f"Found {len(md_files)} Markdown and {len(rd_files)} R documentation files in repository")
+
+    dataset: List[Dict[str, Any]] = []
+
+    for file_path in doc_files:
+        try:
+            logging.info(f"Processing documentation file: {file_path.name}")
+
+            # Load document
+            content, metadata = paper_loader.load_document(str(file_path))
+
+            if not content.strip():
+                logging.warning(f"No content extracted from {file_path.name}")
+                continue
+
+            # Split into semantic chunks
+            doc_chunks = paper_splitter.split_document(content, metadata)
+            logging.info(f"Split {file_path.name} into {len(doc_chunks)} chunks")
+
+            if not doc_chunks:
+                logging.warning(f"No chunks generated for {file_path.name}")
+                continue
+
+            # Convert to chunk texts for classification
+            chunk_texts = [chunk.content for chunk in doc_chunks]
+
+            # Classify chunks
+            classified = paper_gen.classify_chunks(chunk_texts)
+
+            # Generate QA pairs using multi-strategy approach
+            qa_pairs = paper_gen.generate_integrative_qa_pairs(
+                paper_chunks=classified,
+                count=len(doc_chunks)
+            )
+
+            # Format dataset entries
+            for qa in qa_pairs:
+                # Combine source chunks as context
+                context = "\n\n".join([chunk.content for chunk in qa.source_chunks])
+
+                entry = {
+                    "context_code": context,
+                    "question": qa.question,
+                    "answer": qa.answer,
+                    "task": "documentation_qa",
+                    "language": "documentation",
+                    "complexity": qa.difficulty_level,
+                    "metadata": {
+                        "file": str(file_path.relative_to(repo_path)),
+                        "doc_type": metadata.get("doc_type", "unknown"),
+                        "source": "repo_documentation",
+                        "integration_type": qa.integration_type,
+                        "chunk_indices": qa.chunk_indices,
+                        "requires_cross_reference": qa.requires_cross_reference
+                    }
+                }
+                dataset.append(entry)
+
+            logging.info(f"Generated {len(qa_pairs)} QA pairs from {file_path.name}")
+
+        except Exception as e:
+            logging.error(f"Error processing documentation file {file_path}: {e}")
+            continue
+
+    logging.info(f"Total QA pairs from repository documentation: {len(dataset)}")
+    return dataset
 
 
 def generate_from_code(
@@ -409,8 +513,18 @@ def generate_from_code(
         
         # Aggregate per file
         dataset.extend(file_entries)
-    
+
     logging.info(f"Generated {len(dataset)} dataset entries from code")
+
+    # Also process documentation files (.md, .Rd) found in repository
+    logging.info("Processing documentation files in repository...")
+    doc_dataset = process_repo_documentation(repo_path, config_manager, openai_client)
+
+    if doc_dataset:
+        dataset.extend(doc_dataset)
+        logging.info(f"Added {len(doc_dataset)} dataset entries from documentation")
+
+    logging.info(f"Total dataset size (code + documentation): {len(dataset)}")
     return dataset
 
 
@@ -446,13 +560,15 @@ def generate_from_papers(
         )
     )
 
-    # Collect PDF and text files
+    # Collect PDF, text, markdown, and R documentation files
     pdf_files = list(papers_dir.glob("**/*.pdf"))
     text_files = list(papers_dir.glob("**/*.txt"))
-    all_files = pdf_files + text_files
+    md_files = list(papers_dir.glob("**/*.md")) + list(papers_dir.glob("**/*.MD"))
+    rd_files = list(papers_dir.glob("**/*.Rd")) + list(papers_dir.glob("**/*.rd"))
+    all_files = pdf_files + text_files + md_files + rd_files
     dataset: List[Dict[str, Any]] = []
 
-    logging.info(f"Found {len(pdf_files)} PDF files and {len(text_files)} text files in papers directory")
+    logging.info(f"Found {len(pdf_files)} PDF, {len(text_files)} TXT, {len(md_files)} MD, and {len(rd_files)} Rd files in papers directory")
 
     for file_path in all_files:
         try:
@@ -526,22 +642,31 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Generate from Python and R code (instruct format only)
-  python run_comprehensive_data_gen.py --repo /path/to/repo --languages python r
+  # Generate from single repository
+  python run_comprehensive_data_gen.py --repo /path/to/repo
+
+  # Generate from multiple repositories (uses checkpoints - safe to interrupt!)
+  python run_comprehensive_data_gen.py --repo /path/repo1 /path/repo2 https://github.com/user/repo3
 
   # Generate from code and papers
   python run_comprehensive_data_gen.py --repo /path/to/repo --papers /path/to/papers
 
+  # Multiple repos with papers (checkpoints protect your progress)
+  python run_comprehensive_data_gen.py --repo /path/repo1 https://github.com/user/repo2 --papers /path/to/papers
+
+  # Resume interrupted pipeline (checkpoints auto-loaded)
+  python run_comprehensive_data_gen.py --repo /path/repo1 /path/repo2 /path/repo3
+
+  # Start fresh by clearing checkpoints
+  python run_comprehensive_data_gen.py --repo /path/to/repo --clear_checkpoints
+
   # Quick test with limited output
   python run_comprehensive_data_gen.py --repo /path/to/repo --max_symbols 5 --no_critic --no_dedup
-
-  # Use GitHub URL directly
-  python run_comprehensive_data_gen.py --repo https://github.com/user/repo --max_symbols 30
         """
     )
     
     # Input/Output
-    parser.add_argument("--repo", type=str, help="Path to a local code repository to process.")
+    parser.add_argument("--repo", nargs="+", help="Path(s) to local code repository(ies) or GitHub URL(s) to process (space-separated).")
     parser.add_argument("--papers", type=str, default="", help="Directory of pre-chunked .txt files for papers.")
     parser.add_argument("--output", type=str, default="comprehensive_outputs", help="Output directory for JSON files.")
     
@@ -560,6 +685,7 @@ Examples:
     parser.add_argument("--no_negatives", action="store_true", help="Disable extra negative examples.")
     parser.add_argument("--no_critic", action="store_true", help="Disable critic filtering.")
     parser.add_argument("--no_dedup", action="store_true", help="Disable deduplication.")
+    parser.add_argument("--clear_checkpoints", action="store_true", help="Delete existing checkpoints and start fresh.")
 
     # Privacy Mode - Local LLM
     parser.add_argument("--privacy", action="store_true",
@@ -581,77 +707,166 @@ Examples:
     # Validate inputs
     if not args.repo and not args.papers:
         parser.error("Must specify either --repo or --papers (or both)")
-    
+
     # Setup output directory
     out_dir = Path(args.output)
     out_dir.mkdir(parents=True, exist_ok=True)
-    
+
+    # Create checkpoints directory for intermediate saves
+    checkpoints_dir = out_dir / "checkpoints"
+    checkpoints_dir.mkdir(exist_ok=True)
+
+    # Clear checkpoints if requested
+    if args.clear_checkpoints:
+        checkpoint_files = list(checkpoints_dir.glob("*.json"))
+        if checkpoint_files:
+            logging.info(f"Clearing {len(checkpoint_files)} existing checkpoint(s)...")
+            for ckpt in checkpoint_files:
+                try:
+                    ckpt.unlink()
+                    logging.info(f"  Deleted: {ckpt.name}")
+                except Exception as e:
+                    logging.warning(f"  Failed to delete {ckpt.name}: {e}")
+        else:
+            logging.info("No checkpoints to clear")
+
     logging.info(f"Starting comprehensive data generation pipeline")
     logging.info(f"Languages: {args.languages}")
     logging.info(f"Output directory: {out_dir}")
-    
+    logging.info(f"Checkpoints directory: {checkpoints_dir}")
+
     # Load config
     config_manager = get_config_manager()
-    
-    # Code processing
+
+    # Code processing - handle multiple repositories
     code_dataset: List[Dict[str, Any]] = []
     if args.repo:
-        logging.info(f"Processing code repository: {args.repo}")
-        
-        # Handle GitHub URLs by cloning to a temporary directory
-        repo_path = Path(args.repo)
-        temp_dir = None
-        
+        repos_to_process = args.repo if isinstance(args.repo, list) else [args.repo]
+        logging.info(f"Processing {len(repos_to_process)} code repository(ies)")
+
+        # Check for existing checkpoints to resume from
+        existing_checkpoints = list(checkpoints_dir.glob("repo_*.json"))
+        if existing_checkpoints:
+            logging.info(f"Found {len(existing_checkpoints)} existing checkpoint(s)")
+
+        # Track temp directories for cleanup
+        temp_dirs = []
+
         try:
-            # Check if it's a URL or local path
-            parsed = urlparse(args.repo)
-            if parsed.netloc:  # It's a URL
-                temp_dir = Path(tempfile.mkdtemp(prefix="cloned_repo_"))
-                if clone_repository(args.repo, temp_dir):
-                    repo_path = temp_dir
-                else:
-                    logging.error(f"Failed to clone repository {args.repo}")
-                    repo_path = None
-            elif not repo_path.exists():
-                logging.error(f"Local repository path does not exist: {args.repo}")
-                repo_path = None
-            
-            if repo_path and repo_path.exists():
-                code_dataset = generate_from_code(
-                    repo_path,
-                    config_manager,
-                    args.min_tokens,
-                    args.max_symbols,
-                    args.languages,
-                    include_debug=not args.no_debug,
-                    include_negatives=not args.no_negatives,
-                    apply_critic=not args.no_critic,
-                    apply_dedup=not args.no_dedup,
-                    privacy_mode=args.privacy,
-                    local_model_path=args.local_model_path,
-                    device=args.device,
-                )
+            # Process each repository
+            for i, repo in enumerate(repos_to_process, 1):
+                logging.info(f"\n{'='*60}")
+                logging.info(f"Repository {i}/{len(repos_to_process)}: {repo}")
+                logging.info(f"{'='*60}")
+
+                # Generate checkpoint filename from repo name
+                repo_name = Path(repo).name.replace('.git', '')
+                checkpoint_file = checkpoints_dir / f"repo_{i:02d}_{repo_name}.json"
+
+                # Check if checkpoint exists - skip processing if it does
+                if checkpoint_file.exists():
+                    try:
+                        logging.info(f"Loading existing checkpoint: {checkpoint_file.name}")
+                        with open(checkpoint_file, 'r', encoding='utf-8') as f:
+                            repo_data = json.load(f)
+                        code_dataset.extend(repo_data)
+                        logging.info(f"Loaded {len(repo_data)} entries from checkpoint {i}")
+                        continue  # Skip to next repo
+                    except Exception as e:
+                        logging.warning(f"Failed to load checkpoint {checkpoint_file}: {e}")
+                        logging.info("Reprocessing repository...")
+
+                # Handle GitHub URLs by cloning to a temporary directory
+                repo_path = Path(repo)
+                temp_dir = None
+
+                # Check if it's a URL or local path
+                parsed = urlparse(repo)
+                if parsed.netloc:  # It's a URL
+                    temp_dir = Path(tempfile.mkdtemp(prefix="cloned_repo_"))
+                    if clone_repository(repo, temp_dir):
+                        repo_path = temp_dir
+                        temp_dirs.append(temp_dir)
+                    else:
+                        logging.error(f"Failed to clone repository {repo}, skipping")
+                        continue
+                elif not repo_path.exists():
+                    logging.error(f"Local repository path does not exist: {repo}, skipping")
+                    continue
+
+                if repo_path and repo_path.exists():
+                    repo_data = generate_from_code(
+                        repo_path,
+                        config_manager,
+                        args.min_tokens,
+                        args.max_symbols,
+                        args.languages,
+                        include_debug=not args.no_debug,
+                        include_negatives=not args.no_negatives,
+                        apply_critic=not args.no_critic,
+                        apply_dedup=not args.no_dedup,
+                        privacy_mode=args.privacy,
+                        local_model_path=args.local_model_path,
+                        device=args.device,
+                    )
+                    code_dataset.extend(repo_data)
+                    logging.info(f"Added {len(repo_data)} entries from repository {i}")
+
+                    # Save checkpoint immediately after processing
+                    try:
+                        with open(checkpoint_file, 'w', encoding='utf-8') as f:
+                            json.dump(repo_data, f, indent=2, ensure_ascii=False)
+                        logging.info(f"✓ Checkpoint saved: {checkpoint_file.name} ({len(repo_data)} entries)")
+                    except Exception as e:
+                        logging.error(f"Failed to save checkpoint {checkpoint_file}: {e}")
+
+            logging.info(f"\nTotal entries from all {len(repos_to_process)} repositories: {len(code_dataset)}")
         finally:
-            # Clean up temporary directory if created
-            if temp_dir and temp_dir.exists():
-                try:
-                    shutil.rmtree(temp_dir)
-                    logging.info(f"Cleaned up temporary directory: {temp_dir}")
-                except Exception as e:
-                    logging.warning(f"Failed to clean up temporary directory {temp_dir}: {e}")
+            # Clean up temporary directories
+            for temp_dir in temp_dirs:
+                if temp_dir.exists():
+                    try:
+                        shutil.rmtree(temp_dir)
+                        logging.info(f"Cleaned up temporary directory: {temp_dir}")
+                    except Exception as e:
+                        logging.warning(f"Failed to clean up temporary directory {temp_dir}: {e}")
     
     # Papers processing (optional)
     papers_dataset: List[Dict[str, Any]] = []
     if args.papers:
-        logging.info(f"Processing papers directory: {args.papers}")
-        papers_dataset = generate_from_papers(
-            Path(args.papers),
-            config_manager,
-            apply_critic=not args.no_critic,
-            privacy_mode=args.privacy,
-            local_model_path=args.local_model_path,
-            device=args.device,
-        )
+        papers_checkpoint_file = checkpoints_dir / "papers_dataset.json"
+
+        # Check if papers checkpoint exists
+        if papers_checkpoint_file.exists():
+            try:
+                logging.info(f"Loading existing papers checkpoint: {papers_checkpoint_file.name}")
+                with open(papers_checkpoint_file, 'r', encoding='utf-8') as f:
+                    papers_dataset = json.load(f)
+                logging.info(f"Loaded {len(papers_dataset)} entries from papers checkpoint")
+            except Exception as e:
+                logging.warning(f"Failed to load papers checkpoint: {e}")
+                logging.info("Reprocessing papers...")
+                papers_dataset = []
+
+        # Process papers if no checkpoint or checkpoint failed to load
+        if not papers_dataset:
+            logging.info(f"Processing papers directory: {args.papers}")
+            papers_dataset = generate_from_papers(
+                Path(args.papers),
+                config_manager,
+                apply_critic=not args.no_critic,
+                privacy_mode=args.privacy,
+                local_model_path=args.local_model_path,
+                device=args.device,
+            )
+
+            # Save papers checkpoint
+            try:
+                with open(papers_checkpoint_file, 'w', encoding='utf-8') as f:
+                    json.dump(papers_dataset, f, indent=2, ensure_ascii=False)
+                logging.info(f"✓ Papers checkpoint saved: {papers_checkpoint_file.name} ({len(papers_dataset)} entries)")
+            except Exception as e:
+                logging.error(f"Failed to save papers checkpoint: {e}")
     
     # Split datasets
     code_train, code_val = split_train_val(code_dataset, args.train_ratio) if code_dataset else ([], [])

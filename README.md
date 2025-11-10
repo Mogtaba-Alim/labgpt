@@ -234,6 +234,12 @@ python -m RAG.cli ask \
 
 Generate instruction-following training data from code repositories and research papers.
 
+**Enhanced Capabilities:**
+- **Multi-language code analysis**: Python, R, C, C++ with case-insensitive extension support
+- **Automatic documentation processing**: Discovers and processes `.md`, `.Rd` files in repositories
+- **Research paper integration**: Processes PDF, TXT, Markdown, and R documentation files
+- **Semantic chunking**: 600-800 token chunks with 50-token overlap for comprehensive QA generation
+
 **Syntax:**
 ```bash
 python labgpt_cli.py data-gen [OPTIONS]
@@ -244,9 +250,9 @@ python labgpt_cli.py data-gen [OPTIONS]
 - `--output DIR`: Output directory for generated data
 
 **Optional Arguments:**
-- `--papers DIR`: Path to research papers
-- `--max-symbols INT`: Maximum symbols per file (default: 30)
-- `--languages LANG [LANG ...]`: Languages to process (default: `python r c cpp`)
+- `--papers DIR`: Path to research papers directory
+- `--max-symbols INT`: Maximum symbols per file (default: 30, auto-set by pipeline)
+- `--languages LANG [LANG ...]`: Languages to process (default: auto-detected, supports `python r c cpp`)
 - `--train-ratio FLOAT`: Train/validation split (default: 0.8)
 
 **Feature Flags:**
@@ -254,6 +260,7 @@ python labgpt_cli.py data-gen [OPTIONS]
 - `--no-negatives`: Disable negative example generation (NOT_IN_CONTEXT responses)
 - `--no-critic`: Disable quality filtering
 - `--no-dedup`: Disable deduplication
+- `--clear-checkpoints`: Delete existing checkpoints and start fresh (use when changing parameters)
 
 **Privacy Mode:**
 - `--privacy`: Use local Llama model instead of API
@@ -287,9 +294,24 @@ python labgpt_cli.py data-gen \
   --output ./training-data \
   --no-critic \
   --no-dedup
+
+# Resume interrupted pipeline (checkpoints auto-loaded)
+python labgpt_cli.py data-gen \
+  --code-repos /repo1 /repo2 /repo3 \
+  --output ./training-data
+
+# Start fresh (clear checkpoints when changing parameters)
+python labgpt_cli.py data-gen \
+  --code-repos /path/to/repo \
+  --output ./training-data \
+  --max-symbols 50 \
+  --clear-checkpoints
 ```
 
 **Output:**
+- `checkpoints/` - Intermediate saves for fault tolerance (auto-resume on restart)
+  - `repo_01_RepoName.json` - Per-repository checkpoint
+  - `papers_dataset.json` - Papers checkpoint
 - `combined_instruct_train.jsonl` - Training data
 - `combined_instruct_val.jsonl` - Validation data
 - `repo_1/`, `repo_2/`, ... - Per-repository outputs
@@ -398,9 +420,9 @@ tokenizer = AutoTokenizer.from_pretrained("./my-model")
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `--code-repos` | List[str] | Code repository paths or GitHub URLs (space-separated) |
-| `--papers` | str | Path to research papers directory (PDF, TXT, MD, etc.) |
-| `--lab-docs` | str | Path to lab documents directory |
+| `--code-repos` | List[str] | Code repository paths or GitHub URLs (space-separated)<br>Supports: Python (`.py`), R (`.r`/`.R`), C (`.c`/`.C`), C++ (`.cpp`/`.CPP`/`.cxx`/`.CXX`/`.cc`/`.CC`, `.h`/`.H`/`.hpp`/`.HPP`)<br>Also processes: Markdown (`.md`/`.MD`), R Documentation (`.Rd`/`.rd`) |
+| `--papers` | str | Path to research papers directory<br>Supports: PDF (`.pdf`), Text (`.txt`), Markdown (`.md`/`.MD`), R Documentation (`.Rd`/`.rd`) |
+| `--lab-docs` | str | Path to lab documents directory<br>Supports: PDF (`.pdf`), Text (`.txt`), Markdown (`.md`/`.MD`), R Documentation (`.Rd`/`.rd`) |
 
 ### Output Locations
 
@@ -422,8 +444,8 @@ tokenizer = AutoTokenizer.from_pretrained("./my-model")
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `--max-symbols` | int | 30 | Maximum symbols to extract per file |
-| `--languages` | List[str] | `python r c cpp` | Languages to process |
+| `--max-symbols` | int | 30 | Maximum symbols to extract per file (auto-set by pipeline if not specified) |
+| `--languages` | List[str] | `python r c cpp` | Languages to process (auto-detected if not specified)<br>Available: `python`, `r`, `c`, `cpp` (case-insensitive extensions) |
 | `--train-ratio` | float | 0.8 | Train/validation split ratio |
 | `--no-debug` | flag | False | Disable debug task generation |
 | `--no-negatives` | flag | False | Disable negative example generation |
@@ -431,6 +453,16 @@ tokenizer = AutoTokenizer.from_pretrained("./my-model")
 | `--no-dedup` | flag | False | Disable deduplication |
 | `--privacy` | flag | False | Use local model instead of API |
 | `--local-model-path` | str | None | Path to local model for privacy mode |
+
+**Supported File Extensions:**
+- **Code Files**: All case variants supported (e.g., `.py`, `.R`/`.r`, `.C`/`.c`, `.CPP`/`.cpp`/`.cxx`/`.cc`, `.H`/`.h`/`.HPP`/`.hpp`)
+- **Documentation in Repos**: `.md`/`.MD` (Markdown), `.Rd`/`.rd` (R Documentation) - automatically discovered and processed alongside code
+- **Research Papers**: `.pdf`, `.txt`, `.md`/`.MD`, `.Rd`/`.rd`
+
+**Note**: When processing code repositories, the pipeline automatically:
+- Detects and processes all supported code file extensions (case-insensitive)
+- Discovers and processes documentation files (`.md`, `.MD`, `.Rd`, `.rd`) using the same semantic chunking and QA generation as research papers
+- Generates comprehensive training data covering both code implementation and documentation
 
 ### Training Pipeline
 
@@ -468,7 +500,7 @@ python labgpt_cli.py run-all \
 
 ### Example 2: Production Run with Multiple Repos
 
-Process multiple repositories with full quality control:
+Process multiple repositories with full quality control. All repos are processed in a single pipeline run for optimal quality control and deduplication:
 
 ```bash
 python labgpt_cli.py run-all \
@@ -483,6 +515,12 @@ python labgpt_cli.py run-all \
   --num-epochs 3 \
   --learning-rate 2e-5
 ```
+
+**Note**: When processing multiple repos, the pipeline:
+- Processes all code repos in a single run
+- Applies quality control and deduplication across ALL repos together
+- Processes research papers only once (not once per repo)
+- Generates combined training data with optimal diversity
 
 ### Example 3: Privacy Mode (No API Calls)
 

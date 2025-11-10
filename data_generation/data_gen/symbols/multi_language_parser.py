@@ -609,8 +609,17 @@ class MultiLanguageParser:
             return []
     
     def get_supported_extensions(self) -> List[str]:
-        """Get list of supported file extensions."""
-        return ['.py', '.r', '.c', '.cpp', '.cxx', '.cc', '.h', '.hpp', '.h++']
+        """Get list of supported file extensions (cross-platform compatibility)."""
+        # Include both lowercase and uppercase variants for case-sensitive filesystems
+        return [
+            '.py',                                    # Python
+            '.r', '.R',                               # R (both cases)
+            '.c', '.C',                               # C (both cases)
+            '.cpp', '.CPP', '.cxx', '.CXX',          # C++ source (both cases)
+            '.cc', '.CC',                             # C++ source (both cases)
+            '.h', '.H',                               # Headers (both cases)
+            '.hpp', '.HPP', '.h++', '.H++'           # C++ headers (both cases)
+        ]
     
     def is_supported(self, file_path: str) -> bool:
         """Check if file is supported by any parser."""

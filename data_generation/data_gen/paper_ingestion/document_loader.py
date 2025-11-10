@@ -28,7 +28,8 @@ class PaperLoader:
     """Enhanced document loader with metadata extraction and structure preservation."""
 
     def __init__(self, supported_extensions: List[str] = None):
-        self.supported_extensions = supported_extensions or ['.pdf', '.txt', '.md']
+        # Support PDFs, text files, Markdown, and R documentation files
+        self.supported_extensions = supported_extensions or ['.pdf', '.txt', '.md', '.Rd', '.rd']
 
     def load_document(self, file_path: str) -> Tuple[str, Dict]:
         """
