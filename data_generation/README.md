@@ -22,15 +22,14 @@ OPENAI_KEY=your_openai_api_key
 ### Basic Usage
 
 ```bash
-# Generate from a GitHub repository
+# Generate from a single repository
 python run_comprehensive_data_gen.py \
   --repo https://github.com/user/repo \
-  --output output_dir \
-  --max_symbols 30
+  --output output_dir
 
-# Generate from local code
+# Generate from multiple repositories (all processed in one run)
 python run_comprehensive_data_gen.py \
-  --repo /path/to/local/repo \
+  --repo /path/to/repo1 https://github.com/user/repo2 /path/to/repo3 \
   --output output_dir
 
 # Generate from code + papers
@@ -38,16 +37,36 @@ python run_comprehensive_data_gen.py \
   --repo /path/to/repo \
   --papers /path/to/papers \
   --output output_dir
+
+# Multiple repos + papers (papers processed once, quality control across all repos)
+python run_comprehensive_data_gen.py \
+  --repo /path/repo1 https://github.com/user/repo2 \
+  --papers /path/to/papers \
+  --output output_dir
+
+# Resume interrupted pipeline (checkpoints auto-loaded by default)
+python run_comprehensive_data_gen.py \
+  --repo /path/repo1 /path/repo2 /path/repo3 \
+  --output output_dir
+
+# Start fresh by clearing checkpoints
+python run_comprehensive_data_gen.py \
+  --repo /path/to/repo \
+  --output output_dir \
+  --clear_checkpoints
 ```
 
 ## Key Features
 
-- **Multi-Language Support**: Python, R, C, C++
+- **Multi-Language Support**: Python, R, C, C++ with case-insensitive extensions (`.py`, `.r/.R`, `.c/.C`, `.cpp/.CPP`, etc.)
+- **Documentation Processing**: Automatically processes Markdown (`.md/.MD`) and R documentation (`.Rd/.rd`) files found in repositories
 - **Grounded QA Generation**: Context-bound question-answer pairs with citations
 - **Bug Injection**: 12 realistic bug types for debugging task generation
 - **Negative Examples**: NOT_IN_CONTEXT responses for abstention training
 - **Quality Control**: 6-dimensional LLM-based quality scoring
 - **Deduplication**: Embedding-based similarity filtering (0.92 threshold)
+- **Checkpoint System**: Automatic fault-tolerant processing with per-repository saves
+- **Cross-Platform**: Works consistently on Windows, Linux, and macOS
 - **Instruct Format**: Direct output for Llama fine-tuning
 
 ## Output Format
@@ -56,6 +75,10 @@ The pipeline generates instruct format JSONL files ready for fine-tuning:
 
 ```
 output_dir/
+├── checkpoints/                      # Intermediate saves (auto-resume)
+│   ├── repo_01_RepoName.json        # Per-repository checkpoint
+│   ├── repo_02_RepoName.json        # Per-repository checkpoint
+│   └── papers_dataset.json          # Papers checkpoint
 ├── code_instruct_train.jsonl        # Training data from code
 ├── code_instruct_val.jsonl          # Validation data from code
 ├── papers_instruct_train.jsonl      # Training data from papers
@@ -100,8 +123,8 @@ python run_comprehensive_data_gen.py \
 
 Key arguments:
 
-- `--repo`: Path or GitHub URL to code repository
-- `--papers`: Directory containing research papers (PDF)
+- `--repo`: Path or GitHub URL to code repository (processes code + documentation files)
+- `--papers`: Directory containing research papers (PDF, TXT, MD, Rd files)
 - `--output`: Output directory for generated datasets
 - `--max_symbols`: Maximum symbols to extract per file (default: 30)
 - `--min_tokens`: Minimum tokens per symbol (default: 30)
@@ -111,7 +134,19 @@ Key arguments:
 - `--no_negatives`: Disable negative example generation
 - `--no_critic`: Disable quality filtering
 - `--no_dedup`: Disable deduplication
+- `--clear_checkpoints`: Delete existing checkpoints and start fresh (use when changing parameters)
 - `--log_level`: Logging level (DEBUG, INFO, WARNING, ERROR)
+
+## Checkpoint System
+
+The pipeline automatically saves progress after each repository and paper processing:
+
+- **Auto-Resume**: By default, the pipeline resumes from existing checkpoints if interrupted
+- **Per-Repository Saves**: Each repository is saved immediately after processing
+- **Fault Tolerance**: Prevents data loss during long-running multi-repository processing
+- **Fresh Start**: Use `--clear_checkpoints` when changing parameters like `--max_symbols`
+
+Checkpoints are stored in `output_dir/checkpoints/` and loaded automatically on restart.
 
 ## Architecture
 
@@ -119,10 +154,11 @@ Key arguments:
 data_generation/
 ├── run_comprehensive_data_gen.py    # Main pipeline script
 ├── data_gen/
-│   ├── symbols/                     # Multi-language code parsing
+│   ├── symbols/                     # Multi-language code parsing (Python, R, C, C++)
 │   ├── tasks/                       # QA, debug, negative generation
 │   ├── critique/                    # Quality control & deduplication
 │   ├── assembly/                    # Instruct format conversion
+│   ├── paper_ingestion/             # Document loading (PDF, MD, Rd files)
 │   └── config/                      # Task taxonomy configuration
 └── requirements.txt                 # Dependencies
 ```

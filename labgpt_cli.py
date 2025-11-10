@@ -172,13 +172,14 @@ class PipelineOrchestrator:
         code_repos: List[str],
         papers_dir: Optional[str] = None,
         output_dir: Optional[str] = None,
-        max_symbols: int = 30,
-        languages: List[str] = None,
+        max_symbols: Optional[int] = None,
+        languages: Optional[List[str]] = None,
         train_ratio: float = 0.8,
         no_debug: bool = False,
         no_negatives: bool = False,
         no_critic: bool = False,
         no_dedup: bool = False,
+        clear_checkpoints: bool = False,
         privacy: bool = False,
         local_model_path: Optional[str] = None,
         **kwargs
@@ -197,6 +198,7 @@ class PipelineOrchestrator:
             no_negatives: Disable negative example generation
             no_critic: Disable quality filtering
             no_dedup: Disable deduplication
+            clear_checkpoints: Delete existing checkpoints and start fresh
             privacy: Use local model instead of API
             local_model_path: Path to local model for privacy mode
 
@@ -219,114 +221,69 @@ class PipelineOrchestrator:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        # Set default languages
-        if languages is None:
-            languages = ["python", "r", "c", "cpp"]
-
-        # Handle multiple code repositories
-        repo_paths = []
-        cloned_repos = []
-
+        # Validate local repositories exist (URLs will be handled by data generation script)
         for repo in code_repos:
-            if repo.startswith("http://") or repo.startswith("https://"):
-                # Clone GitHub repository
-                logger.info(f"Cloning repository: {repo}")
-                clone_dir = self.temp_dir / "repos" / Path(repo).stem
-                clone_dir.parent.mkdir(parents=True, exist_ok=True)
-
-                try:
-                    subprocess.run(
-                        ["git", "clone", repo, str(clone_dir)],
-                        check=True,
-                        capture_output=True,
-                        text=True
-                    )
-                    repo_paths.append(str(clone_dir))
-                    cloned_repos.append(clone_dir)
-                    logger.info(f"✓ Cloned to: {clone_dir}")
-                except subprocess.CalledProcessError as e:
-                    logger.error(f"Failed to clone {repo}: {e.stderr}")
-                    raise
-            else:
-                # Local repository path
+            if not (repo.startswith("http://") or repo.startswith("https://")):
                 if not os.path.exists(repo):
                     raise ValueError(f"Local repository path does not exist: {repo}")
-                repo_paths.append(repo)
-                logger.info(f"Using local repository: {repo}")
 
         try:
-            # Run data generation for each repository and combine
-            all_outputs = []
+            logger.info(f"\nProcessing {len(code_repos)} repositories in single pipeline run")
 
-            for i, repo_path in enumerate(repo_paths, 1):
-                logger.info(f"\nProcessing repository {i}/{len(repo_paths)}: {repo_path}")
+            # Build command - pass ALL repos in a single call
+            cmd = [
+                sys.executable,
+                "data_generation/run_comprehensive_data_gen.py",
+                "--repo", *code_repos,  # Pass all repos at once
+                "--output", str(output_path),
+                "--train_ratio", str(train_ratio),
+            ]
 
-                # Create output directory for this repo
-                repo_output = output_path / f"repo_{i}"
-                repo_output.mkdir(exist_ok=True)
+            # Only add max_symbols and languages if explicitly provided
+            if max_symbols is not None:
+                cmd.extend(["--max_symbols", str(max_symbols)])
+            if languages is not None:
+                cmd.extend(["--languages", *languages])
 
-                # Build command
-                cmd = [
-                    sys.executable,
-                    "data_generation/run_comprehensive_data_gen.py",
-                    "--repo", repo_path,
-                    "--output", str(repo_output),
-                    "--max_symbols", str(max_symbols),
-                    "--languages", *languages,
-                    "--train_ratio", str(train_ratio),
-                ]
+            # Add papers directory if provided
+            if papers_dir and os.path.exists(papers_dir):
+                cmd.extend(["--papers", papers_dir])
 
-                # Add papers directory for first repo only (to avoid duplication)
-                if i == 1 and papers_dir and os.path.exists(papers_dir):
-                    cmd.extend(["--papers", papers_dir])
+            # Add flags
+            if no_debug:
+                cmd.append("--no_debug")
+            if no_negatives:
+                cmd.append("--no_negatives")
+            if no_critic:
+                cmd.append("--no_critic")
+            if no_dedup:
+                cmd.append("--no_dedup")
+            if clear_checkpoints:
+                cmd.append("--clear_checkpoints")
+            if privacy:
+                cmd.append("--privacy")
+                if local_model_path:
+                    cmd.extend(["--local_model_path", local_model_path])
 
-                # Add flags
-                if no_debug:
-                    cmd.append("--no_debug")
-                if no_negatives:
-                    cmd.append("--no_negatives")
-                if no_critic:
-                    cmd.append("--no_critic")
-                if no_dedup:
-                    cmd.append("--no_dedup")
-                if privacy:
-                    cmd.append("--privacy")
-                    if local_model_path:
-                        cmd.extend(["--local_model_path", local_model_path])
+            logger.info(f"Running command: {' '.join(cmd)}")
 
-                logger.info(f"Running command: {' '.join(cmd)}")
+            result = subprocess.run(
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=os.getcwd()
+            )
 
-                result = subprocess.run(
-                    cmd,
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                    cwd=os.getcwd()
-                )
+            logger.info("Data generation output:")
+            logger.info(result.stdout)
 
-                logger.info(f"Data generation output for repo {i}:")
-                logger.info(result.stdout)
+            if result.stderr:
+                logger.warning(f"Data generation warnings:\n{result.stderr}")
 
-                if result.stderr:
-                    logger.warning(f"Data generation warnings:\n{result.stderr}")
-
-                all_outputs.append(repo_output)
-
-            # Combine outputs from all repositories
-            logger.info("\nCombining outputs from all repositories...")
+            # Output files are already combined by the data generation pipeline
             combined_train = output_path / "combined_instruct_train.jsonl"
             combined_val = output_path / "combined_instruct_val.jsonl"
-
-            self._combine_jsonl_files(
-                all_outputs,
-                "combined_instruct_train.jsonl",
-                combined_train
-            )
-            self._combine_jsonl_files(
-                all_outputs,
-                "combined_instruct_val.jsonl",
-                combined_val
-            )
 
             # Count examples
             train_count = self._count_jsonl_lines(combined_train)
@@ -349,13 +306,6 @@ class PipelineOrchestrator:
         except subprocess.CalledProcessError as e:
             logger.error(f"Data generation failed with error:\n{e.stderr}")
             raise RuntimeError(f"Data generation failed: {e.stderr}")
-
-        finally:
-            # Cleanup cloned repositories
-            for clone_dir in cloned_repos:
-                if clone_dir.exists():
-                    logger.info(f"Cleaning up cloned repository: {clone_dir}")
-                    shutil.rmtree(clone_dir)
 
     def run_training(
         self,
@@ -725,6 +675,11 @@ def add_datagen_specific_args(parser: argparse.ArgumentParser):
         help="Space-separated list of code repository paths or GitHub URLs"
     )
     parser.add_argument(
+        "--papers",
+        type=str,
+        help="Path to research papers directory (optional)"
+    )
+    parser.add_argument(
         "--output",
         type=str,
         required=True,
@@ -733,7 +688,7 @@ def add_datagen_specific_args(parser: argparse.ArgumentParser):
 
 
 def add_datagen_args(parser: argparse.ArgumentParser):
-    """Add data generation pipeline arguments."""
+    """Add data generation pipeline arguments (optional parameters)."""
     datagen_group = parser.add_argument_group("Data Generation options")
     datagen_group.add_argument(
         "--datagen-output",
@@ -743,14 +698,14 @@ def add_datagen_args(parser: argparse.ArgumentParser):
     datagen_group.add_argument(
         "--max-symbols",
         type=int,
-        default=30,
-        help="Maximum symbols to extract per file (default: 30)"
+        default=None,
+        help="Maximum symbols to extract per file (default: 30 if not specified)"
     )
     datagen_group.add_argument(
         "--languages",
         nargs="+",
-        default=["python", "r", "c", "cpp"],
-        help="Languages to process (default: python r c cpp)"
+        default=None,
+        help="Languages to process (default: python r c cpp if not specified)"
     )
     datagen_group.add_argument(
         "--train-ratio",
@@ -777,6 +732,11 @@ def add_datagen_args(parser: argparse.ArgumentParser):
         "--no-dedup",
         action="store_true",
         help="Disable deduplication"
+    )
+    datagen_group.add_argument(
+        "--clear-checkpoints",
+        action="store_true",
+        help="Delete existing checkpoints and start fresh (use when changing parameters)"
     )
     datagen_group.add_argument(
         "--privacy",
@@ -925,6 +885,7 @@ def main():
                 "no_negatives": args_dict.get("no_negatives", False),
                 "no_critic": args_dict.get("no_critic", False),
                 "no_dedup": args_dict.get("no_dedup", False),
+                "clear_checkpoints": args_dict.get("clear_checkpoints", False),
                 "privacy": args_dict.get("privacy", False),
                 "local_model_path": args_dict.get("local_model_path"),
                 "model_output": args_dict.get("model_output"),
@@ -963,6 +924,7 @@ def main():
                 no_negatives=args_dict.get("no_negatives", False),
                 no_critic=args_dict.get("no_critic", False),
                 no_dedup=args_dict.get("no_dedup", False),
+                clear_checkpoints=args_dict.get("clear_checkpoints", False),
                 privacy=args_dict.get("privacy", False),
                 local_model_path=args_dict.get("local_model_path"),
             )
