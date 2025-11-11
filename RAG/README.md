@@ -44,8 +44,11 @@ for result in results:
 ### CLI Usage
 
 ```bash
-# Ingest documents
+# Ingest documents (auto-detect device)
 python -m RAG.cli ingest --docs papers/ --index my_rag
+
+# Ingest with specific device (cpu/cuda/auto)
+python -m RAG.cli ingest --docs papers/ --index my_rag --device cpu
 
 # Search
 python -m RAG.cli ask --index my_rag --query "How does CRISPR work?"
@@ -53,6 +56,11 @@ python -m RAG.cli ask --index my_rag --query "How does CRISPR work?"
 # Check status
 python -m RAG.cli status --index my_rag
 ```
+
+**Device Selection:**
+- `--device auto` (default): Automatically uses GPU if available and not locked by other tasks
+- `--device cuda`: Forces GPU usage (may conflict with training)
+- `--device cpu`: Uses CPU (slower but no GPU conflicts)
 
 ## Key Features
 
@@ -63,6 +71,8 @@ python -m RAG.cli status --index my_rag
 - **Cited Spans**: Extract supporting text with character offsets
 - **Embedding Cache**: SHA256-based caching for 50-1000x speedup on incremental updates
 - **Reproducibility Snapshots**: SHA256 verification for exact index state tracking
+- **Device-Aware Loading**: Auto-detects GPU availability with lock coordination to prevent conflicts
+- **Model Caching**: Multiple pipeline instances share cached models to reduce memory usage
 
 ## Testing
 

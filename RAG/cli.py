@@ -32,10 +32,11 @@ def cmd_ingest(args):
     """Ingest documents into the RAG index."""
     print("Processing documents...")
 
-    # Initialize pipeline
+    # Initialize pipeline with device selection
     rag = RAGPipeline(
         index_dir=args.index,
-        preset=args.preset
+        preset=args.preset,
+        device=args.device
     )
 
     # Add documents
@@ -331,6 +332,12 @@ Examples:
         default='default',
         choices=['default', 'research'],
         help='Configuration preset (default: default)'
+    )
+    ingest_parser.add_argument(
+        '--device',
+        default='auto',
+        choices=['cpu', 'cuda', 'auto'],
+        help='Device for embedding models: cpu, cuda, or auto (default: auto - use GPU if available)'
     )
 
     # Ask command

@@ -32,6 +32,9 @@ class RAGPipeline:
     """
     Unified RAG pipeline with simple API and sensible defaults.
 
+    Features model caching: Multiple RAGPipeline instances using the same
+    embedding/reranker models will share cached instances to reduce memory usage.
+
     Usage:
         # Quick start (default preset)
         rag = RAGPipeline(index_dir="my_rag")
@@ -43,6 +46,10 @@ class RAGPipeline:
         results = rag.search("compare CRISPR-Cas9 vs Cas13",
                            expand_query=True, cited_spans=True)
     """
+
+    # Class-level model cache: {(model_name, device): model_instance}
+    _embedding_model_cache: Dict[tuple, SentenceTransformer] = {}
+    _reranker_model_cache: Dict[tuple, CrossEncoder] = {}
 
     PRESETS = {
         "default": {
@@ -93,27 +100,64 @@ class RAGPipeline:
 
         logger.info(f"Initializing RAGPipeline with preset: {preset}")
 
-        # Auto-detect device if needed
+        # Auto-detect device if needed with GPU lock check
+        self._gpu_lock = None  # Track GPU lock for cleanup
         if device == "auto":
             import torch
+            # Check if GPU is available and not locked
             if torch.cuda.is_available():
-                device = "cuda"
+                # Try to acquire GPU lock (non-blocking)
+                try:
+                    import redis
+                    import os
+                    # Get Redis URL from environment or use default
+                    redis_url = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+                    redis_client = redis.Redis.from_url(redis_url, decode_responses=True)
+                    gpu_lock = redis_client.lock('gpu:mutex', timeout=5, blocking_timeout=0)
+
+                    if gpu_lock.acquire(blocking=False):
+                        # GPU is available and not locked
+                        device = "cuda"
+                        self._gpu_lock = gpu_lock  # Hold lock for pipeline lifetime
+                        logger.info("Auto-detected device: cuda (GPU lock acquired)")
+                    else:
+                        # GPU is busy, fall back to CPU
+                        device = "cpu"
+                        logger.info("Auto-detected device: cpu (GPU busy, lock not available)")
+                except Exception as e:
+                    # Redis not available or lock failed, use CPU to be safe
+                    device = "cpu"
+                    logger.warning(f"GPU lock check failed ({e}), falling back to CPU")
             elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
                 device = "mps"
+                logger.info("Auto-detected device: mps")
             else:
                 device = "cpu"
-            logger.info(f"Auto-detected device: {device}")
+                logger.info("Auto-detected device: cpu")
 
         # Store model names for later reference
         self.embedding_model_name = embedding_model
         self.reranker_model_name = reranker_model
 
-        # Initialize models
-        logger.info(f"Loading embedding model: {embedding_model}")
-        self.embedding_model = SentenceTransformer(embedding_model, device=device)
+        # Initialize models (use cache if available)
+        cache_key_embed = (embedding_model, device)
+        cache_key_rerank = (reranker_model, device)
 
-        logger.info(f"Loading reranker model: {reranker_model}")
-        self.reranker_model = CrossEncoder(reranker_model, device=device)
+        if cache_key_embed in RAGPipeline._embedding_model_cache:
+            logger.info(f"Reusing cached embedding model: {embedding_model} on {device}")
+            self.embedding_model = RAGPipeline._embedding_model_cache[cache_key_embed]
+        else:
+            logger.info(f"Loading embedding model: {embedding_model} on {device}")
+            self.embedding_model = SentenceTransformer(embedding_model, device=device)
+            RAGPipeline._embedding_model_cache[cache_key_embed] = self.embedding_model
+
+        if cache_key_rerank in RAGPipeline._reranker_model_cache:
+            logger.info(f"Reusing cached reranker model: {reranker_model} on {device}")
+            self.reranker_model = RAGPipeline._reranker_model_cache[cache_key_rerank]
+        else:
+            logger.info(f"Loading reranker model: {reranker_model} on {device}")
+            self.reranker_model = CrossEncoder(reranker_model, device=device)
+            RAGPipeline._reranker_model_cache[cache_key_rerank] = self.reranker_model
 
         # Initialize components
         self.document_loader = DocumentLoader()
