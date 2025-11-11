@@ -1,0 +1,1858 @@
+[
+  {
+    "doc_id": "A T2-weighted MRI-based radiomic signature for disease-free survival_ad99a7f9",
+    "source_path": "temp/rag_documents/papers/A T2-weighted MRI-based radiomic signature for disease-free survival.pdf",
+    "doc_type": "pdf",
+    "title": "A T2-weighted MRI-based radiomic signature for disease-free survival in locally advanced cervical cancer following chemoradiation: An international, multicentre study",
+    "page_count": 7,
+    "chunk_count": 43
+  },
+  {
+    "doc_id": "An open-source foundation for head and neck radiomics_f1a3b5a9",
+    "source_path": "temp/rag_documents/papers/An open-source foundation for head and neck radiomics.pdf",
+    "doc_type": "pdf",
+    "title": "98 An open-source foundation for head and neck radiomics",
+    "page_count": 4,
+    "chunk_count": 9
+  },
+  {
+    "doc_id": "APOBEC3B_expression_in_breast_cancer_reflects_cellular_proliferation,_while_a_deletion_polymorphism_is_associated_with_immune_activation_44bede9c",
+    "source_path": "temp/rag_documents/papers/APOBEC3B_expression_in_breast_cancer_reflects_cellular_proliferation,_while_a_deletion_polymorphism_is_associated_with_immune_activation.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 6,
+    "chunk_count": 45
+  },
+  {
+    "doc_id": "Assessing_therapy_response_in_patient-derived_xenografts_20ee5efc",
+    "source_path": "temp/rag_documents/papers/Assessing_therapy_response_in_patient-derived_xenografts.pdf",
+    "doc_type": "pdf",
+    "title": "Assessing therapy response in patient-derived xenografts",
+    "page_count": 11,
+    "chunk_count": 79
+  },
+  {
+    "doc_id": "Assessment_of_Genetic_Drift_in_Large_Pharmacogenomic_Studies_9565ce77",
+    "source_path": "temp/rag_documents/papers/Assessment_of_Genetic_Drift_in_Large_Pharmacogenomic_Studies.pdf",
+    "doc_type": "pdf",
+    "title": "Assessment of Genetic Drift in Large Pharmacogenomic Studies",
+    "page_count": 12,
+    "chunk_count": 52
+  },
+  {
+    "doc_id": "Assessment_of_pharmacogenomic_agreement_version_1_7be782f2",
+    "source_path": "temp/rag_documents/papers/Assessment_of_pharmacogenomic_agreement_version_1.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 10,
+    "chunk_count": 44
+  },
+  {
+    "doc_id": "Automated analysis of elective neck radiation therapy patterns in patients with head and neck_35592262",
+    "source_path": "temp/rag_documents/papers/Automated analysis of elective neck radiation therapy patterns in patients with head and neck.pdf",
+    "doc_type": "pdf",
+    "title": "168 Automated analysis of elective neck radiation therapy patterns in patients with head and neck cancer",
+    "page_count": 4,
+    "chunk_count": 11
+  },
+  {
+    "doc_id": "Automated_detection_of_dental_artifacts_for_large-scale_radiomic_analysis_in_radiation_oncology_a3c39c06",
+    "source_path": "temp/rag_documents/papers/Automated_detection_of_dental_artifacts_for_large-scale_radiomic_analysis_in_radiation_oncology.pdf",
+    "doc_type": "pdf",
+    "title": "Automated detection of dental artifacts for large-scale radiomic analysis in radiation oncology",
+    "page_count": 7,
+    "chunk_count": 36
+  },
+  {
+    "doc_id": "Bimodal_Gene_Expression_in_Patients_with_Cancer_Provides_Interpretable_Biomarkers_for_Drug_Sensitivity_5fdeedff",
+    "source_path": "temp/rag_documents/papers/Bimodal_Gene_Expression_in_Patients_with_Cancer_Provides_Interpretable_Biomarkers_for_Drug_Sensitivity.pdf",
+    "doc_type": "pdf",
+    "title": "CAN-21-2395 2378..2387",
+    "page_count": 10,
+    "chunk_count": 53
+  },
+  {
+    "doc_id": "Biological_and_therapeutic_implications_of_a_unique_subtype_of_NPM1_mutated_AML_c36d52fb",
+    "source_path": "temp/rag_documents/papers/Biological_and_therapeutic_implications_of_a_unique_subtype_of_NPM1_mutated_AML.pdf",
+    "doc_type": "pdf",
+    "title": "MetaGxData: Clinically Annotated Breast, Ovarian and Pancreatic Cancer Datasets and their Use in Generating a Multi-Cancer Gene Signature",
+    "page_count": 14,
+    "chunk_count": 50
+  },
+  {
+    "doc_id": "Characterization_of_Conserved_Toxicogenomic_Responses_in_Chemically_Exposed_Hepatocytes_across_Species_and_Platforms_761077eb",
+    "source_path": "temp/rag_documents/papers/Characterization_of_Conserved_Toxicogenomic_Responses_in_Chemically_Exposed_Hepatocytes_across_Species_and_Platforms.pdf",
+    "doc_type": "pdf",
+    "title": "Characterization of Conserved Toxicogenomic Responses in Chemically Exposed Hepatocytes across Species and Platforms",
+    "page_count": 8,
+    "chunk_count": 57
+  },
+  {
+    "doc_id": "Computational_pharmacogenomic_screen_identifies_drugs_that_potentiate_the_anti-breast_cancer_activity_of_statins_a297a258",
+    "source_path": "temp/rag_documents/papers/Computational_pharmacogenomic_screen_identifies_drugs_that_potentiate_the_anti-breast_cancer_activity_of_statins.pdf",
+    "doc_type": "pdf",
+    "title": "Computational pharmacogenomic screen identifies drugs that potentiate the anti-breast cancer activity of statins",
+    "page_count": 17,
+    "chunk_count": 120
+  },
+  {
+    "doc_id": "Consensus_on_Molecular_Subtypes_of_High-grade_Serous_Ovarian_Carcinoma_79669d72",
+    "source_path": "temp/rag_documents/papers/Consensus_on_Molecular_Subtypes_of_High-grade_Serous_Ovarian_Carcinoma.pdf",
+    "doc_type": "pdf",
+    "title": "Consensus on Molecular Subtypes of High-grade Serous Ovarian Carcinoma",
+    "page_count": 22,
+    "chunk_count": 52
+  },
+  {
+    "doc_id": "Consistency_in_drug_response_profiling_368feb20",
+    "source_path": "temp/rag_documents/papers/Consistency_in_drug_response_profiling.pdf",
+    "doc_type": "pdf",
+    "title": "Safikhani et al. reply",
+    "page_count": 4,
+    "chunk_count": 33
+  },
+  {
+    "doc_id": "Creating_reproducible_pharmacogenomic_analysis_pipelines_6b642cf0",
+    "source_path": "temp/rag_documents/papers/Creating_reproducible_pharmacogenomic_analysis_pipelines.pdf",
+    "doc_type": "pdf",
+    "title": "Creating reproducible pharmacogenomic analysis pipelines",
+    "page_count": 7,
+    "chunk_count": 30
+  },
+  {
+    "doc_id": "CrosstalkNet:_A_Visualization_Tool_for_Differential_Co-expression_Networks_and_Communities_3e399425",
+    "source_path": "temp/rag_documents/papers/CrosstalkNet:_A_Visualization_Tool_for_Differential_Co-expression_Networks_and_Communities.pdf",
+    "doc_type": "pdf",
+    "title": "CrosstalkNet: A Visualization Tool for Differential Co-expression Networks and Communities",
+    "page_count": 4,
+    "chunk_count": 24
+  },
+  {
+    "doc_id": "Deep-CR_MTLR:_a_Multi-Modal_Approach_for_Cancer_Prediction_with_Competing_Risks_cf320d01",
+    "source_path": "temp/rag_documents/papers/Deep-CR_MTLR:_a_Multi-Modal_Approach_for_Cancer_Prediction_with_Competing_Risks.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 9,
+    "chunk_count": 28
+  },
+  {
+    "doc_id": "Distributed Biomarker Discovery for Immuno-Oncology_e01777c7",
+    "source_path": "temp/rag_documents/papers/Distributed Biomarker Discovery for Immuno-Oncology.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 43,
+    "chunk_count": 123
+  },
+  {
+    "doc_id": "DNA_replication_stress:_a_source_of_APOBEC3B_expression_in_breast_cancer_293fa382",
+    "source_path": "temp/rag_documents/papers/DNA_replication_stress:_a_source_of_APOBEC3B_expression_in_breast_cancer.pdf",
+    "doc_type": "pdf",
+    "title": "DNA replication stress: a source of APOBEC3B expression in breast cancer",
+    "page_count": 3,
+    "chunk_count": 18
+  },
+  {
+    "doc_id": "Drug_sensitivity_prediction_from_cell_line-based_pharmacogenomics_data:_guidelines_for_developing_machine_learning_models_e76ba592",
+    "source_path": "temp/rag_documents/papers/Drug_sensitivity_prediction_from_cell_line-based_pharmacogenomics_data:_guidelines_for_developing_machine_learning_models.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 14,
+    "chunk_count": 69
+  },
+  {
+    "doc_id": "Effect_of_Radiation_Therapy_Quality_Assuranceon_Nasopharyngeal_Carcinoma:_Usage_of_a_Novel,_Web-Based_Quality_Assurance_Application_5d1c080f",
+    "source_path": "temp/rag_documents/papers/Effect_of_Radiation_Therapy_Quality_Assuranceon_Nasopharyngeal_Carcinoma:_Usage_of_a_Novel,_Web-Based_Quality_Assurance_Application.pdf",
+    "doc_type": "pdf",
+    "title": "Effect of Radiation Therapy Quality Assurance on Nasopharyngeal Carcinoma: Usage of a Novel, Web-Based Quality Assurance Application",
+    "page_count": 11,
+    "chunk_count": 40
+  },
+  {
+    "doc_id": "Enhancing_Reproducibility_in_Cancer_Drug_Screening:_How_Do_We_Move_Forward_4d392a1c",
+    "source_path": "temp/rag_documents/papers/Enhancing_Reproducibility_in_Cancer_Drug_Screening:_How_Do_We_Move_Forward.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 14,
+    "chunk_count": 37
+  },
+  {
+    "doc_id": "Evaluation_of_statistical_approaches_for_association_testing_in_noisy_drug_screening_data_de78551e",
+    "source_path": "temp/rag_documents/papers/Evaluation_of_statistical_approaches_for_association_testing_in_noisy_drug_screening_data.pdf",
+    "doc_type": "pdf",
+    "title": "Evaluation of statistical approaches for association testing in noisy drug screening data",
+    "page_count": 24,
+    "chunk_count": 89
+  },
+  {
+    "doc_id": "Functional landscape of circular RNAs in human cancer cells_165f9bc0",
+    "source_path": "temp/rag_documents/papers/Functional landscape of circular RNAs in human cancer cells.pdf",
+    "doc_type": "pdf",
+    "title": "Functional landscape of circular RNAs in human cancer cells",
+    "page_count": 48,
+    "chunk_count": 102
+  },
+  {
+    "doc_id": "Genefu:_an_R_Bioconductor_package_for_computation_of_gene_expression-based_signatures_in_breast_cancer_eb657e9e",
+    "source_path": "temp/rag_documents/papers/Genefu:_an_R_Bioconductor_package_for_computation_of_gene_expression-based_signatures_in_breast_cancer.pdf",
+    "doc_type": "pdf",
+    "title": "Genefu: an R/Bioconductor package for computation of gene expression-based signatures in breast cancer",
+    "page_count": 3,
+    "chunk_count": 18
+  },
+  {
+    "doc_id": "Generalizability of deep learning in organ-at-risk segmentation A transfer_b7bca1b1",
+    "source_path": "temp/rag_documents/papers/Generalizability of deep learning in organ-at-risk segmentation A transfer.pdf",
+    "doc_type": "pdf",
+    "title": "Generalizability of deep learning in organ-at-risk segmentation: A transfer learning study in cervical brachytherapy",
+    "page_count": 8,
+    "chunk_count": 49
+  },
+  {
+    "doc_id": "Gene_Expression_Analyses_in_Breast_Cancer:_Sample_Matters_1f4c7ac7",
+    "source_path": "temp/rag_documents/papers/Gene_Expression_Analyses_in_Breast_Cancer:_Sample_Matters.pdf",
+    "doc_type": "pdf",
+    "title": "OP-JNCS180020 1..3",
+    "page_count": 3,
+    "chunk_count": 18
+  },
+  {
+    "doc_id": "Gene_isoforms_as_expression-based_biomarkers_predictive_of_drug_response_in_vitro_c77f00fa",
+    "source_path": "temp/rag_documents/papers/Gene_isoforms_as_expression-based_biomarkers_predictive_of_drug_response_in_vitro.pdf",
+    "doc_type": "pdf",
+    "title": "Gene isoforms as expression-based biomarkers predictive of drug response in vitro",
+    "page_count": 11,
+    "chunk_count": 71
+  },
+  {
+    "doc_id": "Gene_regulatory_networks_and_their_applications:_understanding_biological_and_medical_problems_in_terms_of_networks_e8ba642a",
+    "source_path": "temp/rag_documents/papers/Gene_regulatory_networks_and_their_applications:_understanding_biological_and_medical_problems_in_terms_of_networks.pdf",
+    "doc_type": "pdf",
+    "title": "Gene regulatory networks and their applications: understanding biological and medical problems in terms of networks",
+    "page_count": 7,
+    "chunk_count": 48
+  },
+  {
+    "doc_id": "Genomic_biomarkers_for_precision_radiation_medicine_09a703e1",
+    "source_path": "temp/rag_documents/papers/Genomic_biomarkers_for_precision_radiation_medicine.pdf",
+    "doc_type": "pdf",
+    "title": "Genomic biomarkers for precision radiation medicine",
+    "page_count": 1,
+    "chunk_count": 5
+  },
+  {
+    "doc_id": "Geometrically focused training and evaluation of organs-at-risk segmentation via deep learning_afdd9720",
+    "source_path": "temp/rag_documents/papers/Geometrically focused training and evaluation of organs-at-risk segmentation via deep learning.pdf",
+    "doc_type": "pdf",
+    "title": "Geometrically focused training and evaluation of organs\u2010at\u2010risk segmentation via deep learning",
+    "page_count": 13,
+    "chunk_count": 84
+  },
+  {
+    "doc_id": "GraphComm predicts cell cell communication using a graph based deep learning method in single cell RNA sequencing data_43a8ad23",
+    "source_path": "temp/rag_documents/papers/GraphComm predicts cell cell communication using a graph based deep learning method in single cell RNA sequencing data.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 14,
+    "chunk_count": 52
+  },
+  {
+    "doc_id": "Identifying_clusters_of_cis-regulatory_elements_underpinning_TAD_structures_and_lineage-specific_regulatory_networks_3e08b161",
+    "source_path": "temp/rag_documents/papers/Identifying_clusters_of_cis-regulatory_elements_underpinning_TAD_structures_and_lineage-specific_regulatory_networks.pdf",
+    "doc_type": "pdf",
+    "title": "GR248658Mad 1733..1743",
+    "page_count": 11,
+    "chunk_count": 77
+  },
+  {
+    "doc_id": "Importance_of_collection_in_gene_set_enrichment_analysis_of_drug_response_in_cancer_cell_lines_17d15427",
+    "source_path": "temp/rag_documents/papers/Importance_of_collection_in_gene_set_enrichment_analysis_of_drug_response_in_cancer_cell_lines.pdf",
+    "doc_type": "pdf",
+    "title": "untitled",
+    "page_count": 7,
+    "chunk_count": 36
+  },
+  {
+    "doc_id": "Inconsistency_in_large_pharmacogenomic_studies_a3c2e6df",
+    "source_path": "temp/rag_documents/papers/Inconsistency_in_large_pharmacogenomic_studies.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 26,
+    "chunk_count": 44
+  },
+  {
+    "doc_id": "Inference_and_validation_of_predictive_gene_networks_from_biomedical_literature_and_gene_expression_data_6289f18e",
+    "source_path": "temp/rag_documents/papers/Inference_and_validation_of_predictive_gene_networks_from_biomedical_literature_and_gene_expression_data.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 21,
+    "chunk_count": 48
+  },
+  {
+    "doc_id": "Integrative_Cancer_Pharmacogenomics_to_Infer_Large-Scale_Drug_Taxonomy_0ab880f5",
+    "source_path": "temp/rag_documents/papers/Integrative_Cancer_Pharmacogenomics_to_Infer_Large-Scale_Drug_Taxonomy.pdf",
+    "doc_type": "pdf",
+    "title": "Integrative Cancer Pharmacogenomics to Infer Large-Scale Drug Taxonomy",
+    "page_count": 13,
+    "chunk_count": 92
+  },
+  {
+    "doc_id": "Integrative_Pharmacogenomics_Analysis_of_Patient-Derived_Xenografts_391cfc45",
+    "source_path": "temp/rag_documents/papers/Integrative_Pharmacogenomics_Analysis_of_Patient-Derived_Xenografts.pdf",
+    "doc_type": "pdf",
+    "title": "Integrative Pharmacogenomics Analysis of Patient-Derived Xenografts",
+    "page_count": 12,
+    "chunk_count": 64
+  },
+  {
+    "doc_id": "Leveraging_big_data_of_immune_checkpoint_blockade_response_identifies_novel_potential_targets_6f3c72d3",
+    "source_path": "temp/rag_documents/papers/Leveraging_big_data_of_immune_checkpoint_blockade_response_identifies_novel_potential_targets.pdf",
+    "doc_type": "pdf",
+    "title": "Leveraging big data of immune checkpoint blockade response identifies novel potential targets",
+    "page_count": 14,
+    "chunk_count": 88
+  },
+  {
+    "doc_id": "Machine_learning_approaches_to_drug_response_prediction:_challenges_and_recent_progress_725a9747",
+    "source_path": "temp/rag_documents/papers/Machine_learning_approaches_to_drug_response_prediction:_challenges_and_recent_progress.pdf",
+    "doc_type": "pdf",
+    "title": "Machine learning approaches to drug response prediction: challenges and recent progress",
+    "page_count": 10,
+    "chunk_count": 52
+  },
+  {
+    "doc_id": "Measured intrapatient radiomic variability as a predictor of treatment response in multi- metastatic soft tissue sarcoma patients_a7635370",
+    "source_path": "temp/rag_documents/papers/Measured intrapatient radiomic variability as a predictor of treatment response in multi- metastatic soft tissue sarcoma patients.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 10,
+    "chunk_count": 34
+  },
+  {
+    "doc_id": "Med-ImageTools An open-source Python package for robust data processing pipelines and curating medical imaging data_c161470d",
+    "source_path": "temp/rag_documents/papers/Med-ImageTools An open-source Python package for robust data processing pipelines and curating medical imaging data.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 20,
+    "chunk_count": 60
+  },
+  {
+    "doc_id": "Meta-Analysis_of_1,200_Transcriptomic_Profiles_Identifies_a_Prognostic_Model_for_Pancreatic_Ductal_Adenocarcinoma_6349e42d",
+    "source_path": "temp/rag_documents/papers/Meta-Analysis_of_1,200_Transcriptomic_Profiles_Identifies_a_Prognostic_Model_for_Pancreatic_Ductal_Adenocarcinoma.pdf",
+    "doc_type": "pdf",
+    "title": "Meta-Analysis of 1,200 Transcriptomic Profiles Identifies a Prognostic Model for Pancreatic Ductal Adenocarcinoma",
+    "page_count": 16,
+    "chunk_count": 79
+  },
+  {
+    "doc_id": "MM2S:_personalized_diagnosis_of_medulloblastoma_patients_and_model_systems_64e80508",
+    "source_path": "temp/rag_documents/papers/MM2S:_personalized_diagnosis_of_medulloblastoma_patients_and_model_systems.pdf",
+    "doc_type": "pdf",
+    "title": "MM2S: personalized diagnosis of medulloblastoma patients and model systems",
+    "page_count": 4,
+    "chunk_count": 24
+  },
+  {
+    "doc_id": "Modeling_cellular_response_in_large-scale_radiogenomic_databases_to_advance_precision_radiotherapy_5b7865da",
+    "source_path": "temp/rag_documents/papers/Modeling_cellular_response_in_large-scale_radiogenomic_databases_to_advance_precision_radiotherapy.pdf",
+    "doc_type": "pdf",
+    "title": "Modeling cellular response in large-scale radiogenomic databases to advance precision radiotherapy",
+    "page_count": 22,
+    "chunk_count": 63
+  },
+  {
+    "doc_id": "MorphoDiff Cellular Morphology Painting with Diffusion Models_a58f8386",
+    "source_path": "temp/rag_documents/papers/MorphoDiff Cellular Morphology Painting with Diffusion Models.pdf",
+    "doc_type": "pdf",
+    "title": "MorphoDiff: Cellular Morphology Painting with Diffusion Models",
+    "page_count": 35,
+    "chunk_count": 82
+  },
+  {
+    "doc_id": "mRMRe:_an_R_package_for_parallelized_mRMR_ensemble_feature_selection_34c32668",
+    "source_path": "temp/rag_documents/papers/mRMRe:_an_R_package_for_parallelized_mRMR_ensemble_feature_selection.pdf",
+    "doc_type": "pdf",
+    "title": "OP-CBIO130397 2365..2368 ++",
+    "page_count": 4,
+    "chunk_count": 27
+  },
+  {
+    "doc_id": "Multi-institutional_Prognostic_Modeling_in_Head_and_Neck_Cancer:_Evaluating_Impact_and_Generalizability_of_Deep_Learning_and_Radiomics_5684abb2",
+    "source_path": "temp/rag_documents/papers/Multi-institutional_Prognostic_Modeling_in_Head_and_Neck_Cancer:_Evaluating_Impact_and_Generalizability_of_Deep_Learning_and_Radiomics.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 12,
+    "chunk_count": 60
+  },
+  {
+    "doc_id": "Network science in clinical trials A patient-centered approach_9808dd56",
+    "source_path": "temp/rag_documents/papers/Network science in clinical trials A patient-centered approach.pdf",
+    "doc_type": "pdf",
+    "title": "Network science in clinical trials_ A patient-centered approach",
+    "page_count": 16,
+    "chunk_count": 125
+  },
+  {
+    "doc_id": "Orchestrating_and_sharing_large_multimodal_data_for_transparent_and_reproducible_research_fbf07cc2",
+    "source_path": "temp/rag_documents/papers/Orchestrating_and_sharing_large_multimodal_data_for_transparent_and_reproducible_research.pdf",
+    "doc_type": "pdf",
+    "title": "Orchestrating and sharing large multimodal data for transparent and reproducible research",
+    "page_count": 10,
+    "chunk_count": 66
+  },
+  {
+    "doc_id": "Pathway-Based_Drug_Response_Prediction_Using_Similarity_Identification_in_Gene_Expression_a4590bb9",
+    "source_path": "temp/rag_documents/papers/Pathway-Based_Drug_Response_Prediction_Using_Similarity_Identification_in_Gene_Expression.pdf",
+    "doc_type": "pdf",
+    "title": "Pathway-Based Drug Response Prediction Using Similarity Identification in Gene Expression",
+    "page_count": 9,
+    "chunk_count": 34
+  },
+  {
+    "doc_id": "Personalized_diagnosis_ofmedulloblastoma_subtypes_across_patients_and_model_systems_41ae87cb",
+    "source_path": "temp/rag_documents/papers/Personalized_diagnosis_ofmedulloblastoma_subtypes_across_patients_and_model_systems.pdf",
+    "doc_type": "pdf",
+    "title": "Personalized diagnosis of medulloblastoma subtypes across patients and model systems",
+    "page_count": 11,
+    "chunk_count": 74
+  },
+  {
+    "doc_id": "PharmacoDB_2.0:_improving_scalability_and_transparency_of_in_vitro_pharmacogenomics_analysis_7acd26c9",
+    "source_path": "temp/rag_documents/papers/PharmacoDB_2.0:_improving_scalability_and_transparency_of_in_vitro_pharmacogenomics_analysis.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 10,
+    "chunk_count": 60
+  },
+  {
+    "doc_id": "PharmacoDB:_an_integrative_database_for_mining_in_vitro_anticancer_drug_screening_studies_a522bf4d",
+    "source_path": "temp/rag_documents/papers/PharmacoDB:_an_integrative_database_for_mining_in_vitro_anticancer_drug_screening_studies.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 9,
+    "chunk_count": 69
+  },
+  {
+    "doc_id": "PharmacoGx:_an_R_package_for_analysis_of_large_pharmacogenomic_datasets_5a820889",
+    "source_path": "temp/rag_documents/papers/PharmacoGx:_an_R_package_for_analysis_of_large_pharmacogenomic_datasets.pdf",
+    "doc_type": "pdf",
+    "title": "PharmacoGx: an R package for analysis of large pharmacogenomic datasets",
+    "page_count": 3,
+    "chunk_count": 19
+  },
+  {
+    "doc_id": "Predicting patient-level extranodal extension using pre-treatment computed tomography_b67463d8",
+    "source_path": "temp/rag_documents/papers/Predicting patient-level extranodal extension using pre-treatment computed tomography.pdf",
+    "doc_type": "pdf",
+    "title": "255 Predicting patient-level extranodal extension using pre-treatment computed tomography imaging",
+    "page_count": 4,
+    "chunk_count": 10
+  },
+  {
+    "doc_id": "Prediction_of_Human_Papillomavirus_HPV_Association_of_Oropharyngeal_Cancer_OPC_Using_Radiomics:_The_Impact_of_the_Variation_of_CT_Scanner_2d85f52d",
+    "source_path": "temp/rag_documents/papers/Prediction_of_Human_Papillomavirus_HPV_Association_of_Oropharyngeal_Cancer_OPC_Using_Radiomics:_The_Impact_of_the_Variation_of_CT_Scanner.pdf",
+    "doc_type": "pdf",
+    "title": "Prediction of Human Papillomavirus (HPV) Association of Oropharyngeal Cancer (OPC) Using Radiomics: The Impact of the Variation of CT Scanner",
+    "page_count": 13,
+    "chunk_count": 52
+  },
+  {
+    "doc_id": "Predictive_approaches_for_drug_combination_discovery_in_cancer_fe1c8b5e",
+    "source_path": "temp/rag_documents/papers/Predictive_approaches_for_drug_combination_discovery_in_cancer.pdf",
+    "doc_type": "pdf",
+    "title": "OP-BIBJ160108 263..276",
+    "page_count": 14,
+    "chunk_count": 94
+  },
+  {
+    "doc_id": "Radiomic-based approaches in the multi-metastatic setting a quantitative review_dd9f7190",
+    "source_path": "temp/rag_documents/papers/Radiomic-based approaches in the multi-metastatic setting a quantitative review.pdf",
+    "doc_type": "pdf",
+    "title": "Radiomic-based approaches in the multi-metastatic setting: a quantitative review",
+    "page_count": 10,
+    "chunk_count": 45
+  },
+  {
+    "doc_id": "Radiomic-Based Prediction of Lesion-Specific Systemic_d86a9d83",
+    "source_path": "temp/rag_documents/papers/Radiomic-Based Prediction of Lesion-Specific Systemic.pdf",
+    "doc_type": "pdf",
+    "title": "Radiomic-based prediction of lesion-specific systemic treatment response in metastatic disease",
+    "page_count": 17,
+    "chunk_count": 46
+  },
+  {
+    "doc_id": "Radiomic-Based_Prediction_of_Lesion-Specific_Systemic_Treatment_Response_in_Metastatic_Disease_b397d8e4",
+    "source_path": "temp/rag_documents/papers/Radiomic-Based_Prediction_of_Lesion-Specific_Systemic_Treatment_Response_in_Metastatic_Disease.pdf",
+    "doc_type": "pdf",
+    "title": "Radiomic-Based Prediction of Lesion-Specific Systemic Treatment Response in Metastatic Disease",
+    "page_count": 19,
+    "chunk_count": 52
+  },
+  {
+    "doc_id": "Radiomics_in_sarcoma_trials:_a_complement_to_RECIST_for_patient_assessment_2d466a76",
+    "source_path": "temp/rag_documents/papers/Radiomics_in_sarcoma_trials:_a_complement_to_RECIST_for_patient_assessment.pdf",
+    "doc_type": "pdf",
+    "title": "Radiomics in sarcoma trials: a complement to RECIST for patient assessment",
+    "page_count": 8,
+    "chunk_count": 27
+  },
+  {
+    "doc_id": "Relevance_of_different_prior_knowledge_sources_for_inferring_gene_interaction_networks_e7711783",
+    "source_path": "temp/rag_documents/papers/Relevance_of_different_prior_knowledge_sources_for_inferring_gene_interaction_networks.pdf",
+    "doc_type": "pdf",
+    "title": "Relevance of different prior knowledge sources for inferring gene interaction networks",
+    "page_count": 7,
+    "chunk_count": 40
+  },
+  {
+    "doc_id": "Reusability_report:_Evaluating_reproducibility_and_reusability_of_a_finetuned_model_to_predict_drug_response_in_cancer_patient_samples_2e1906b0",
+    "source_path": "temp/rag_documents/papers/Reusability_report:_Evaluating_reproducibility_and_reusability_of_a_finetuned_model_to_predict_drug_response_in_cancer_patient_samples.pdf",
+    "doc_type": "pdf",
+    "title": "Reusability report: Evaluating reproducibility and reusability of a fine-tuned model to predict drug response in cancer patient samples",
+    "page_count": 7,
+    "chunk_count": 37
+  },
+  {
+    "doc_id": "Revisiting_inconsistency_in_large_pharmacogenomic_studies_version_3_referees:_2_approved_1_approved_with_reservations_3d3fa9ec",
+    "source_path": "temp/rag_documents/papers/Revisiting_inconsistency_in_large_pharmacogenomic_studies_version_3_referees:_2_approved_1_approved_with_reservations.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 46,
+    "chunk_count": 164
+  },
+  {
+    "doc_id": "Significance_Analysis_of_Prognostic_Signatures_ef2da6ef",
+    "source_path": "temp/rag_documents/papers/Significance_Analysis_of_Prognostic_Signatures.pdf",
+    "doc_type": "pdf",
+    "title": "pcbi.1002875-Hi 1..17",
+    "page_count": 17,
+    "chunk_count": 76
+  },
+  {
+    "doc_id": "SIGN:_similarity_identification_in_gene_expression_1b8d28a9",
+    "source_path": "temp/rag_documents/papers/SIGN:_similarity_identification_in_gene_expression.pdf",
+    "doc_type": "pdf",
+    "title": "OP-CBIO190494 4830..4833",
+    "page_count": 4,
+    "chunk_count": 26
+  },
+  {
+    "doc_id": "Test_set_bias_affects_reproducibility_of_gene_signatures_babd0eb4",
+    "source_path": "temp/rag_documents/papers/Test_set_bias_affects_reproducibility_of_gene_signatures.pdf",
+    "doc_type": "pdf",
+    "title": "OP-CBIO150164 2318..2323",
+    "page_count": 6,
+    "chunk_count": 29
+  },
+  {
+    "doc_id": "The_impact_of_the_variation_of_imaging_parameters_on_the_robustness_of_Computed_Tomography_radiomic_features_e840402a",
+    "source_path": "temp/rag_documents/papers/The_impact_of_the_variation_of_imaging_parameters_on_the_robustness_of_Computed_Tomography_radiomic_features.pdf",
+    "doc_type": "pdf",
+    "title": "The impact of the variation of imaging parameters on the robustness of Computed Tomography radiomic features: A review",
+    "page_count": 6,
+    "chunk_count": 42
+  },
+  {
+    "doc_id": "The_impact_of_violating_the_independence_assumption_in_meta-analysis_on_biomarker_discovery_24b844ce",
+    "source_path": "temp/rag_documents/papers/The_impact_of_violating_the_independence_assumption_in_meta-analysis_on_biomarker_discovery.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 17,
+    "chunk_count": 91
+  },
+  {
+    "doc_id": "Tissue_specificity_of_in_vitro_drug_sensitivity_79db2c18",
+    "source_path": "temp/rag_documents/papers/Tissue_specificity_of_in_vitro_drug_sensitivity.pdf",
+    "doc_type": "pdf",
+    "title": "OP-JAMI170198 158..166",
+    "page_count": 9,
+    "chunk_count": 40
+  },
+  {
+    "doc_id": "ToxicoDB:_an_integrated_database_to_mine_and_visualize_large-scale_toxicogenomic_datasets_126efc4e",
+    "source_path": "temp/rag_documents/papers/ToxicoDB:_an_integrated_database_to_mine_and_visualize_large-scale_toxicogenomic_datasets.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 8,
+    "chunk_count": 46
+  },
+  {
+    "doc_id": "to_identify_synergistic_drug_combinations_for_precision_oncology_Heewon_Seo1,2,_Denis_Tkachuk1,_C_28db9fa1",
+    "source_path": "temp/rag_documents/papers/to_identify_synergistic_drug_combinations_for_precision_oncology_Heewon_Seo1,2,_Denis_Tkachuk1,_C.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 8,
+    "chunk_count": 52
+  },
+  {
+    "doc_id": "Transfer_of_clinically_relevant_gene_expression_signatures_in_breast_cancer:_from_Affymetrix_microarray_to_Illumina_RNA-Sequencing_technology_37ccdf35",
+    "source_path": "temp/rag_documents/papers/Transfer_of_clinically_relevant_gene_expression_signatures_in_breast_cancer:_from_Affymetrix_microarray_to_Illumina_RNA-Sequencing_technology.pdf",
+    "doc_type": "pdf",
+    "title": "",
+    "page_count": 12,
+    "chunk_count": 82
+  },
+  {
+    "doc_id": "Transparency_and_reproducibility_in_artificial_intelligence_45bb583e",
+    "source_path": "temp/rag_documents/papers/Transparency_and_reproducibility_in_artificial_intelligence.pdf",
+    "doc_type": "pdf",
+    "title": "Transparency and reproducibility in artificial intelligence",
+    "page_count": 7,
+    "chunk_count": 15
+  },
+  {
+    "doc_id": "Untangling_statistical_and_biological_models_to_understand_network_inference:_the_need_for_a_genomics_network_ontology_eb136a9b",
+    "source_path": "temp/rag_documents/papers/Untangling_statistical_and_biological_models_to_understand_network_inference:_the_need_for_a_genomics_network_ontology.pdf",
+    "doc_type": "pdf",
+    "title": "Untangling statistical and biological models to understand network inference: the need for a genomics network ontology",
+    "page_count": 6,
+    "chunk_count": 37
+  },
+  {
+    "doc_id": "Using_shRNA_experiments_to_validate_gene_regulatory_networks_b91431a8",
+    "source_path": "temp/rag_documents/papers/Using_shRNA_experiments_to_validate_gene_regulatory_networks.pdf",
+    "doc_type": "pdf",
+    "title": "Using shRNA experiments to validate gene regulatory networks",
+    "page_count": 4,
+    "chunk_count": 13
+  },
+  {
+    "doc_id": "Whole_genomes_define_concordance_of_matched_primary,_xenograft,_and_organoid_models_of_pancreas_cancer_583e7756",
+    "source_path": "temp/rag_documents/papers/Whole_genomes_define_concordance_of_matched_primary,_xenograft,_and_organoid_models_of_pancreas_cancer.pdf",
+    "doc_type": "pdf",
+    "title": "Whole genomes define concordance of matched primary, xenograft, and organoid models of pancreas cancer",
+    "page_count": 30,
+    "chunk_count": 94
+  },
+  {
+    "doc_id": "Almas_Khan_43d2f69d",
+    "source_path": "temp/rag_documents/lab_docs/Almas_Khan.md",
+    "doc_type": "md",
+    "title": "Position: PhD Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Anna_Bernadas_Call_4ff6577f",
+    "source_path": "temp/rag_documents/lab_docs/Anna_Bernadas_Call.md",
+    "doc_type": "md",
+    "title": "Position: Research Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Candace_Peters_ee6ce907",
+    "source_path": "temp/rag_documents/lab_docs/Candace_Peters.md",
+    "doc_type": "md",
+    "title": "Position: Research Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Caryn_Geady_353599d5",
+    "source_path": "temp/rag_documents/lab_docs/Caryn_Geady.md",
+    "doc_type": "md",
+    "title": "Position: PhD Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "contributing_adding_content_62b415fb",
+    "source_path": "temp/rag_documents/lab_docs/contributing_adding_content.md",
+    "doc_type": "md",
+    "title": "This document will guide you through the process of adding a new page to the",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "contributing_changelog_e1e80ef9",
+    "source_path": "temp/rag_documents/lab_docs/contributing_changelog.md",
+    "doc_type": "md",
+    "title": "include-markdown ....CHANGELOG.md",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "contributing_conventional_commits_a84fab29",
+    "source_path": "temp/rag_documents/lab_docs/contributing_conventional_commits.md",
+    "doc_type": "md",
+    "title": "We follow the Conventional Commitshttps:www.conventionalcommits.orgenv1.0.0 specification for commit messages. This helps us automate our release process and keep our commit history clean.",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "contributing_index_9fbd5705",
+    "source_path": "temp/rag_documents/lab_docs/contributing_index.md",
+    "doc_type": "md",
+    "title": "Thank you for your interest in contributing to the Lab Handbook",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "contributing_merging_pr_8d6c16e1",
+    "source_path": "temp/rag_documents/lab_docs/contributing_merging_pr.md",
+    "doc_type": "md",
+    "title": "note For Maintainers",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "contributing_prerequisites_07b6d33c",
+    "source_path": "temp/rag_documents/lab_docs/contributing_prerequisites.md",
+    "doc_type": "md",
+    "title": "Pixi is a tool for managing conda environments and dependencies.",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "contributing_release_deployment_e51c4a78",
+    "source_path": "temp/rag_documents/lab_docs/contributing_release_deployment.md",
+    "doc_type": "md",
+    "title": "The handbook website is hosted on GitHub Pageshttps:pages.github.com.",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "contributing_reviews_75974c1b",
+    "source_path": "temp/rag_documents/lab_docs/contributing_reviews.md",
+    "doc_type": "md",
+    "title": "This document provides an overview of the review process for contributions to the BHK Lab repositories.",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "contributing_submitting_issues_b19431ff",
+    "source_path": "temp/rag_documents/lab_docs/contributing_submitting_issues.md",
+    "doc_type": "md",
+    "title": "If you encounter any issues have suggestions or need clarifications about",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "Declan_Korda_9c428283",
+    "source_path": "temp/rag_documents/lab_docs/Declan_Korda.md",
+    "doc_type": "md",
+    "title": "Position: Research Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "disciplines_Bioinformatics_Data_Types_rnaseq_941f963f",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Bioinformatics_Data_Types_rnaseq.md",
+    "doc_type": "md",
+    "title": "Central Dogma of Molecular Biology: DNA  RNA  Protein",
+    "page_count": null,
+    "chunk_count": 5
+  },
+  {
+    "doc_id": "disciplines_Bioinformatics_index_f53a7937",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Bioinformatics_index.md",
+    "doc_type": "md",
+    "title": "StatQuest with Josh Starmer -YouTube Channelhttps:www.youtube.comresultssearch_querystatquest",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "disciplines_Bioinformatics_Tools_RNAseq_Pipelines_deseq_01067d39",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Bioinformatics_Tools_RNAseq_Pipelines_deseq.md",
+    "doc_type": "md",
+    "title": "Normalization: DESeq2 normalizes the count data to account for differences in sequencing depth and RNA composition.",
+    "page_count": null,
+    "chunk_count": 5
+  },
+  {
+    "doc_id": "disciplines_Bioinformatics_Tools_RNAseq_Pipelines_kallisto_5c1094a4",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Bioinformatics_Tools_RNAseq_Pipelines_kallisto.md",
+    "doc_type": "md",
+    "title": "Kallisto is a lightweight ultra-fast RNA-seq quantification tool.",
+    "page_count": null,
+    "chunk_count": 5
+  },
+  {
+    "doc_id": "disciplines_Bioinformatics_Tools_RNAseq_Pipelines_STAR_b7c5b195",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Bioinformatics_Tools_RNAseq_Pipelines_STAR.md",
+    "doc_type": "md",
+    "title": "This guide explains how to set up and use STAR for RNA-seq read alignment.",
+    "page_count": null,
+    "chunk_count": 16
+  },
+  {
+    "doc_id": "disciplines_Data_Science_Data_Curation_Clinical_Trial_Curation_index_7341dd0c",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Data_Science_Data_Curation_Clinical_Trial_Curation_index.md",
+    "doc_type": "md",
+    "title": "This documentation goes over the clinical trial data curation process in detail using immunotherapy data.",
+    "page_count": null,
+    "chunk_count": 11
+  },
+  {
+    "doc_id": "disciplines_Data_Science_Data_Curation_index_e986601e",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Data_Science_Data_Curation_index.md",
+    "doc_type": "md",
+    "title": "DataRaven has established standard operating procedures SOPs for different data types.",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "disciplines_Data_Science_index_ca8e1117",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Data_Science_index.md",
+    "doc_type": "md",
+    "title": "TODO:: Add a short description here",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "disciplines_Imaging_Data_Sources_index_61c0d53b",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Imaging_Data_Sources_index.md",
+    "doc_type": "md",
+    "title": "List of data sources for imaging data. Retrieved from publications websites and other sources.",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "disciplines_Imaging_Data_Types_DICOM_cc084597",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Imaging_Data_Types_DICOM.md",
+    "doc_type": "md",
+    "title": "TODO: add introduction to DICOM",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "disciplines_Imaging_Data_Types_nifti_2604f48d",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Imaging_Data_Types_nifti.md",
+    "doc_type": "md",
+    "title": "The NIfTI Neuroimaging Informatics Technology Initiative format is a",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "disciplines_Imaging_index_86ac8534",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Imaging_index.md",
+    "doc_type": "md",
+    "title": "A medical image is a digital representation of the internal structure or",
+    "page_count": null,
+    "chunk_count": 6
+  },
+  {
+    "doc_id": "disciplines_Imaging_Radiomics_index_594e3fee",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Imaging_Radiomics_index.md",
+    "doc_type": "md",
+    "title": "..imagesRadiomicsAnalysisWorkflow.png",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "disciplines_Imaging_Tools_index_746ceb48",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Imaging_Tools_index.md",
+    "doc_type": "md",
+    "title": "Med-Imagetools is a free open-source image processing tool for medical images developed by the BHK Lab.",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "disciplines_Imaging_Tools_QIPCM_index_4449cde5",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Imaging_Tools_QIPCM_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "disciplines_Imaging_Tools_QIPCM_querying_data_bf4fb790",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Imaging_Tools_QIPCM_querying_data.md",
+    "doc_type": "md",
+    "title": "There are three tools you will need to access the data:",
+    "page_count": null,
+    "chunk_count": 10
+  },
+  {
+    "doc_id": "disciplines_index_9046451c",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_index.md",
+    "doc_type": "md",
+    "title": "Data ScienceData_Scienceindex.md focuses on extracting insights and knowledge from data using",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "disciplines_Machine_Learning_index_997879a3",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Machine_Learning_index.md",
+    "doc_type": "md",
+    "title": "Before ML we relied on statistical methods manual rule-based algorithms or human judgment which had limited scalability and adaptability.",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "disciplines_Machine_Learning_learning_resources_05793f5e",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Machine_Learning_learning_resources.md",
+    "doc_type": "md",
+    "title": "Luis Serrano - Serrano.Academy - YouTubehttps:www.youtube.comchannelUCgBncpylJ1kiVaPyP-PZauQ",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "disciplines_Machine_Learning_tools_4addc194",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Machine_Learning_tools.md",
+    "doc_type": "md",
+    "title": "PyTorchhttps:pytorch.org",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "disciplines_Pharmacogenomics_index_656c4142",
+    "source_path": "temp/rag_documents/lab_docs/disciplines_Pharmacogenomics_index.md",
+    "doc_type": "md",
+    "title": "TODO:: Add a short description here",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "Farnoosh_Abbas_Aghababazadeh_89949e37",
+    "source_path": "temp/rag_documents/lab_docs/Farnoosh_Abbas_Aghababazadeh.md",
+    "doc_type": "md",
+    "title": "Position: Postdoctoral Fellow",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Foram_Vyas_3e9ae327",
+    "source_path": "temp/rag_documents/lab_docs/Foram_Vyas.md",
+    "doc_type": "md",
+    "title": "Position: PhD Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "General_Awards_Achievements_Tracking_index_c98e0e33",
+    "source_path": "temp/rag_documents/lab_docs/General_Awards_Achievements_Tracking_index.md",
+    "doc_type": "md",
+    "title": "This form must be filled out for each award or achievement individually.",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "General_Code_Of_Conduct_index_cfdbb2df",
+    "source_path": "temp/rag_documents/lab_docs/General_Code_Of_Conduct_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "General_Communications_bhklab_calendar_a2991f70",
+    "source_path": "temp/rag_documents/lab_docs/General_Communications_bhklab_calendar.md",
+    "doc_type": "md",
+    "title": "The BHKLab Calendar is managed by bhklab.researchgmail.com and contains events for",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "General_Communications_bhklab_gmail_778f303f",
+    "source_path": "temp/rag_documents/lab_docs/General_Communications_bhklab_gmail.md",
+    "doc_type": "md",
+    "title": "This email will be used for",
+    "page_count": null,
+    "chunk_count": 8
+  },
+  {
+    "doc_id": "General_Communications_slack_363cfedd",
+    "source_path": "temp/rag_documents/lab_docs/General_Communications_slack.md",
+    "doc_type": "md",
+    "title": "- UHN Code of Conducthttps:www.uhn.cacorporateFor_StaffNew_EmployeesDocumentsUHN-Policies-Codes-Handbook.pdf",
+    "page_count": null,
+    "chunk_count": 7
+  },
+  {
+    "doc_id": "General_index_857b824e",
+    "source_path": "temp/rag_documents/lab_docs/General_index.md",
+    "doc_type": "md",
+    "title": "The handbook is a collection of resources for the BHK Lab. It is intended to be a resource for all BHK Lab members to learn about the lab its projects and how to get involved.",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "General_lab_mission_ef9a6c9f",
+    "source_path": "temp/rag_documents/lab_docs/General_lab_mission.md",
+    "doc_type": "md",
+    "title": "- Research Transparency: We believe in open science and transparency in our work.",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "General_Lab_Space_index_fa3233b0",
+    "source_path": "temp/rag_documents/lab_docs/General_Lab_Space_index.md",
+    "doc_type": "md",
+    "title": "For directions to the lab please see the BHKLab Onboarding Policy....onboarding_offboardingOnboardingbhklab_onboarding.md.",
+    "page_count": null,
+    "chunk_count": 5
+  },
+  {
+    "doc_id": "General_Manuscripts_cover_letter_3dea37bb",
+    "source_path": "temp/rag_documents/lab_docs/General_Manuscripts_cover_letter.md",
+    "doc_type": "md",
+    "title": "A strong cover letter introduces your manuscript highlights its importance and explains why it fits the journal.",
+    "page_count": null,
+    "chunk_count": 7
+  },
+  {
+    "doc_id": "General_Manuscripts_index_720dcca0",
+    "source_path": "temp/rag_documents/lab_docs/General_Manuscripts_index.md",
+    "doc_type": "md",
+    "title": "This guide outlines key steps for preparing a manuscript in the BHK Lab to streamline review and feedback from Benjamin and co-authors.",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "General_Manuscripts_manuscript_review_presentations_ee61b87f",
+    "source_path": "temp/rag_documents/lab_docs/General_Manuscripts_manuscript_review_presentations.md",
+    "doc_type": "md",
+    "title": "This section describes the goals format and expectations of manuscript review in the lab.",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "General_Manuscripts_response_to_reviewers_736da77a",
+    "source_path": "temp/rag_documents/lab_docs/General_Manuscripts_response_to_reviewers.md",
+    "doc_type": "md",
+    "title": "When revising a manuscript based on peer review a well-structured response document is essential. It shows that youve addressed the feedback thoughtfully and improved the manuscript accordingly.",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "General_Meetings_index_d4d002ad",
+    "source_path": "temp/rag_documents/lab_docs/General_Meetings_index.md",
+    "doc_type": "md",
+    "title": "Lab-Wide Meetings                  Frequency            Date and time            Slack channel",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "General_Meetings_journal_club_b7ae208c",
+    "source_path": "temp/rag_documents/lab_docs/General_Meetings_journal_club.md",
+    "doc_type": "md",
+    "title": "Welcome to Journal Club",
+    "page_count": null,
+    "chunk_count": 6
+  },
+  {
+    "doc_id": "General_Meetings_lab_meeting_d3fd4495",
+    "source_path": "temp/rag_documents/lab_docs/General_Meetings_lab_meeting.md",
+    "doc_type": "md",
+    "title": "Time: Every Tuesday from 10:30 AM to 12:00 PM.",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "General_Meetings_owl_basics_2a6c310f",
+    "source_path": "temp/rag_documents/lab_docs/General_Meetings_owl_basics.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "General_Meetings_pgx_meeting_737b3874",
+    "source_path": "temp/rag_documents/lab_docs/General_Meetings_pgx_meeting.md",
+    "doc_type": "md",
+    "title": "The goal of this meeting is to discuss individual PGx projects check for existing data models brainstorm issuesideas - maybe someone in the team has already found a solution earlier.",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "General_Meetings_project_tracking_a1b52a37",
+    "source_path": "temp/rag_documents/lab_docs/General_Meetings_project_tracking.md",
+    "doc_type": "md",
+    "title": "We will be using it to go through the progress of the projects.",
+    "page_count": null,
+    "chunk_count": 5
+  },
+  {
+    "doc_id": "General_Meetings_Radiomics_meeting_dc4ab147",
+    "source_path": "temp/rag_documents/lab_docs/General_Meetings_Radiomics_meeting.md",
+    "doc_type": "md",
+    "title": "Radiomics meeting happens every 2 weeks on Tuesday 2:00 - 3:00pm at PMCRT 11-710.",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "General_Meetings_Software_dev_meeting_ab3e7333",
+    "source_path": "temp/rag_documents/lab_docs/General_Meetings_Software_dev_meeting.md",
+    "doc_type": "md",
+    "title": "- Provide updates on current tasks including progress completed work and any blockers or challenges encountered.",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "General_Presentations_database_7bb1166b",
+    "source_path": "temp/rag_documents/lab_docs/General_Presentations_database.md",
+    "doc_type": "md",
+    "title": "This page contains links to previously created presentations and is intended to support the creation of future presentations.",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "General_Presentations_index_6fb1f80e",
+    "source_path": "temp/rag_documents/lab_docs/General_Presentations_index.md",
+    "doc_type": "md",
+    "title": "- Title slide: Include your name date affiliation eventconference and contact information e.g. email. Optional: include the BHK Lab logo and others e.g. UHN University of Toronto etc",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "General_Presentations_tools_bcd27b64",
+    "source_path": "temp/rag_documents/lab_docs/General_Presentations_tools.md",
+    "doc_type": "md",
+    "title": "This page describes standards tools and resources for creating presentations for the lab.",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "General_Projects_index_94949a50",
+    "source_path": "temp/rag_documents/lab_docs/General_Projects_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "General_Summary_Of_Work_index_b88811a8",
+    "source_path": "temp/rag_documents/lab_docs/General_Summary_Of_Work_index.md",
+    "doc_type": "md",
+    "title": "This tutorial will walk you through how to set up a Google Drive SOW directory and yearly document and how to write your weekly SOW.",
+    "page_count": null,
+    "chunk_count": 7
+  },
+  {
+    "doc_id": "General_Summary_Of_Work_old_confluence_instructions_303298dd",
+    "source_path": "temp/rag_documents/lab_docs/General_Summary_Of_Work_old_confluence_instructions.md",
+    "doc_type": "md",
+    "title": "warning Outdated Warning",
+    "page_count": null,
+    "chunk_count": 12
+  },
+  {
+    "doc_id": "grants_Identifying_Suitable_Grants_63ec6c43",
+    "source_path": "temp/rag_documents/lab_docs/grants_Identifying_Suitable_Grants.md",
+    "doc_type": "md",
+    "title": "h2 stylecolor: redCanadian funding opportunitiesh2",
+    "page_count": null,
+    "chunk_count": 8
+  },
+  {
+    "doc_id": "grants_index_fd59c74e",
+    "source_path": "temp/rag_documents/lab_docs/grants_index.md",
+    "doc_type": "md",
+    "title": "This handbook is a guide to navigating the grant submission process efficiently.",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "grants_Preparing_for_Submission_index_21913940",
+    "source_path": "temp/rag_documents/lab_docs/grants_Preparing_for_Submission_index.md",
+    "doc_type": "md",
+    "title": "While there are common sections each grant agency has specific requirements. Before submitting a grant application ensure you have all necessary documents and have addressed key requirements.",
+    "page_count": null,
+    "chunk_count": 6
+  },
+  {
+    "doc_id": "grants_Preparing_for_Submission_UHN_budget_process_30a8cf66",
+    "source_path": "temp/rag_documents/lab_docs/grants_Preparing_for_Submission_UHN_budget_process.md",
+    "doc_type": "md",
+    "title": "Budgets for grants need to be submitted to the UHN Grants Office at least one week before the application deadline.",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "grants_Submission_Process_eb69f6ff",
+    "source_path": "temp/rag_documents/lab_docs/grants_Submission_Process.md",
+    "doc_type": "md",
+    "title": "Each funding agency has different submission portals and requirements.",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "grants_Templates_&_Resources_0d0c1fba",
+    "source_path": "temp/rag_documents/lab_docs/grants_Templates_&_Resources.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "grants_Writing_a_Strong_Grant_Proposal_4c2ac58e",
+    "source_path": "temp/rag_documents/lab_docs/grants_Writing_a_Strong_Grant_Proposal.md",
+    "doc_type": "md",
+    "title": "This is intended as a guide to the general sections of a full grant proposal. Please refer to the funding guidelines for specific requirements.",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "Guanqiao_Feng_f4e83ef1",
+    "source_path": "temp/rag_documents/lab_docs/Guanqiao_Feng.md",
+    "doc_type": "md",
+    "title": "Position: Research Associate",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Jackie_Chen_74353eb0",
+    "source_path": "temp/rag_documents/lab_docs/Jackie_Chen.md",
+    "doc_type": "md",
+    "title": "Position: Research Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "James_Bannon_4705770a",
+    "source_path": "temp/rag_documents/lab_docs/James_Bannon.md",
+    "doc_type": "md",
+    "title": "Position: Postdoctoral Fellow",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Jermiah_Joseph_84b62cc6",
+    "source_path": "temp/rag_documents/lab_docs/Jermiah_Joseph.md",
+    "doc_type": "md",
+    "title": "Position: Software Developer",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Joshua_Siraj_97155d7e",
+    "source_path": "temp/rag_documents/lab_docs/Joshua_Siraj.md",
+    "doc_type": "md",
+    "title": "Position: Research Analyst",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Julia_Nguyen_33ae9c8d",
+    "source_path": "temp/rag_documents/lab_docs/Julia_Nguyen.md",
+    "doc_type": "md",
+    "title": "Position: MSc Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Junye_Che_edfc64e0",
+    "source_path": "temp/rag_documents/lab_docs/Junye_Che.md",
+    "doc_type": "md",
+    "title": "Position: PhD Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Katy_Scott_81088d19",
+    "source_path": "temp/rag_documents/lab_docs/Katy_Scott.md",
+    "doc_type": "md",
+    "title": "Position: Research Analyst",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Kevin_Wang_9c60572d",
+    "source_path": "temp/rag_documents/lab_docs/Kevin_Wang.md",
+    "doc_type": "md",
+    "title": "Position: Medical Oncology Fellow",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Kewei_Ni_1929c6e1",
+    "source_path": "temp/rag_documents/lab_docs/Kewei_Ni.md",
+    "doc_type": "md",
+    "title": "Position: PhD Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Lucy_Qi_e996d9dc",
+    "source_path": "temp/rag_documents/lab_docs/Lucy_Qi.md",
+    "doc_type": "md",
+    "title": "Position: Lucy Qi",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Matthew_Boccalon_624c722a",
+    "source_path": "temp/rag_documents/lab_docs/Matthew_Boccalon.md",
+    "doc_type": "md",
+    "title": "Position: Software Developer",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Michael_Tran_a8634896",
+    "source_path": "temp/rag_documents/lab_docs/Michael_Tran.md",
+    "doc_type": "md",
+    "title": "Position: Research Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Mogtaba_Alim_3b7de278",
+    "source_path": "temp/rag_documents/lab_docs/Mogtaba_Alim.md",
+    "doc_type": "md",
+    "title": "Position: Research Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Nabin_Bagale_db6a34a7",
+    "source_path": "temp/rag_documents/lab_docs/Nabin_Bagale.md",
+    "doc_type": "md",
+    "title": "Position: Software Developer",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Nasim_BondarSahebi_1c74b646",
+    "source_path": "temp/rag_documents/lab_docs/Nasim_BondarSahebi.md",
+    "doc_type": "md",
+    "title": "Position: Nasim BondarSahebi",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Nikta_Feizi_332ac757",
+    "source_path": "temp/rag_documents/lab_docs/Nikta_Feizi.md",
+    "doc_type": "md",
+    "title": "Position: PhD Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "onboarding_offboarding_my_new_page_a5544c0b",
+    "source_path": "temp/rag_documents/lab_docs/onboarding_offboarding_my_new_page.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "onboarding_offboarding_Offboarding_admin_checklist_a4262f59",
+    "source_path": "temp/rag_documents/lab_docs/onboarding_offboarding_Offboarding_admin_checklist.md",
+    "doc_type": "md",
+    "title": "This checklist is for the assigned lab staff running the offboarding process.",
+    "page_count": null,
+    "chunk_count": 5
+  },
+  {
+    "doc_id": "onboarding_offboarding_Offboarding_index_c9fcc62e",
+    "source_path": "temp/rag_documents/lab_docs/onboarding_offboarding_Offboarding_index.md",
+    "doc_type": "md",
+    "title": "Thank you for your time in the lab. To ensure a smooth transition and back up of your work please follow the policy detailed below.",
+    "page_count": null,
+    "chunk_count": 12
+  },
+  {
+    "doc_id": "onboarding_offboarding_Onboarding_admin_checklist_c0970650",
+    "source_path": "temp/rag_documents/lab_docs/onboarding_offboarding_Onboarding_admin_checklist.md",
+    "doc_type": "md",
+    "title": "These instructions are for the assigned lab staff running the offboarding process.",
+    "page_count": null,
+    "chunk_count": 10
+  },
+  {
+    "doc_id": "onboarding_offboarding_Onboarding_bhklab_onboarding_93ba559b",
+    "source_path": "temp/rag_documents/lab_docs/onboarding_offboarding_Onboarding_bhklab_onboarding.md",
+    "doc_type": "md",
+    "title": "The BHKLab is located in room 11-401 of the Princess Margaret Cancer Research Tower PMCRT in the MARS Discovery District.",
+    "page_count": null,
+    "chunk_count": 6
+  },
+  {
+    "doc_id": "onboarding_offboarding_Onboarding_index_f7e18bec",
+    "source_path": "temp/rag_documents/lab_docs/onboarding_offboarding_Onboarding_index.md",
+    "doc_type": "md",
+    "title": "Congratulations on your successful interview and welcome to BHK Lab",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "onboarding_offboarding_Onboarding_lab_member_expertise_82878b08",
+    "source_path": "temp/rag_documents/lab_docs/onboarding_offboarding_Onboarding_lab_member_expertise.md",
+    "doc_type": "md",
+    "title": "This document outlines various expertise of lab members. Helpful for new recruits writing personnel skills for funding and clear communication of individual roles.",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "onboarding_offboarding_Onboarding_mbp_rotation_fa48cc1b",
+    "source_path": "temp/rag_documents/lab_docs/onboarding_offboarding_Onboarding_mbp_rotation.md",
+    "doc_type": "md",
+    "title": "If you are a student from the University of Toronto Medical Biophysics program completing a rotation in the BHKLab there are a few more steps to make your rotation experience as smooth as possible.",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "onboarding_offboarding_Onboarding_uhn_onboarding_d5561cbe",
+    "source_path": "temp/rag_documents/lab_docs/onboarding_offboarding_Onboarding_uhn_onboarding.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "onboarding_offboarding_Onboarding_vpn_68b7ca89",
+    "source_path": "temp/rag_documents/lab_docs/onboarding_offboarding_Onboarding_vpn.md",
+    "doc_type": "md",
+    "title": "A Virtual Private Network VPN is essential in the workplace to ensure secure and private access to the company network especially when working remotely or on public Wi-Fi.",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "Paul_Brogee_83d8b151",
+    "source_path": "temp/rag_documents/lab_docs/Paul_Brogee.md",
+    "doc_type": "md",
+    "title": "Position: Paul Brogee",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Peter_Her_030d31c7",
+    "source_path": "temp/rag_documents/lab_docs/Peter_Her.md",
+    "doc_type": "md",
+    "title": "Position: PhD Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "resources_Guide_to_mentors_d7a0d551",
+    "source_path": "temp/rag_documents/lab_docs/resources_Guide_to_mentors.md",
+    "doc_type": "md",
+    "title": "This guide is for:",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "resources_index_5a066617",
+    "source_path": "temp/rag_documents/lab_docs/resources_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "resources_Undergraduate_award_opportunities_07423ed5",
+    "source_path": "temp/rag_documents/lab_docs/resources_Undergraduate_award_opportunities.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "Ruben_Armananzas_Arnedillo_72cfe624",
+    "source_path": "temp/rag_documents/lab_docs/Ruben_Armananzas_Arnedillo.md",
+    "doc_type": "md",
+    "title": "Position: Ruben Armananzas Arnedillo",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Ruiyan_Ni_622b4d77",
+    "source_path": "temp/rag_documents/lab_docs/Ruiyan_Ni.md",
+    "doc_type": "md",
+    "title": "Position: PhD Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Sejin_Kim_b800e593",
+    "source_path": "temp/rag_documents/lab_docs/Sejin_Kim.md",
+    "doc_type": "md",
+    "title": "Position: PhD Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Shabnam_Tajik_0f5ab60f",
+    "source_path": "temp/rag_documents/lab_docs/Shabnam_Tajik.md",
+    "doc_type": "md",
+    "title": "Position: Research Student",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Shaghayegh_Reza_4dc623bb",
+    "source_path": "temp/rag_documents/lab_docs/Shaghayegh_Reza.md",
+    "doc_type": "md",
+    "title": "Position: Postdoctoral Fellow",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "Sisira_Kadambat_76d632c6",
+    "source_path": "temp/rag_documents/lab_docs/Sisira_Kadambat.md",
+    "doc_type": "md",
+    "title": "Discipline: pharmacogenomics",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "Sisira_Kadambat_Nair_1d5c5485",
+    "source_path": "temp/rag_documents/lab_docs/Sisira_Kadambat_Nair.md",
+    "doc_type": "md",
+    "title": "Position: Research Associate",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "software_development_Development_Environment_CLI_Tools_index_6df566c5",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Development_Environment_CLI_Tools_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Development_Environment_Containerization_index_da4ac4eb",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Development_Environment_Containerization_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Development_Environment_index_00b14706",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Development_Environment_index.md",
+    "doc_type": "md",
+    "title": "Think of the development environment as EVERYTHING that you need to",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "software_development_Development_Environment_Integrated_Development_Environments_index_e430c21a",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Development_Environment_Integrated_Development_Environments_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Development_Environment_Integrated_Development_Environments_r_studio_3ea23eb7",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Development_Environment_Integrated_Development_Environments_r_studio.md",
+    "doc_type": "md",
+    "title": "Download RStudiohttps:posit.coproductsopen-sourcerstudio",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "software_development_Development_Environment_Integrated_Development_Environments_visual_studio_code_defa2a95",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Development_Environment_Integrated_Development_Environments_visual_studio_code.md",
+    "doc_type": "md",
+    "title": "Download Visual Studio Codehttps:code.visualstudio.com",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Development_Environment_Package_Managers_index_755aab08",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Development_Environment_Package_Managers_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Development_Environment_Package_Managers_pixi_6e8a94f8",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Development_Environment_Package_Managers_pixi.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 7
+  },
+  {
+    "doc_id": "software_development_Development_Environment_Shells_index_f9680693",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Development_Environment_Shells_index.md",
+    "doc_type": "md",
+    "title": "A shell is a user interface that provides access to the operating systems",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "software_development_Development_Environment_Shells_wsl_965ea434",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Development_Environment_Shells_wsl.md",
+    "doc_type": "md",
+    "title": "Installationhttps:learn.microsoft.comen-uswindowswslinstall",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "software_development_index_bb7ede1b",
+    "source_path": "temp/rag_documents/lab_docs/software_development_index.md",
+    "doc_type": "md",
+    "title": "All things related to software development.",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Languages_index_e75b1c2e",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_index.md",
+    "doc_type": "md",
+    "title": "Ideas for a breakdown:",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Languages_Javascript_Typescript_index_dc137a50",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_Javascript_Typescript_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "software_development_Languages_Javascript_Typescript_learning_resources_6b8bc2d8",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_Javascript_Typescript_learning_resources.md",
+    "doc_type": "md",
+    "title": "For ReactJS: Official docshttps:reactjs.orgdocsgetting-started.html",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "software_development_Languages_Markdown_index_e611bf89",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_Markdown_index.md",
+    "doc_type": "md",
+    "title": "Markdown is extensively used in all kinds of software development projects",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "software_development_Languages_Markdown_mkdocs_examples_7fdebb2d",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_Markdown_mkdocs_examples.md",
+    "doc_type": "md",
+    "title": "The tabbed extension allows you to create tabbed codecontent blocks.",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "software_development_Languages_Markdown_mkdocs_index_d252bcc5",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_Markdown_mkdocs_index.md",
+    "doc_type": "md",
+    "title": "MkDocs is a static site generator that uses Markdown files and many other formats",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "software_development_Languages_Python_index_a8fc3a41",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_Python_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Languages_Rust_index_5d5dd259",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_Rust_index.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Languages_R_index_4d0a5b08",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_R_index.md",
+    "doc_type": "md",
+    "title": "Deep Dive into R",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "software_development_Languages_R_MultiAssayExperiment_56f32f2b",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_R_MultiAssayExperiment.md",
+    "doc_type": "md",
+    "title": "It provides a familiar Bioconductor user experience by extending concepts from SummarizedExperiment",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "software_development_Languages_R_Tidyverse_ggplot2_146df417",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_R_Tidyverse_ggplot2.md",
+    "doc_type": "md",
+    "title": "warning Page Under Construction",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "software_development_Languages_R_Tidyverse_index_239d40d4",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_R_Tidyverse_index.md",
+    "doc_type": "md",
+    "title": "The Tidyversehttps:tidyverse.tidyverse.org is a suite of R packages",
+    "page_count": null,
+    "chunk_count": 9
+  },
+  {
+    "doc_id": "software_development_Languages_SQL_index_89413bad",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Languages_SQL_index.md",
+    "doc_type": "md",
+    "title": "Structured Query Language SQL is a domain-specific programming language designed for managing data held in a relational database management system.",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Compute_Canada_Cloud_index_e3d12df8",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Compute_Canada_Cloud_index.md",
+    "doc_type": "md",
+    "title": "- Access to a cloud computing environment with a variety of computing resources",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Google_Cloud_Platform_artifact_registry_2d32ee24",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Google_Cloud_Platform_artifact_registry.md",
+    "doc_type": "md",
+    "title": "Google Cloud Artifact Registry is a fully-managed service for storing and",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Google_Cloud_Platform_bigquery_ea4318b6",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Google_Cloud_Platform_bigquery.md",
+    "doc_type": "md",
+    "title": "BigQuery is a powerful SQL-based data warehouse that allows you to process",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Google_Cloud_Platform_cloud_sql_0df57135",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Google_Cloud_Platform_cloud_sql.md",
+    "doc_type": "md",
+    "title": "Google Cloud SQL is a fully-managed relational database service for MySQL",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Google_Cloud_Platform_gcs_eef7b01c",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Google_Cloud_Platform_gcs.md",
+    "doc_type": "md",
+    "title": "GCS is a scalable and secure object storage for data files datasets and",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Google_Cloud_Platform_introduction_f2ce1e40",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Google_Cloud_Platform_introduction.md",
+    "doc_type": "md",
+    "title": "Google Cloud Platform is a suite of cloud computing services offered by Google",
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Google_Cloud_Platform_serving_images_and_videos_df4d7061",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Google_Cloud_Platform_serving_images_and_videos.md",
+    "doc_type": "md",
+    "title": null,
+    "page_count": null,
+    "chunk_count": 4
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Google_Cloud_Platform_vertexai_cffb01f7",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Google_Cloud_Platform_vertexai.md",
+    "doc_type": "md",
+    "title": "Vertex AI is Google Clouds end-to-end platform for building training deploying and managing machine learning models.",
+    "page_count": null,
+    "chunk_count": 7
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Google_Cloud_Platform_virtual_machines_fecfee7e",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Google_Cloud_Platform_virtual_machines.md",
+    "doc_type": "md",
+    "title": "A Cloud VM is a scalable on-demand virtual machine hosted in the cloud. It",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "software_development_Remote_Development_High_Performance_Computing_for_Health_index_74e54e1e",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_High_Performance_Computing_for_Health_index.md",
+    "doc_type": "md",
+    "title": "Tutorials and resources for HPC4Health can be found here:",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Lab_Server_github_access_7bb93960",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Lab_Server_github_access.md",
+    "doc_type": "md",
+    "title": "In order to use GitHub on the lab server you will need to use an SSH key set up in your GitHub account.",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "software_development_Remote_Development_Lab_Server_index_848d8e61",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Remote_Development_Lab_Server_index.md",
+    "doc_type": "md",
+    "title": "The lab server is accessible in a manner similar to H4H.",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "software_development_Version_Control_code_reviews_challenges_solutions_2913c8bd",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Version_Control_code_reviews_challenges_solutions.md",
+    "doc_type": "md",
+    "title": "Code reviews are an essential part of software development but they come with their own set of challenges.",
+    "page_count": null,
+    "chunk_count": 6
+  },
+  {
+    "doc_id": "software_development_Version_Control_code_reviews_conducting_a_review_54024fc1",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Version_Control_code_reviews_conducting_a_review.md",
+    "doc_type": "md",
+    "title": "start Terminology",
+    "page_count": null,
+    "chunk_count": 0
+  },
+  {
+    "doc_id": "software_development_Version_Control_code_reviews_introduction_f59203ec",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Version_Control_code_reviews_introduction.md",
+    "doc_type": "md",
+    "title": "Code reviews are a critical practice in software development where developers",
+    "page_count": null,
+    "chunk_count": 2
+  },
+  {
+    "doc_id": "software_development_Version_Control_code_reviews_mindsets_cea17c50",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Version_Control_code_reviews_mindsets.md",
+    "doc_type": "md",
+    "title": "A successful code review process depends not just on technical knowledge but also on the right mindset.",
+    "page_count": null,
+    "chunk_count": 5
+  },
+  {
+    "doc_id": "software_development_Version_Control_code_reviews_presentation_407575e9",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Version_Control_code_reviews_presentation.md",
+    "doc_type": "md",
+    "title": "description: A presentation on code reviews",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "software_development_Version_Control_git_introduction_4d4db15b",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Version_Control_git_introduction.md",
+    "doc_type": "md",
+    "title": "The slides cover the following topics:",
+    "page_count": null,
+    "chunk_count": 1
+  },
+  {
+    "doc_id": "software_development_Version_Control_git_quick_git_4345c7e6",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Version_Control_git_quick_git.md",
+    "doc_type": "md",
+    "title": "Problem: Switching branches with uncommitted changes.",
+    "page_count": null,
+    "chunk_count": 5
+  },
+  {
+    "doc_id": "software_development_Version_Control_orcestra_vc_40447899",
+    "source_path": "temp/rag_documents/lab_docs/software_development_Version_Control_orcestra_vc.md",
+    "doc_type": "md",
+    "title": "ORCESTRA is setup to version control several key components:",
+    "page_count": null,
+    "chunk_count": 3
+  },
+  {
+    "doc_id": "Zeinab_Navidi_e2db7c89",
+    "source_path": "temp/rag_documents/lab_docs/Zeinab_Navidi.md",
+    "doc_type": "md",
+    "title": "Position: PhD Student",
+    "page_count": null,
+    "chunk_count": 1
+  }
+]
