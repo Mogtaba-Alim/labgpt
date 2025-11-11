@@ -68,6 +68,7 @@ python run_comprehensive_data_gen.py \
 - **Checkpoint System**: Automatic fault-tolerant processing with per-repository saves
 - **Cross-Platform**: Works consistently on Windows, Linux, and macOS
 - **Instruct Format**: Direct output for Llama fine-tuning
+- **Privacy Mode GPU Coordination**: Automatic GPU lock management prevents conflicts with training tasks
 
 ## Output Format
 
@@ -136,6 +137,40 @@ Key arguments:
 - `--no_dedup`: Disable deduplication
 - `--clear_checkpoints`: Delete existing checkpoints and start fresh (use when changing parameters)
 - `--log_level`: Logging level (DEBUG, INFO, WARNING, ERROR)
+- `--privacy`: Use local Llama 3.1 8B model instead of API (complete data privacy)
+- `--local_model_path`: Path to local model for privacy mode
+- `--device`: Device for local model (cpu/cuda/auto, default: auto)
+
+## Privacy Mode GPU Coordination
+
+When using `--privacy` mode, the pipeline automatically coordinates GPU usage with other tasks:
+
+**Auto-Device Selection:**
+- Checks if GPU is available
+- Attempts to acquire Redis GPU lock (non-blocking)
+- If GPU available and lock acquired: uses CUDA
+- If GPU busy or locked by training: falls back to CPU automatically
+
+**Benefits:**
+- No GPU conflicts with training tasks
+- Automatic fallback ensures pipeline continues
+- CPU inference slower (~10-30x) but doesn't interfere with GPU tasks
+
+**Example:**
+```bash
+# Privacy mode with auto device detection
+python run_comprehensive_data_gen.py \
+  --repo /path/to/repo \
+  --output output_dir \
+  --privacy
+
+# Force CPU to ensure no GPU conflicts
+python run_comprehensive_data_gen.py \
+  --repo /path/to/repo \
+  --output output_dir \
+  --privacy \
+  --device cpu
+```
 
 ## Checkpoint System
 

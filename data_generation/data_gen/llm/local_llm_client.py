@@ -73,24 +73,63 @@ class LocalLlamaClient:
         logger.info(f"Model: {self.model_path}")
         logger.info(f"8-bit quantization: {self.load_in_8bit}")
 
+        # Track GPU lock for cleanup
+        self._gpu_lock = None
+
         # Initialize model and tokenizer
         self.model = None
         self.tokenizer = None
         self._load_model()
 
     def _auto_detect_device(self) -> str:
-        """Auto-detect available device (CUDA GPU or CPU)."""
+        """
+        Auto-detect available device (CUDA GPU or CPU) with GPU lock coordination.
+
+        If CUDA is available, attempts to acquire Redis GPU lock to prevent concurrent
+        GPU usage with training tasks. Falls back to CPU if GPU is busy.
+        """
         if torch.cuda.is_available():
-            device = "cuda"
             gpu_name = torch.cuda.get_device_name(0)
             gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1e9
             logger.info(f"GPU detected: {gpu_name} ({gpu_memory:.1f}GB)")
 
-            if gpu_memory < 10 and self.load_in_8bit:
-                logger.warning(
-                    f"GPU has {gpu_memory:.1f}GB VRAM. 8-bit quantization recommended. "
-                    "May encounter OOM errors with full precision."
+            # Check if GPU is available via Redis lock
+            try:
+                import redis
+                # Get Redis URL from environment or use default
+                redis_url = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+                redis_client = redis.Redis.from_url(redis_url, decode_responses=True)
+
+                # Try to acquire GPU lock (non-blocking)
+                gpu_lock = redis_client.lock(
+                    'gpu:mutex',
+                    timeout=86400,  # 24 hours (will hold for model lifetime)
+                    blocking_timeout=0  # Don't wait
                 )
+
+                if gpu_lock.acquire(blocking=False):
+                    # Successfully acquired GPU lock
+                    self._gpu_lock = gpu_lock
+                    device = "cuda"
+                    logger.info("GPU lock acquired - using CUDA")
+
+                    if gpu_memory < 10 and self.load_in_8bit:
+                        logger.warning(
+                            f"GPU has {gpu_memory:.1f}GB VRAM. 8-bit quantization recommended. "
+                            "May encounter OOM errors with full precision."
+                        )
+                else:
+                    # GPU is busy (locked by another task)
+                    device = "cpu"
+                    logger.info("GPU is busy (locked by another task) - falling back to CPU")
+                    logger.info("Inference will be slower (~10-30x) but will not interfere with GPU tasks")
+
+            except ImportError:
+                logger.warning("Redis not available - proceeding with CUDA without lock coordination")
+                device = "cuda"
+            except Exception as e:
+                logger.warning(f"GPU lock check failed ({e}) - falling back to CPU")
+                device = "cpu"
         else:
             device = "cpu"
             logger.info("No GPU detected, using CPU (inference will be slower ~10-30x)")
@@ -258,6 +297,16 @@ class LocalLlamaClient:
 
     def __del__(self):
         """Clean up resources on deletion."""
+        # Release GPU lock if held
+        if hasattr(self, '_gpu_lock') and self._gpu_lock is not None:
+            try:
+                self._gpu_lock.release()
+                logger.info("GPU lock released")
+            except Exception as e:
+                # Lock may have already expired or been released
+                logger.debug(f"GPU lock release error (may be expected): {e}")
+
+        # Clean up model
         if hasattr(self, 'model') and self.model is not None:
             del self.model
             if torch.cuda.is_available():

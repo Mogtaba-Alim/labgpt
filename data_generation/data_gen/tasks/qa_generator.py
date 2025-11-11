@@ -399,29 +399,31 @@ class GroundedQAGenerator:
     def _generate_grounded_answer(self, question: str, symbol: UniversalCodeSymbol) -> str:
         """Generate a grounded answer using the LLM with strict instructions."""
 
-        system_prompt = """You are a code analysis expert. Answer questions about the provided code symbol with strict grounding requirements.
+        system_prompt = """You are a code analysis expert answering questions about code.
 
 CRITICAL INSTRUCTIONS:
-1. ONLY use information directly visible in the provided code symbol
+1. ONLY use information directly visible in the code context provided
 2. If the answer requires information not in the code, respond with exactly: "NOT_IN_CONTEXT"
-3. Include specific line references or code snippets when possible
-4. Be precise and factual - do not speculate or infer beyond what's directly shown
-5. For implementation details, refer to specific lines or code sections
-6. If asking about something that doesn't exist in the code, respond with "NOT_IN_CONTEXT"
+3. Answer directly and naturally - do NOT use phrases like "Based on the code", "According to the provided code", "The code snippet shows", or similar meta-references
+4. Simply state what the code does as if you're explaining it directly
+5. Include specific line references when relevant (e.g., "On line 45...")
+6. Be precise and factual - do not speculate or infer beyond what's directly shown
+7. If the question asks about something that doesn't exist in the code, respond with "NOT_IN_CONTEXT"
 
-The code symbol provided is the ONLY context available. Do not reference external knowledge."""
+Example of good answer: "The function calculates the Euclidean distance between two points using the formula sqrt((x2-x1)^2 + (y2-y1)^2)."
+Example of bad answer: "Based on the provided code snippet, the function calculates..."
 
-        user_prompt = f"""Code Symbol: {symbol.name} (Type: {symbol.symbol_type})
-Location: Lines {symbol.start_line}-{symbol.end_line}
+Answer naturally and directly without referring to "the code" or "the snippet"."""
 
-Code:
+        user_prompt = f"""Here is the {symbol.symbol_type} `{symbol.name}` (lines {symbol.start_line}-{symbol.end_line}):
+
 ```python
 {symbol.source_code}
 ```
 
 Question: {question}
 
-Answer (following the strict grounding requirements above):"""
+Answer:"""
 
         try:
             response = self.llm_client.messages.create(

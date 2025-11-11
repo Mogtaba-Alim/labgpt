@@ -195,29 +195,40 @@ class MultiChunkPaperQAGenerator:
     
     def _generate_integrative_question_answer(self, chunks: List[PaperChunk]) -> tuple[str, str]:
         """Generate an integrative question and answer using GPT-4o."""
-        
-        system_prompt = """You are a research expert who creates high-quality questions and answers about academic papers. 
-        
-        Your task is to generate integrative questions that require synthesizing information across multiple sections of a research paper. The questions should:
-        1. Require understanding of concepts from multiple sections
-        2. Test comprehension of relationships between different parts of the paper
-        3. Be answerable based on the provided content
-        4. Be educational and valuable for training a research assistant AI
-        
-        Generate exactly one question and one comprehensive answer based on the provided paper sections."""
-        
+
+        system_prompt = """You are a research expert who creates high-quality questions and answers about academic papers.
+
+Your task is to generate integrative questions that require synthesizing information across multiple sections of a research paper. The questions should:
+1. Require understanding of concepts from multiple sections
+2. Test comprehension of relationships between different parts of the paper
+3. Be answerable using the provided content
+4. Be educational and valuable for training a research assistant AI
+
+CRITICAL: When generating the answer, write naturally and directly. Do NOT use phrases like:
+- "Based on the provided sections"
+- "According to the paper"
+- "The sections describe"
+- "From the content provided"
+
+Instead, answer directly as if you're explaining the research. State the information clearly and naturally.
+
+Example of good answer: "The study uses a randomized controlled trial design with 500 participants divided into treatment and control groups."
+Example of bad answer: "Based on the provided sections, the study uses a randomized controlled trial design..."
+
+Generate exactly one question and one comprehensive answer."""
+
         # Prepare context from chunks
         chunk_contexts = []
         for i, chunk in enumerate(chunks):
             chunk_contexts.append(f"**Section {i+1} ({chunk.section_type.value}):**\n{chunk.content[:1000]}...")
-        
-        user_prompt = f"""Based on the following sections from a research paper:
+
+        user_prompt = f"""Research paper sections:
 
 {chr(10).join(chunk_contexts)}
 
 Generate:
 1. One integrative question that requires understanding multiple sections
-2. One comprehensive answer that synthesizes information from the sections
+2. One comprehensive answer that synthesizes information from the sections (answer directly without meta-references)
 
 Format your response as:
 QUESTION: [your question]
