@@ -44,7 +44,7 @@ export CLAUDE_API_KEY=your_claude_api_key
 export OPENAI_KEY=your_openai_api_key
 
 # For HuggingFace models
-export HUGGINGFACE_TOKEN=your_huggingface_token
+export HF_TOKEN=your_huggingface_token
 ```
 
 ### Running LabGPT
