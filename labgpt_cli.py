@@ -24,6 +24,8 @@ import argparse
 import logging
 import subprocess
 import tempfile
+import signal
+import atexit
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -50,6 +52,12 @@ class PipelineOrchestrator:
         self.logs_dir.mkdir(exist_ok=True)
         self.temp_dir.mkdir(exist_ok=True)
 
+        # Track child processes for cleanup
+        self.child_processes = []
+
+        # Register cleanup handler
+        atexit.register(self.cleanup_processes)
+
         # Setup log file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file = self.logs_dir / f"labgpt_{timestamp}.log"
@@ -60,6 +68,111 @@ class PipelineOrchestrator:
         logger.addHandler(file_handler)
 
         logger.info(f"LabGPT Orchestrator initialized. Logs: {log_file}")
+
+    def cleanup_processes(self):
+        """Kill all tracked child processes and their process groups."""
+        if not self.child_processes:
+            return
+
+        logger.info(f"Cleaning up {len(self.child_processes)} child process(es)...")
+
+        for proc in self.child_processes:
+            try:
+                if proc.poll() is None:  # Process still running
+                    # With start_new_session=True, the process is its own session leader
+                    # Session ID equals PID, so we can kill the entire session
+                    try:
+                        os.killpg(proc.pid, signal.SIGTERM)
+                        logger.info(f"Sent SIGTERM to process session {proc.pid}")
+
+                        # Wait briefly for graceful shutdown
+                        try:
+                            proc.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            # Force kill if still running
+                            os.killpg(proc.pid, signal.SIGKILL)
+                            logger.warning(f"Sent SIGKILL to process session {proc.pid}")
+                    except ProcessLookupError:
+                        # Process already exited
+                        pass
+            except (OSError, AttributeError) as e:
+                logger.debug(f"Cleanup error for PID {proc.pid}: {e}")
+
+        self.child_processes.clear()
+
+    def run_subprocess_with_logging(self, cmd: List[str], log_prefix: str, cwd: str = None) -> tuple:
+        """
+        Run subprocess with process group handling and streamed logging.
+
+        Args:
+            cmd: Command and arguments to run
+            log_prefix: Prefix for log file name
+            cwd: Working directory (default: current directory)
+
+        Returns:
+            Tuple of (CompletedProcess with stdout/stderr as strings, Path to log file)
+
+        Raises:
+            subprocess.CalledProcessError: If subprocess fails
+        """
+        # Create log file for subprocess output
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_file_path = self.logs_dir / f"{log_prefix}_{timestamp}.log"
+
+        logger.info(f"Running command: {' '.join(cmd)}")
+        logger.info(f"Subprocess logs: {log_file_path}")
+
+        # Initialize process to None (in case exception occurs before it's created)
+        process = None
+
+        try:
+            with open(log_file_path, 'w') as log_file:
+                # On Unix: start_new_session creates process group
+                # On Windows: creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                popen_kwargs = {
+                    'stdout': log_file,
+                    'stderr': subprocess.STDOUT,  # Combine stderr with stdout
+                    'text': True,
+                    'cwd': cwd or os.getcwd(),
+                }
+
+                # Platform-specific process group creation
+                if os.name == 'posix':  # Unix/Linux/Mac
+                    # start_new_session=True creates a new process session (equivalent to setsid)
+                    popen_kwargs['start_new_session'] = True
+                else:  # Windows
+                    popen_kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+
+                # Start subprocess
+                process = subprocess.Popen(cmd, **popen_kwargs)
+                self.child_processes.append(process)
+
+                # Wait for completion
+                return_code = process.wait()
+
+                # Remove from tracked processes (successfully completed)
+                if process in self.child_processes:
+                    self.child_processes.remove(process)
+
+            # Read logs for return
+            with open(log_file_path, 'r') as log_file:
+                output = log_file.read()
+
+            # Check return code
+            if return_code != 0:
+                logger.error(f"Subprocess failed with return code {return_code}")
+                logger.error(f"Output:\n{output}")
+                raise subprocess.CalledProcessError(return_code, cmd, output=output)
+
+            logger.info(f"Subprocess completed successfully")
+            completed_process = subprocess.CompletedProcess(cmd, return_code, stdout=output, stderr='')
+            return completed_process, log_file_path
+
+        except Exception as e:
+            # Remove from tracked processes on error
+            if process in self.child_processes:
+                self.child_processes.remove(process)
+            raise
 
     def run_rag_pipeline(
         self,
@@ -127,22 +240,14 @@ class PipelineOrchestrator:
                 "--docs", str(temp_docs_dir),
                 "--index", str(index_path),
                 "--preset", rag_preset,
+                "--device", "auto",  # Auto-select device: GPU if available, otherwise CPU
             ]
 
-            logger.info(f"Running command: {' '.join(cmd)}")
-            result = subprocess.run(
-                cmd,
-                check=True,
-                capture_output=True,
-                text=True,
-                cwd=os.getcwd()
-            )
+            # Run with process group handling and streamed logging
+            result, log_file_path = self.run_subprocess_with_logging(cmd, "rag_ingestion")
 
             logger.info("RAG ingestion output:")
             logger.info(result.stdout)
-
-            if result.stderr:
-                logger.warning(f"RAG ingestion warnings:\n{result.stderr}")
 
             # Verify index was created
             if not (index_path / "documents_metadata.json").exists():
@@ -154,7 +259,8 @@ class PipelineOrchestrator:
             return {
                 "status": "success",
                 "index_path": str(index_path),
-                "documents_indexed": self._count_indexed_documents(index_path)
+                "documents_indexed": self._count_indexed_documents(index_path),
+                "log_file": str(log_file_path)
             }
 
         except subprocess.CalledProcessError as e:
@@ -265,21 +371,11 @@ class PipelineOrchestrator:
                 if local_model_path:
                     cmd.extend(["--local_model_path", local_model_path])
 
-            logger.info(f"Running command: {' '.join(cmd)}")
-
-            result = subprocess.run(
-                cmd,
-                check=True,
-                capture_output=True,
-                text=True,
-                cwd=os.getcwd()
-            )
+            # Run with process group handling and streamed logging
+            result, log_file_path = self.run_subprocess_with_logging(cmd, "data_generation")
 
             logger.info("Data generation output:")
             logger.info(result.stdout)
-
-            if result.stderr:
-                logger.warning(f"Data generation warnings:\n{result.stderr}")
 
             # Output files are already combined by the data generation pipeline
             combined_train = output_path / "combined_instruct_train.jsonl"
@@ -300,7 +396,8 @@ class PipelineOrchestrator:
                 "train_file": str(combined_train),
                 "val_file": str(combined_val),
                 "train_count": train_count,
-                "val_count": val_count
+                "val_count": val_count,
+                "log_file": str(log_file_path)
             }
 
         except subprocess.CalledProcessError as e:
@@ -384,23 +481,14 @@ class PipelineOrchestrator:
         if not use_flash_attn:
             cmd.append("--use_flash_attn=False")
 
-        logger.info(f"Running command: {' '.join(cmd)}")
         logger.info("Note: Training may take several hours depending on dataset size and hardware.")
 
         try:
-            result = subprocess.run(
-                cmd,
-                check=True,
-                capture_output=True,
-                text=True,
-                cwd=os.getcwd()
-            )
+            # Run with process group handling and streamed logging
+            result, log_file_path = self.run_subprocess_with_logging(cmd, "training")
 
             logger.info("Training output:")
             logger.info(result.stdout)
-
-            if result.stderr:
-                logger.warning(f"Training warnings:\n{result.stderr}")
 
             logger.info(f"✓ Training completed successfully")
             logger.info(f"✓ Model saved to: {model_path}")
@@ -408,6 +496,7 @@ class PipelineOrchestrator:
             return {
                 "status": "success",
                 "model_path": str(model_path),
+                "log_file": str(log_file_path)
             }
 
         except subprocess.CalledProcessError as e:

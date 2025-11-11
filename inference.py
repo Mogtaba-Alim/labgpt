@@ -2,9 +2,13 @@ import torch
 import logging
 import argparse
 import os
-from sentence_transformers import SentenceTransformer
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, GenerationConfig
-from peft import PeftModel
+from typing import Optional
+
+# Lazy imports - only import when needed
+# from sentence_transformers import SentenceTransformer
+# from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, GenerationConfig
+# from peft import PeftModel
+
 from RAG.pipeline import RAGPipeline
 from RAG.models import Chunk, RetrievalResult
 
@@ -17,8 +21,103 @@ ADAPTER_REPO = "MogtabaAlim/llama3.1-8B-BHK-LABGPT-Fine-tunedByMogtaba"  # Adapt
 DEFAULT_STORAGE_DIR = os.environ.get("RAG_STORAGE_DIR", "rag_demo_storage")
 DEFAULT_TOP_K = 3
 
-# Load the embedding model for RAG
-embed_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+
+class ModelManager:
+    """
+    Singleton class for lazy loading and caching of ML models.
+
+    Models are loaded only on first use and cached for reuse.
+    This prevents models from loading at module import time.
+    """
+    _instance: Optional['ModelManager'] = None
+    _initialized = False
+
+    def __new__(cls):
+        """Ensure only one instance exists."""
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        """Initialize model cache (runs only once)."""
+        if not ModelManager._initialized:
+            self.embed_model = None
+            self.tokenizer = None
+            self.model = None
+            ModelManager._initialized = True
+
+    def get_embedding_model(self):
+        """Lazy load embedding model."""
+        if self.embed_model is None:
+            logging.info(f"Loading embedding model: {EMBEDDING_MODEL_NAME}")
+            from sentence_transformers import SentenceTransformer
+            self.embed_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+            logging.info("Embedding model loaded successfully")
+        return self.embed_model
+
+    def get_llm(self):
+        """Lazy load LLM (tokenizer + base model + LoRA adapters)."""
+        if self.tokenizer is None or self.model is None:
+            logging.info("Loading LLM (this may take a few minutes on first use)...")
+            self._load_llm()
+            logging.info("LLM loaded successfully")
+        return self.tokenizer, self.model
+
+    def _load_llm(self):
+        """Internal method to load LLM components."""
+        from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+        from peft import PeftModel
+
+        # Get HF token
+        HF_KEY = os.environ.get('HF_TOKEN', None)
+
+        # Auto-detect best dtype
+        has_cuda = torch.cuda.is_available()
+        bf16_supported = detect_bf16_support()
+        compute_dtype = torch.bfloat16 if bf16_supported else torch.float16
+        dtype_name = "BF16" if bf16_supported else "FP16"
+
+        logging.info(f"Using {dtype_name} precision with 4-bit quantization")
+
+        try:
+            # Load tokenizer
+            logging.info(f"Loading tokenizer from {BASE_MODEL_NAME}")
+            self.tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME, use_fast=True, token=HF_KEY)
+
+            # Configure 4-bit quantization
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=compute_dtype,
+                bnb_4bit_use_double_quant=True,
+            )
+
+            # Load base model
+            logging.info(f"Loading base model {BASE_MODEL_NAME} with 4-bit quantization...")
+            base_model = AutoModelForCausalLM.from_pretrained(
+                BASE_MODEL_NAME,
+                device_map="auto",
+                quantization_config=bnb_config,
+                token=HF_KEY,
+                trust_remote_code=False,
+            )
+
+            # Attach LoRA adapters
+            logging.info(f"Attaching LoRA adapters from {ADAPTER_REPO}...")
+            self.model = PeftModel.from_pretrained(base_model, ADAPTER_REPO, token=HF_KEY)
+
+            # Enable KV-cache
+            self.model.config.use_cache = True
+
+            logging.info(f"Model loaded: {BASE_MODEL_NAME} + {ADAPTER_REPO} ({dtype_name} + 4-bit)")
+
+        except Exception as e:
+            logging.error(f"Error loading LLM: {e}")
+            raise
+
+
+# Global model manager instance
+_model_manager = ModelManager()
 
 
 def detect_bf16_support() -> bool:
@@ -36,53 +135,6 @@ def detect_bf16_support() -> bool:
         return major >= 8
     except Exception:
         return False
-
-
-# Load the fine-tuned LLM with 4-bit quantization
-# Use None instead of empty string for missing token (empty string = invalid credential)
-HF_KEY = os.environ.get('HF_TOKEN', None)
-
-# Auto-detect best dtype
-has_cuda = torch.cuda.is_available()
-bf16_supported = detect_bf16_support()
-compute_dtype = torch.bfloat16 if bf16_supported else torch.float16
-dtype_name = "BF16" if bf16_supported else "FP16"
-
-logging.info(f"Using {dtype_name} precision with 4-bit quantization for model loading")
-
-try:
-    # Load tokenizer from base model
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME, use_fast=True, token=HF_KEY)
-
-    # Configure 4-bit quantization (reduces VRAM, avoids CPU offloading)
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=compute_dtype,
-        bnb_4bit_use_double_quant=True,
-    )
-
-    # Load base model with 4-bit quantization
-    logging.info(f"Loading base model {BASE_MODEL_NAME} with 4-bit quantization...")
-    base_model = AutoModelForCausalLM.from_pretrained(
-        BASE_MODEL_NAME,
-        device_map="auto",
-        quantization_config=bnb_config,
-        token=HF_KEY,
-        trust_remote_code=False,
-    )
-
-    # Load and attach LoRA adapters
-    logging.info(f"Attaching LoRA adapters from {ADAPTER_REPO}...")
-    model = PeftModel.from_pretrained(base_model, ADAPTER_REPO, token=HF_KEY)
-
-    # Enable KV-cache for faster inference
-    model.config.use_cache = True
-
-    logging.info(f"Model loaded successfully: {BASE_MODEL_NAME} + {ADAPTER_REPO} adapters with {dtype_name} + 4-bit")
-except Exception as e:
-    logging.error("Error loading model: %s", e)
-    raise
 
 
 def build_rag(index_dir: str, preset: str = "default") -> RAGPipeline:
@@ -152,7 +204,7 @@ def retrieve_relevant_chunks_rag(
         return []
 
 
-# LABGPT System Prompt (matches training format)
+# LABGPT System Prompt (unified across all applications)
 LABGPT_SYSTEM = """You are LABGPT, an advanced AI assistant specialized in laboratory research, computational biology, and scientific programming. You were developed to assist researchers at the BHK Lab and similar research institutions.
 
 Your core capabilities include:
@@ -163,8 +215,8 @@ Your core capabilities include:
 - Providing expertise in computational biology, pharmacogenomics, and medical imaging
 
 Key principles:
-- Always provide accurate, grounded responses based on the provided context
-- When information is not available in the context, clearly state "I don't have enough information to answer that" or "That information is not in the provided context"
+- Always provide accurate, precise, and helpful responses
+- When you don't have sufficient information to answer a question, clearly state "I don't have enough information to answer that"
 - Maintain scientific rigor and precision in all responses
 - Provide code examples that follow best practices and are well-documented
 - Consider computational efficiency and reproducibility in scientific workflows
@@ -221,6 +273,10 @@ def generate_messages(messages: list, max_new_tokens: int = 512, temperature: fl
         Generated text response
     """
     from time import perf_counter
+    from transformers import GenerationConfig
+
+    # Get models from manager (lazy loaded on first use)
+    tokenizer, model = _model_manager.get_llm()
 
     # Apply chat template (matches training format)
     prompt = tokenizer.apply_chat_template(
