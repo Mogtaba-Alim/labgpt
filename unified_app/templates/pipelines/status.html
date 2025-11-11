@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline Status - {{ project.name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+        .project-info {
+            color: #666;
+            margin-top: 10px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 15px 30px;
+            background: white;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 1em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background 0.3s;
+        }
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+        .tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .status-pending {
+            background: #ffc107;
+            color: #333;
+        }
+        .status-running {
+            background: #007bff;
+            color: white;
+        }
+        .status-completed {
+            background: #28a745;
+            color: white;
+        }
+        .status-failed {
+            background: #dc3545;
+            color: white;
+        }
+        .progress-section {
+            margin: 30px 0;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .current-step {
+            margin-top: 10px;
+            color: #666;
+            font-style: italic;
+        }
+        .log-section {
+            margin-top: 30px;
+        }
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .log-line {
+            margin-bottom: 5px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1em;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .action-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error-box {
+            background: #ffe7e7;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Pipeline Status</h1>
+        <div class="project-info">
+            <strong>Project:</strong> {{ project.name }}
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('rag')">RAG Indexing</button>
+        <button class="tab" onclick="switchTab('datagen')">Data Generation</button>
+    </div>
+
+    <!-- RAG Tab -->
+    <div id="rag-tab" class="tab-content active">
+        <h2>RAG Document Indexing</h2>
+        <span id="rag-status-badge" class="status-badge status-pending">Pending</span>
+
+        <div class="info-box">
+            <strong>What's happening:</strong> The RAG pipeline is indexing research papers and lab documents
+            to create a searchable knowledge base for chat and grant generation features.
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-label">
+                <span>Progress</span>
+                <span id="rag-progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div id="rag-progress-bar" class="progress-bar" style="width: 0%">0%</div>
+            </div>
+            <div class="current-step" id="rag-current-step">Waiting to start...</div>
+        </div>
+
+        <div class="log-section">
+            <div class="log-header">
+                <h3>Logs</h3>
+                <button class="btn btn-secondary" onclick="refreshLogs('rag')">Refresh Logs</button>
+            </div>
+            <div id="rag-logs" class="log-container">
+                <div class="log-line">No logs available yet...</div>
+            </div>
+        </div>
+
+        <div id="rag-error" class="error-box" style="display: none;">
+            <strong>Error:</strong> <span id="rag-error-message"></span>
+        </div>
+    </div>
+
+    <!-- Data Generation Tab -->
+    <div id="datagen-tab" class="tab-content">
+        <h2>Data Generation</h2>
+        <span id="datagen-status-badge" class="status-badge status-pending">Pending</span>
+
+        <div class="info-box">
+            <strong>What's happening:</strong> The data generation pipeline is processing code repositories
+            and research papers to create instruction-following training data for model fine-tuning.
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-label">
+                <span>Progress</span>
+                <span id="datagen-progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div id="datagen-progress-bar" class="progress-bar" style="width: 0%">0%</div>
+            </div>
+            <div class="current-step" id="datagen-current-step">Waiting to start...</div>
+        </div>
+
+        <div class="log-section">
+            <div class="log-header">
+                <h3>Logs</h3>
+                <button class="btn btn-secondary" onclick="refreshLogs('datagen')">Refresh Logs</button>
+            </div>
+            <div id="datagen-logs" class="log-container">
+                <div class="log-line">No logs available yet...</div>
+            </div>
+        </div>
+
+        <div id="datagen-error" class="error-box" style="display: none;">
+            <strong>Error:</strong> <span id="datagen-error-message"></span>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-section">
+        <p id="completion-message" style="display: none; color: #28a745; font-weight: bold; margin-bottom: 15px;">
+            Both pipelines completed successfully! You can now proceed to training.
+        </p>
+        <button id="proceed-btn" class="btn btn-success" onclick="proceedToTraining()" disabled>
+            Proceed to Training
+        </button>
+        <a href="{{ url_for('welcome.index') }}" class="btn btn-secondary">Back to Projects</a>
+    </div>
+
+    <script>
+        const PROJECT_ID = {{ project.id }};
+        let ragJobId = null;
+        let datagenJobId = null;
+        let pollingInterval = null;
+
+        // Initialize - get active jobs
+        async function initialize() {
+            try {
+                const response = await fetch(`/api/project/${PROJECT_ID}/status`);
+                const data = await response.json();
+
+                // Find active jobs
+                const activeJobs = data.active_jobs || [];
+                for (const job of activeJobs) {
+                    if (job.job_type === 'rag') {
+                        ragJobId = job.id;
+                    } else if (job.job_type === 'data_generation') {
+                        datagenJobId = job.id;
+                    }
+                }
+
+                // Start polling
+                startPolling();
+            } catch (error) {
+                console.error('Failed to initialize:', error);
+            }
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        async function updateJobStatus(jobId, jobType) {
+            if (!jobId) return;
+
+            try {
+                const response = await fetch(`/api/job/${jobId}/status`);
+                const job = await response.json();
+
+                // Update status badge
+                const badge = document.getElementById(`${jobType}-status-badge`);
+                badge.className = `status-badge status-${job.status}`;
+                badge.textContent = job.status.charAt(0).toUpperCase() + job.status.slice(1);
+
+                // Update progress
+                const progress = job.progress_percentage || 0;
+                document.getElementById(`${jobType}-progress-percent`).textContent = `${progress}%`;
+                document.getElementById(`${jobType}-progress-bar`).style.width = `${progress}%`;
+                document.getElementById(`${jobType}-progress-bar`).textContent = `${progress}%`;
+
+                // Update current step
+                document.getElementById(`${jobType}-current-step`).textContent =
+                    job.current_step || 'Processing...';
+
+                // Update error message if failed
+                if (job.status === 'failed') {
+                    document.getElementById(`${jobType}-error`).style.display = 'block';
+                    document.getElementById(`${jobType}-error-message`).textContent =
+                        job.error_message || 'Unknown error occurred';
+                }
+
+                // Check if both jobs are complete
+                checkCompletion();
+
+            } catch (error) {
+                console.error(`Failed to update ${jobType} status:`, error);
+            }
+        }
+
+        async function refreshLogs(jobType) {
+            const jobId = jobType === 'rag' ? ragJobId : datagenJobId;
+            if (!jobId) return;
+
+            try {
+                const response = await fetch(`/api/job/${jobId}/logs`);
+                const data = await response.json();
+
+                const logsContainer = document.getElementById(`${jobType}-logs`);
+                logsContainer.innerHTML = '';
+
+                if (data.log_lines && data.log_lines.length > 0) {
+                    data.log_lines.forEach(line => {
+                        const logLine = document.createElement('div');
+                        logLine.className = 'log-line';
+                        logLine.textContent = line;
+                        logsContainer.appendChild(logLine);
+                    });
+                    // Scroll to bottom
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                } else {
+                    logsContainer.innerHTML = '<div class="log-line">No logs available yet...</div>';
+                }
+            } catch (error) {
+                console.error(`Failed to refresh ${jobType} logs:`, error);
+            }
+        }
+
+        function startPolling() {
+            // Poll every 2 seconds
+            pollingInterval = setInterval(async () => {
+                if (ragJobId) {
+                    await updateJobStatus(ragJobId, 'rag');
+                    await refreshLogs('rag');
+                }
+                if (datagenJobId) {
+                    await updateJobStatus(datagenJobId, 'datagen');
+                    await refreshLogs('datagen');
+                }
+            }, 2000);
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+
+        async function checkCompletion() {
+            try {
+                const response = await fetch(`/api/project/${PROJECT_ID}/status`);
+                const data = await response.json();
+
+                if (data.completion_status.data_generation) {
+                    // Data generation complete, enable proceed button
+                    document.getElementById('proceed-btn').disabled = false;
+                    document.getElementById('completion-message').style.display = 'block';
+                    stopPolling();
+                }
+            } catch (error) {
+                console.error('Failed to check completion:', error);
+            }
+        }
+
+        function proceedToTraining() {
+            window.location.href = `/training/${PROJECT_ID}/config`;
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', initialize);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', stopPolling);
+    </script>
+</body>
+</html>

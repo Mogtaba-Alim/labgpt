@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grant Generation - {{ project.name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 2px solid #eee;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .project-info {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: opacity 0.3s;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 2px solid #eee;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            color: #333;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #007bff;
+        }
+
+        .section-list {
+            list-style: none;
+        }
+
+        .section-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f9f9f9;
+            border-left: 3px solid transparent;
+        }
+
+        .section-item:hover {
+            background: #e9f3ff;
+            border-left-color: #007bff;
+        }
+
+        .section-item.active {
+            background: #e7f3ff;
+            border-left-color: #007bff;
+            font-weight: 600;
+        }
+
+        .section-item.completed {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .section-status {
+            float: right;
+            font-size: 0.8em;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .section-header {
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .section-description {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .draft-area {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+
+        .draft-content {
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 1em;
+            color: #333;
+        }
+
+        .empty-draft {
+            text-align: center;
+            color: #999;
+            padding: 60px 20px;
+        }
+
+        .empty-draft h3 {
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .citations-area {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .citations-area h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .citation {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #007bff;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        .citation-source {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .citation-text {
+            color: #666;
+            font-style: italic;
+        }
+
+        .actions-area {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .loading-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .loading-indicator.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quality-feedback {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .quality-feedback.active {
+            display: block;
+        }
+
+        .quality-feedback h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .quality-feedback p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .progress-bar {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>Grant Generation</h1>
+            <div class="project-info">
+                <strong>Project:</strong> {{ project.name }}
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-success" onclick="exportGrant()">Export Draft</button>
+            <a href="{{ url_for('pipelines.status', project_id=project.id) }}" class="btn btn-secondary">Back to Pipelines</a>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <h2>Grant Sections</h2>
+
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text" id="progress-text">0 of 7 sections completed</div>
+
+            <ul class="section-list">
+                <li class="section-item active" data-section="Background" onclick="loadSection('Background')">
+                    Background
+                    <span class="section-status status-pending" id="status-Background">Pending</span>
+                </li>
+                <li class="section-item" data-section="Specific Aims" onclick="loadSection('Specific Aims')">
+                    Specific Aims
+                    <span class="section-status status-pending" id="status-Specific Aims">Pending</span>
+                </li>
+                <li class="section-item" data-section="Significance" onclick="loadSection('Significance')">
+                    Significance
+                    <span class="section-status status-pending" id="status-Significance">Pending</span>
+                </li>
+                <li class="section-item" data-section="Innovation" onclick="loadSection('Innovation')">
+                    Innovation
+                    <span class="section-status status-pending" id="status-Innovation">Pending</span>
+                </li>
+                <li class="section-item" data-section="Approach" onclick="loadSection('Approach')">
+                    Approach
+                    <span class="section-status status-pending" id="status-Approach">Pending</span>
+                </li>
+                <li class="section-item" data-section="Environment" onclick="loadSection('Environment')">
+                    Environment
+                    <span class="section-status status-pending" id="status-Environment">Pending</span>
+                </li>
+                <li class="section-item" data-section="Bibliography" onclick="loadSection('Bibliography')">
+                    Bibliography
+                    <span class="section-status status-pending" id="status-Bibliography">Pending</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="content-area">
+            <div class="section-header">
+                <h2 id="current-section-name">Background</h2>
+                <p class="section-description" id="section-description">
+                    Establish the scientific foundation and context for your research.
+                </p>
+            </div>
+
+            <div class="loading-indicator" id="loading-indicator">
+                <div class="spinner"></div>
+                <span>Generating section content...</span>
+            </div>
+
+            <div class="quality-feedback" id="quality-feedback">
+                <h4>Quality Assessment</h4>
+                <p id="quality-text"></p>
+            </div>
+
+            <div class="draft-area" id="draft-area">
+                <div class="empty-draft">
+                    <h3>No Content Generated Yet</h3>
+                    <p>Click "Generate Section" to create content using your trained model and RAG citations.</p>
+                </div>
+            </div>
+
+            <div class="citations-area" id="citations-area" style="display: none;">
+                <h3>References</h3>
+                <div id="citations-list"></div>
+            </div>
+
+            <div class="actions-area">
+                <button class="btn btn-primary" id="generate-btn" onclick="generateSection()">Generate Section</button>
+                <button class="btn btn-primary" id="refine-btn" onclick="refineSection()" style="display: none;">Refine Section</button>
+                <button class="btn btn-secondary" id="save-btn" onclick="saveSection()" style="display: none;">Save Draft</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PROJECT_ID = {{ project.id }};
+        let currentSection = 'Background';
+        let draftData = {};
+
+        const SECTION_DESCRIPTIONS = {
+            'Background': 'Establish the scientific foundation and context for your research.',
+            'Specific Aims': 'Define clear, achievable objectives for your research project.',
+            'Significance': 'Explain why this research matters and its potential impact.',
+            'Innovation': 'Highlight novel approaches and unique aspects of your work.',
+            'Approach': 'Detail your research methods and experimental design.',
+            'Environment': 'Describe available resources and institutional support.',
+            'Bibliography': 'Compile all cited references in proper format.'
+        };
+
+        // Load section
+        function loadSection(sectionName) {
+            currentSection = sectionName;
+
+            // Update active state in sidebar
+            document.querySelectorAll('.section-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.section === sectionName) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Update section header
+            document.getElementById('current-section-name').textContent = sectionName;
+            document.getElementById('section-description').textContent = SECTION_DESCRIPTIONS[sectionName];
+
+            // Load draft if exists
+            if (draftData[sectionName]) {
+                displayDraft(draftData[sectionName]);
+            } else {
+                showEmptyState();
+            }
+        }
+
+        // Generate section
+        async function generateSection() {
+            const generateBtn = document.getElementById('generate-btn');
+            const loading = document.getElementById('loading-indicator');
+
+            generateBtn.disabled = true;
+            loading.classList.add('active');
+            document.getElementById('quality-feedback').classList.remove('active');
+
+            try {
+                const response = await fetch(`/api/grant/${PROJECT_ID}/generate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        section: currentSection
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    draftData[currentSection] = data;
+                    displayDraft(data);
+                    markSectionComplete(currentSection);
+                    updateProgress();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to generate section'));
+                }
+
+            } catch (error) {
+                console.error('Error generating section:', error);
+                alert('Error generating section: ' + error.message);
+            } finally {
+                generateBtn.disabled = false;
+                loading.classList.remove('active');
+            }
+        }
+
+        // Refine section
+        async function refineSection() {
+            const refineBtn = document.getElementById('refine-btn');
+            const loading = document.getElementById('loading-indicator');
+
+            refineBtn.disabled = true;
+            loading.classList.add('active');
+
+            try {
+                const response = await fetch(`/api/grant/${PROJECT_ID}/refine`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        section: currentSection,
+                        current_draft: draftData[currentSection].content
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    draftData[currentSection] = data;
+                    displayDraft(data);
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to refine section'));
+                }
+
+            } catch (error) {
+                console.error('Error refining section:', error);
+                alert('Error refining section: ' + error.message);
+            } finally {
+                refineBtn.disabled = false;
+                loading.classList.remove('active');
+            }
+        }
+
+        // Save section
+        async function saveSection() {
+            try {
+                const response = await fetch(`/api/grant/${PROJECT_ID}/save`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        drafts: draftData
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Draft saved successfully!');
+                } else {
+                    alert('Error saving draft');
+                }
+
+            } catch (error) {
+                console.error('Error saving draft:', error);
+                alert('Error saving draft: ' + error.message);
+            }
+        }
+
+        // Display draft
+        function displayDraft(data) {
+            const draftArea = document.getElementById('draft-area');
+            draftArea.innerHTML = `<div class="draft-content">${data.content}</div>`;
+
+            // Show buttons
+            document.getElementById('refine-btn').style.display = 'inline-block';
+            document.getElementById('save-btn').style.display = 'inline-block';
+
+            // Display citations
+            if (data.citations && data.citations.length > 0) {
+                const citationsArea = document.getElementById('citations-area');
+                const citationsList = document.getElementById('citations-list');
+
+                citationsList.innerHTML = '';
+                data.citations.forEach(citation => {
+                    const citationDiv = document.createElement('div');
+                    citationDiv.className = 'citation';
+                    citationDiv.innerHTML = `
+                        <div class="citation-source">${citation.source} - Page ${citation.page}</div>
+                        <div class="citation-text">${citation.text}</div>
+                    `;
+                    citationsList.appendChild(citationDiv);
+                });
+
+                citationsArea.style.display = 'block';
+            }
+
+            // Display quality feedback
+            if (data.quality_feedback) {
+                const feedbackEl = document.getElementById('quality-feedback');
+                document.getElementById('quality-text').textContent = data.quality_feedback;
+                feedbackEl.classList.add('active');
+            }
+        }
+
+        // Show empty state
+        function showEmptyState() {
+            const draftArea = document.getElementById('draft-area');
+            draftArea.innerHTML = `
+                <div class="empty-draft">
+                    <h3>No Content Generated Yet</h3>
+                    <p>Click "Generate Section" to create content using your trained model and RAG citations.</p>
+                </div>
+            `;
+
+            document.getElementById('refine-btn').style.display = 'none';
+            document.getElementById('save-btn').style.display = 'none';
+            document.getElementById('citations-area').style.display = 'none';
+            document.getElementById('quality-feedback').classList.remove('active');
+        }
+
+        // Mark section complete
+        function markSectionComplete(sectionName) {
+            const statusEl = document.getElementById(`status-${sectionName}`);
+            statusEl.textContent = 'Completed';
+            statusEl.className = 'section-status status-completed';
+
+            const sectionItem = document.querySelector(`[data-section="${sectionName}"]`);
+            sectionItem.classList.add('completed');
+        }
+
+        // Update progress
+        function updateProgress() {
+            const completed = Object.keys(draftData).length;
+            const total = 7;
+            const percentage = (completed / total) * 100;
+
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+            document.getElementById('progress-text').textContent = `${completed} of ${total} sections completed`;
+        }
+
+        // Export grant
+        async function exportGrant() {
+            if (Object.keys(draftData).length === 0) {
+                alert('Please generate at least one section before exporting.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/grant/${PROJECT_ID}/export`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        drafts: draftData,
+                        format: 'docx'
+                    })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `grant_${PROJECT_ID}.docx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    alert('Error exporting grant');
+                }
+
+            } catch (error) {
+                console.error('Error exporting grant:', error);
+                alert('Error exporting grant: ' + error.message);
+            }
+        }
+
+        // Load saved draft on page load
+        async function loadSavedDraft() {
+            try {
+                const response = await fetch(`/api/grant/${PROJECT_ID}/draft`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.drafts) {
+                        draftData = data.drafts;
+
+                        // Mark completed sections
+                        Object.keys(draftData).forEach(section => {
+                            markSectionComplete(section);
+                        });
+
+                        updateProgress();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading saved draft:', error);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', loadSavedDraft);
+    </script>
+</body>
+</html>

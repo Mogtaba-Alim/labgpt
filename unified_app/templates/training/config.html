@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Configuration - {{ project.name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+        .project-info {
+            color: #666;
+            margin-top: 10px;
+        }
+        .config-form {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .section-title {
+            color: #007bff;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .help-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+        .radio-group {
+            margin: 10px 0;
+        }
+        .radio-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+        .radio-group input {
+            margin-right: 8px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            font-size: 1.1em;
+            padding: 15px 40px;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .submit-section {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .default-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.75em;
+            margin-left: 8px;
+        }
+        #custom-data-inputs {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Training Configuration</h1>
+        <div class="project-info">
+            <strong>Project:</strong> {{ project.name }}<br>
+            <strong>Base Model:</strong> Llama 3.1 8B with LoRA
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('training.start_training', project_id=project.id) }}" class="config-form">
+
+        <!-- Data Source Section -->
+        <div class="section">
+            <h2 class="section-title">Data Source</h2>
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="data_source" value="generated" checked onchange="toggleDataSource()">
+                    Use generated data from pipeline (recommended)
+                </label>
+                <label>
+                    <input type="radio" name="data_source" value="custom" onchange="toggleDataSource()">
+                    Use custom training data
+                </label>
+            </div>
+
+            <div id="custom-data-inputs">
+                <div class="form-group">
+                    <label for="train_file">Training JSONL File</label>
+                    <input type="text" id="train_file" name="train_file" placeholder="/path/to/train.jsonl">
+                </div>
+                <div class="form-group">
+                    <label for="val_file">Validation JSONL File (optional)</label>
+                    <input type="text" id="val_file" name="val_file" placeholder="/path/to/val.jsonl">
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Configuration Section -->
+        <div class="section">
+            <h2 class="section-title">Model Configuration</h2>
+
+            <div class="form-group">
+                <label for="output_model_name">Output Model Name</label>
+                <input type="text" id="output_model_name" name="output_model_name" value="labgpt-finetuned" required>
+                <p class="help-text">Name for your fine-tuned model</p>
+            </div>
+
+            <div class="form-group">
+                <label for="base_model">Base Model</label>
+                <select id="base_model" name="base_model">
+                    <option value="meta-llama/Llama-3.1-8B" selected>Llama 3.1 8B</option>
+                    <option value="meta-llama/Llama-3.2-11B">Llama 3.2 11B</option>
+                </select>
+                <p class="help-text">Base model to fine-tune</p>
+            </div>
+        </div>
+
+        <!-- LoRA Configuration Section -->
+        <div class="section">
+            <h2 class="section-title">LoRA Configuration</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="lora_rank">
+                        LoRA Rank <span class="default-badge">Default: 16</span>
+                    </label>
+                    <input type="number" id="lora_rank" name="lora_rank" value="16" min="4" max="64">
+                    <p class="help-text">Higher = more parameters (4-64)</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="lora_alpha">
+                        LoRA Alpha <span class="default-badge">Default: 32</span>
+                    </label>
+                    <input type="number" id="lora_alpha" name="lora_alpha" value="32" min="8" max="128">
+                    <p class="help-text">Scaling factor (usually 2x rank)</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="lora_dropout">
+                    LoRA Dropout <span class="default-badge">Default: 0.05</span>
+                </label>
+                <input type="number" id="lora_dropout" name="lora_dropout" value="0.05" min="0" max="0.5" step="0.01">
+                <p class="help-text">Dropout probability (0.0-0.5)</p>
+            </div>
+        </div>
+
+        <!-- Training Hyperparameters Section -->
+        <div class="section">
+            <h2 class="section-title">Training Hyperparameters</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="num_epochs">
+                        Number of Epochs <span class="default-badge">Default: 3</span>
+                    </label>
+                    <input type="number" id="num_epochs" name="num_epochs" value="3" min="1" max="10">
+                    <p class="help-text">Training epochs (1-10)</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="learning_rate">
+                        Learning Rate <span class="default-badge">Default: 2e-4</span>
+                    </label>
+                    <input type="number" id="learning_rate" name="learning_rate" value="0.0002" min="0.00001" max="0.001" step="0.00001">
+                    <p class="help-text">Learning rate (1e-5 to 1e-3)</p>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="batch_size">
+                        Batch Size <span class="default-badge">Default: 2</span>
+                    </label>
+                    <input type="number" id="batch_size" name="batch_size" value="2" min="1" max="8">
+                    <p class="help-text">Per-device batch size</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="gradient_accumulation">
+                        Gradient Accumulation <span class="default-badge">Default: 4</span>
+                    </label>
+                    <input type="number" id="gradient_accumulation" name="gradient_accumulation" value="4" min="1" max="32">
+                    <p class="help-text">Accumulation steps</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="max_seq_length">
+                    Max Sequence Length <span class="default-badge">Default: 8192</span>
+                </label>
+                <input type="number" id="max_seq_length" name="max_seq_length" value="8192" min="512" max="8192" step="512">
+                <p class="help-text">Maximum tokens per sequence</p>
+            </div>
+        </div>
+
+        <!-- Advanced Options Section -->
+        <div class="section">
+            <h2 class="section-title">Advanced Options</h2>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="use_4bit" value="true" checked>
+                    Use 4-bit Quantization (recommended)
+                </label>
+                <p class="help-text">Reduces memory usage significantly</p>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="use_flash_attn" value="true" checked>
+                    Use Flash Attention 2 (if available)
+                </label>
+                <p class="help-text">Faster training on compatible GPUs</p>
+            </div>
+        </div>
+
+        <!-- Submit Section -->
+        <div class="submit-section">
+            <div class="info-box">
+                <strong>Note:</strong> Training may take several hours depending on dataset size and hardware.
+                You'll be redirected to the training status page to monitor progress.
+            </div>
+            <button type="submit" class="btn btn-primary">Start Training</button>
+            <a href="{{ url_for('pipelines.status', project_id=project.id) }}" class="btn btn-secondary">Back to Pipelines</a>
+        </div>
+    </form>
+
+    <script>
+        function toggleDataSource() {
+            const source = document.querySelector('input[name="data_source"]:checked').value;
+            const customInputs = document.getElementById('custom-data-inputs');
+
+            if (source === 'custom') {
+                customInputs.style.display = 'block';
+                document.getElementById('train_file').required = true;
+            } else {
+                customInputs.style.display = 'none';
+                document.getElementById('train_file').required = false;
+                document.getElementById('train_file').value = '';
+                document.getElementById('val_file').value = '';
+            }
+        }
+    </script>
+</body>
+</html>

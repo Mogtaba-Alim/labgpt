@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with LabGPT{% if project %} - {{ project.name }}{% endif %}</title>
+
+    <!-- Markdown rendering library -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 2px solid #eee;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .project-info {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .rag-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: #f9f9f9;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .rag-toggle label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .rag-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: opacity 0.3s;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .messages-area {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: #007bff;
+        }
+
+        .message.assistant .message-avatar {
+            background: #28a745;
+        }
+
+        .message-content {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+
+        .message.user .message-content {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+        }
+
+        .message.assistant .message-content {
+            background: #f1f8e9;
+            border: 1px solid #c5e1a5;
+        }
+
+        .message-text {
+            word-wrap: break-word;
+        }
+
+        /* Markdown rendering styles */
+        .message-text h1, .message-text h2, .message-text h3,
+        .message-text h4, .message-text h5, .message-text h6 {
+            margin-top: 12px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        .message-text h1 { font-size: 1.5em; }
+        .message-text h2 { font-size: 1.3em; }
+        .message-text h3 { font-size: 1.1em; }
+
+        .message-text p {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .message-text ul, .message-text ol {
+            margin-bottom: 12px;
+            padding-left: 24px;
+        }
+
+        .message-text li {
+            margin-bottom: 4px;
+        }
+
+        .message-text code {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .message-text pre {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 12px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+
+        .message-text pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .message-text blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 12px;
+            margin: 12px 0;
+            color: #666;
+        }
+
+        .message-text strong {
+            font-weight: 600;
+        }
+
+        .message-text em {
+            font-style: italic;
+        }
+
+        .message-text a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .message-text a:hover {
+            text-decoration: underline;
+        }
+
+        .message-text table {
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+
+        .message-text table th,
+        .message-text table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .message-text table th {
+            background: rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+
+        .message-text hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 16px 0;
+        }
+
+        .citations {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .citations-header {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .citation {
+            background: #f9f9f9;
+            padding: 10px;
+            border-left: 3px solid #007bff;
+            margin-bottom: 8px;
+            font-size: 0.85em;
+        }
+
+        .citation-source {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .citation-text {
+            color: #666;
+            font-style: italic;
+        }
+
+        .loading-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .loading-indicator.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .input-area {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: none;
+            min-height: 50px;
+            max-height: 150px;
+        }
+
+        #message-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        #send-btn {
+            padding: 12px 30px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #send-btn:hover:not(:disabled) {
+            background: #0056b3;
+        }
+
+        #send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 60px 20px;
+        }
+
+        .empty-state h2 {
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .empty-state p {
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .rag-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .rag-status.enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .rag-status.disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .project-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: #f9f9f9;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .project-selector label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .project-selector select {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .context-banner {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            color: #333;
+        }
+
+        .context-banner strong {
+            color: #007bff;
+        }
+
+        /* RAG Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-option {
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-option:hover {
+            border-color: #007bff;
+            background: #f0f8ff;
+        }
+
+        .modal-option.selected {
+            border-color: #007bff;
+            background: #e7f3ff;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>Chat with LabGPT</h1>
+            <div class="project-info">
+                {% if project %}
+                <strong>Project:</strong> <span id="current-project-name">{{ project.name }}</span>
+                {% else %}
+                <strong>Mode:</strong> <span id="current-project-name">Default LabGPT</span>
+                {% endif %}
+                <span id="rag-status-indicator" class="rag-status disabled">RAG: Disabled</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="project-selector">
+                <label for="project-select">Project:</label>
+                <select id="project-select" onchange="switchProject()">
+                    <option value="">Default (No Project)</option>
+                </select>
+            </div>
+            <div class="rag-toggle">
+                <label for="rag-toggle">Enable RAG</label>
+                <input type="checkbox" id="rag-toggle" {% if project and project.rag_completed %}{% else %}disabled{% endif %}>
+            </div>
+            <button class="btn btn-danger" onclick="clearHistory()">Clear History</button>
+            {% if project %}
+            <a href="{{ url_for('pipelines.status', project_id=project.id) }}" class="btn btn-secondary">Back to Pipelines</a>
+            {% else %}
+            <a href="{{ url_for('welcome.index') }}" class="btn btn-secondary">Projects</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <!-- Context Banner -->
+        <div class="context-banner" id="context-banner">
+            <strong>Model:</strong> <span id="model-info">Loading...</span> |
+            <strong>RAG Index:</strong> <span id="rag-info">Loading...</span>
+        </div>
+
+        {% if project and not project.rag_completed %}
+        <div class="info-box">
+            <strong>RAG Not Available:</strong> RAG indexing is not complete for this project.
+            You can still chat with the model, but document citations will not be available.
+        </div>
+        {% endif %}
+
+        <div class="loading-indicator" id="loading-indicator">
+            <div class="spinner"></div>
+            <span>LabGPT is thinking...</span>
+        </div>
+
+        <div class="messages-area" id="messages-area">
+            <div class="empty-state">
+                <h2>Welcome to LabGPT Chat</h2>
+                {% if project %}
+                <p>Your fine-tuned model is ready. Ask questions about your code, research papers, or lab documentation.</p>
+                {% else %}
+                <p>The default LabGPT model is ready. Ask questions about laboratory research, programming, or computational biology.</p>
+                {% endif %}
+                <p>Enable RAG to get responses with citations from your indexed documents.</p>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <textarea
+                    id="message-input"
+                    placeholder="Type your message here..."
+                    rows="1"
+                    onkeydown="handleKeyPress(event)"></textarea>
+                <button id="send-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configure marked.js for markdown rendering
+        marked.setOptions({
+            breaks: true,        // Convert line breaks to <br>
+            gfm: true,          // GitHub Flavored Markdown
+            headerIds: false,   // Don't generate header IDs
+            mangle: false       // Don't escape autolinked email addresses
+        });
+
+        // Current project tracking
+        let currentProjectId = {% if project %}{{ project.id }}{% else %}null{% endif %};
+        let conversationHistory = [];
+        let ragAvailable = false;
+
+        // Auto-resize textarea
+        const messageInput = document.getElementById('message-input');
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        // Handle Enter key (Shift+Enter for newline)
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Load available projects into dropdown
+        async function loadProjects() {
+            try {
+                const response = await fetch('/api/projects/list');
+                if (response.ok) {
+                    const data = await response.json();
+                    const select = document.getElementById('project-select');
+
+                    // Clear existing options except default
+                    select.innerHTML = '<option value="">Default (No Project)</option>';
+
+                    // Add project options
+                    data.projects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = project.id;
+                        option.textContent = `${project.name}${!project.has_model ? ' (No Model)' : ''}`;
+                        option.disabled = !project.has_model;
+                        if (currentProjectId && project.id === currentProjectId) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+        }
+
+        // Check default RAG status (only for default mode)
+        async function checkRagStatus() {
+            if (currentProjectId) {
+                // Project mode - check project RAG status
+                try {
+                    const response = await fetch(`/api/projects/${currentProjectId}/chat-status`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        ragAvailable = data.rag_available;
+                        updateContextBanner(data.project_name, data.model_path, data.rag_path);
+
+                        // Enable RAG toggle if available
+                        const ragToggle = document.getElementById('rag-toggle');
+                        ragToggle.disabled = !ragAvailable;
+                    }
+                } catch (error) {
+                    console.error('Error checking project RAG status:', error);
+                }
+            } else {
+                // Default mode - check for default RAG index
+                try {
+                    const response = await fetch('/api/chat/check-rag-status');
+                    if (response.ok) {
+                        const data = await response.json();
+                        ragAvailable = data.has_default && data.is_valid;
+                        updateContextBanner('Default LabGPT', 'HuggingFace (MogtabaAlim/llama3.1-8B-BHK-LABGPT)', data.default_path);
+
+                        // Enable RAG toggle if available
+                        const ragToggle = document.getElementById('rag-toggle');
+                        ragToggle.disabled = !ragAvailable;
+
+                        // Show modal if RAG is available and this is first visit
+                        if (ragAvailable && !localStorage.getItem('rag_modal_shown')) {
+                            showRagModal(data.default_path);
+                            localStorage.setItem('rag_modal_shown', 'true');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error checking RAG status:', error);
+                }
+            }
+        }
+
+        // Update context banner with current mode info
+        function updateContextBanner(modelName, modelPath, ragPath) {
+            const modelInfo = document.getElementById('model-info');
+            const ragInfo = document.getElementById('rag-info');
+
+            if (currentProjectId) {
+                modelInfo.textContent = `Project: ${modelName}`;
+            } else {
+                modelInfo.textContent = modelPath || 'Default LabGPT';
+            }
+
+            if (ragPath) {
+                ragInfo.textContent = `Available (${ragPath})`;
+                ragInfo.style.color = '#28a745';
+            } else {
+                ragInfo.textContent = 'Not Available';
+                ragInfo.style.color = '#dc3545';
+            }
+        }
+
+        // Show RAG configuration modal
+        function showRagModal(ragPath) {
+            const modal = document.getElementById('rag-modal');
+            const pathDisplay = document.getElementById('rag-path-display');
+            pathDisplay.textContent = ragPath;
+            modal.classList.add('active');
+
+            // Add click handlers to options
+            document.querySelectorAll('.modal-option').forEach(option => {
+                option.onclick = function() {
+                    const action = this.getAttribute('data-action');
+                    handleRagModalAction(action);
+                };
+            });
+        }
+
+        // Close RAG modal
+        function closeRagModal() {
+            const modal = document.getElementById('rag-modal');
+            modal.classList.remove('active');
+        }
+
+        // Handle RAG modal actions
+        function handleRagModalAction(action) {
+            const ragToggle = document.getElementById('rag-toggle');
+
+            switch(action) {
+                case 'use-default':
+                    ragToggle.checked = true;
+                    ragToggle.dispatchEvent(new Event('change'));
+                    break;
+                case 'provide-path':
+                    // TODO: Implement custom path input
+                    alert('Custom path configuration coming soon!');
+                    break;
+                case 'skip':
+                    ragToggle.checked = false;
+                    ragToggle.dispatchEvent(new Event('change'));
+                    break;
+            }
+
+            closeRagModal();
+        }
+
+        // Switch between projects
+        async function switchProject() {
+            const select = document.getElementById('project-select');
+            const newProjectId = select.value;
+
+            if (newProjectId === '') {
+                // Switch to default mode
+                window.location.href = '/chat/';
+            } else {
+                // Switch to project mode
+                window.location.href = `/chat/${newProjectId}`;
+            }
+        }
+
+        // Update RAG status indicator
+        document.getElementById('rag-toggle').addEventListener('change', function() {
+            const indicator = document.getElementById('rag-status-indicator');
+            if (this.checked) {
+                indicator.textContent = 'RAG: Enabled';
+                indicator.className = 'rag-status enabled';
+            } else {
+                indicator.textContent = 'RAG: Disabled';
+                indicator.className = 'rag-status disabled';
+            }
+        });
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message to UI
+            addMessage('user', message);
+
+            // Clear input
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Disable send button and show loading
+            const sendBtn = document.getElementById('send-btn');
+            sendBtn.disabled = true;
+            document.getElementById('loading-indicator').classList.add('active');
+
+            // Add to conversation history
+            conversationHistory.push({
+                role: 'user',
+                content: message
+            });
+
+            try {
+                // Get RAG setting
+                const useRAG = document.getElementById('rag-toggle').checked;
+
+                // Build request payload
+                const payload = {
+                    messages: conversationHistory,
+                    use_rag: useRAG
+                };
+
+                // Add project_id if in project mode
+                if (currentProjectId) {
+                    payload.project_id = currentProjectId;
+                }
+
+                // Send to unified API endpoint
+                const response = await fetch('/api/chat/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Add assistant message to UI
+                    addMessage('assistant', data.response, data.citations);
+
+                    // Add to conversation history
+                    conversationHistory.push({
+                        role: 'assistant',
+                        content: data.response
+                    });
+                } else {
+                    addMessage('assistant', 'Error: ' + (data.error || 'Failed to get response'), []);
+                }
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage('assistant', 'Error: Failed to communicate with server', []);
+            } finally {
+                // Re-enable send button and hide loading
+                sendBtn.disabled = false;
+                document.getElementById('loading-indicator').classList.remove('active');
+            }
+        }
+
+        // Add message to UI
+        function addMessage(role, text, citations = []) {
+            const messagesArea = document.getElementById('messages-area');
+
+            // Remove empty state if present
+            const emptyState = messagesArea.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            // Create message element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = role === 'user' ? 'U' : 'L';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+
+            // Render markdown for assistant messages, plain text for user messages
+            if (role === 'assistant') {
+                // Use marked.js to render markdown
+                textDiv.innerHTML = marked.parse(text);
+            } else {
+                // Keep user messages as plain text for security
+                textDiv.textContent = text;
+            }
+
+            contentDiv.appendChild(textDiv);
+
+            // Add citations if present
+            if (citations && citations.length > 0) {
+                const citationsDiv = document.createElement('div');
+                citationsDiv.className = 'citations';
+
+                const citationsHeader = document.createElement('div');
+                citationsHeader.className = 'citations-header';
+                citationsHeader.textContent = `Sources (${citations.length}):`;
+                citationsDiv.appendChild(citationsHeader);
+
+                citations.forEach(citation => {
+                    const citationDiv = document.createElement('div');
+                    citationDiv.className = 'citation';
+
+                    const sourceDiv = document.createElement('div');
+                    sourceDiv.className = 'citation-source';
+                    sourceDiv.textContent = `${citation.source} - Page ${citation.page}, Section: ${citation.section}`;
+
+                    const textDiv = document.createElement('div');
+                    textDiv.className = 'citation-text';
+                    textDiv.textContent = citation.text;
+
+                    citationDiv.appendChild(sourceDiv);
+                    citationDiv.appendChild(textDiv);
+                    citationsDiv.appendChild(citationDiv);
+                });
+
+                contentDiv.appendChild(citationsDiv);
+            }
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+
+            messagesArea.appendChild(messageDiv);
+
+            // Scroll to bottom
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        // Clear conversation history
+        async function clearHistory() {
+            if (!confirm('Are you sure you want to clear the conversation history?')) {
+                return;
+            }
+
+            conversationHistory = [];
+
+            const messagesArea = document.getElementById('messages-area');
+            const welcomeText = currentProjectId
+                ? 'Your fine-tuned model is ready. Ask questions about your code, research papers, or lab documentation.'
+                : 'The default LabGPT model is ready. Ask questions about laboratory research, programming, or computational biology.';
+
+            messagesArea.innerHTML = `
+                <div class="empty-state">
+                    <h2>Welcome to LabGPT Chat</h2>
+                    <p>${welcomeText}</p>
+                    <p>Enable RAG to get responses with citations from your indexed documents.</p>
+                </div>
+            `;
+
+            // Call API to clear server-side history (only for project mode)
+            if (currentProjectId) {
+                try {
+                    await fetch(`/api/chat/${currentProjectId}/clear`, {
+                        method: 'POST'
+                    });
+                } catch (error) {
+                    console.error('Error clearing server history:', error);
+                }
+            }
+        }
+
+        // Load conversation history on page load
+        async function loadHistory() {
+            // Only load history for project mode
+            if (!currentProjectId) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/chat/${currentProjectId}/history`);
+                if (response.ok) {
+                    const data = await response.json();
+                    conversationHistory = data.messages || [];
+
+                    // Render messages
+                    conversationHistory.forEach((msg, idx) => {
+                        // Only render non-system messages
+                        if (msg.role !== 'system') {
+                            addMessage(msg.role, msg.content, msg.citations || []);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', async function() {
+            await loadProjects();  // Load available projects into dropdown
+            await checkRagStatus(); // Check RAG availability and update UI
+            await loadHistory();    // Load conversation history (project mode only)
+        });
+    </script>
+
+    <!-- RAG Configuration Modal -->
+    <div id="rag-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                Configure RAG Index
+            </div>
+            <div class="modal-body">
+                <p>A default RAG index was detected at <code id="rag-path-display"></code></p>
+                <p>Would you like to use it for document-based responses with citations?</p>
+                <div class="modal-option" data-action="use-default">
+                    <strong>Use Default Index</strong>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                        Use the detected RAG index for enhanced responses
+                    </div>
+                </div>
+                <div class="modal-option" data-action="provide-path">
+                    <strong>Provide Custom Path</strong>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                        Specify a different RAG index location
+                    </div>
+                </div>
+                <div class="modal-option" data-action="skip">
+                    <strong>Skip for Now</strong>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                        Continue without RAG (can enable later)
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRagModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

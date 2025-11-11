@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Error - LabGPT</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+        }
+
+        .error-code {
+            font-size: 8em;
+            font-weight: bold;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .error-message {
+            font-size: 1.5em;
+            margin: 20px 0;
+        }
+
+        .error-description {
+            font-size: 1em;
+            margin: 20px 0;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 10px;
+            background: white;
+            color: #f5576c;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1 class="error-code">500</h1>
+        <h2 class="error-message">Internal Server Error</h2>
+        <p class="error-description">
+            Something went wrong on our end. We've been notified and are working to fix it.
+            Please try again in a few moments.
+        </p>
+        <a href="/" class="btn">Return Home</a>
+        <a href="javascript:location.reload()" class="btn btn-secondary">Retry</a>
+    </div>
+</body>
+</html>

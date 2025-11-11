@@ -24,3 +24,5 @@ data_generation/data_generation_comprehensive_guide.md
 .venv/
 CLAUDE.md
 final_rag_output/
+
+unified_app/unified_app_comprehensive_guide.md

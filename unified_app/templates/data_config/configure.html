@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Data - {{ project.name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+        .project-info {
+            color: #666;
+            margin-top: 10px;
+        }
+        .config-form {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .section-title {
+            color: #007bff;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .section-number {
+            background: #007bff;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .description {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        .input-group input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .repo-entry {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .repo-entry input {
+            flex: 1;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-add {
+            background: #28a745;
+            color: white;
+            padding: 8px 15px;
+        }
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+            padding: 8px 15px;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            font-size: 1.1em;
+            padding: 15px 40px;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .submit-section {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .help-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+        .radio-group {
+            margin: 10px 0;
+        }
+        .radio-group label {
+            display: inline-block;
+            margin-right: 20px;
+            font-weight: normal;
+        }
+        .conditional-input {
+            margin-top: 10px;
+            padding-left: 25px;
+        }
+        #papers-path-input, #labdocs-path-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Configure Data Sources</h1>
+        <div class="project-info">
+            <strong>Project:</strong> {{ project.name }}<br>
+            <strong>Created:</strong> {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('data_config.submit_configuration', project_id=project.id) }}" class="config-form" enctype="multipart/form-data">
+
+        <!-- Section 1: Code Repositories -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-number">1</span>
+                Code Repositories
+            </h2>
+            <p class="description">
+                Provide paths to local code repositories or GitHub URLs. The data generation pipeline will extract symbols
+                and generate training data from these repositories. Supports Python, R, C, and C++.
+                <strong>Optional:</strong> You can skip this and provide existing training data instead.
+            </p>
+
+            <div id="repo-entries">
+                <div class="repo-entry">
+                    <input type="text" name="repo_1" placeholder="/path/to/local/repo or https://github.com/user/repo">
+                    <button type="button" class="btn btn-remove" onclick="removeRepo(this)" style="display: none;">Remove</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-add" onclick="addRepo()">+ Add Another Repository</button>
+
+            <p class="help-text">
+                Examples: <code>/home/user/myproject</code> or <code>https://github.com/bhklab/readii-fmcib</code>
+            </p>
+        </div>
+
+        <!-- Section 2: Research Papers -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-number">2</span>
+                Research Papers
+            </h2>
+            <p class="description">
+                Provide a directory containing research papers (PDF, TXT, MD). Papers will be used for both RAG indexing
+                and data generation. The pipeline will extract multi-chunk Q&A pairs from papers.
+            </p>
+
+            <div class="input-group">
+                <label>How do you want to provide papers?</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="papers_type" value="none" checked onchange="togglePapersInput()">
+                        No papers (skip)
+                    </label>
+                    <label>
+                        <input type="radio" name="papers_type" value="directory" onchange="togglePapersInput()">
+                        Directory path
+                    </label>
+                </div>
+            </div>
+
+            <div id="papers-path-input" class="conditional-input">
+                <div class="input-group">
+                    <label for="papers_dir">Papers Directory Path</label>
+                    <input type="text" id="papers_dir" name="papers_dir" placeholder="/path/to/papers">
+                    <p class="help-text">Path to directory containing PDF, TXT, or MD files</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Lab Documents -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-number">3</span>
+                Lab Documents
+            </h2>
+            <p class="description">
+                Provide lab documents for RAG indexing only. These will create a searchable knowledge base for the chat
+                and grant generation features. Supports PDF, TXT, MD, and code files.
+            </p>
+
+            <div class="input-group">
+                <label>How do you want to provide lab documents?</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="labdocs_type" value="none" checked onchange="toggleLabDocsInput()">
+                        No lab documents (skip)
+                    </label>
+                    <label>
+                        <input type="radio" name="labdocs_type" value="directory" onchange="toggleLabDocsInput()">
+                        Directory path
+                    </label>
+                </div>
+            </div>
+
+            <div id="labdocs-path-input" class="conditional-input">
+                <div class="input-group">
+                    <label for="labdocs_dir">Lab Documents Directory Path</label>
+                    <input type="text" id="labdocs_dir" name="labdocs_dir" placeholder="/path/to/lab-docs">
+                    <p class="help-text">Path to directory containing lab documentation files</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Existing RAG Index (Optional) -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-number">4</span>
+                Existing RAG Index (Optional)
+            </h2>
+            <p class="description">
+                If you already have a RAG index from a previous project or generated elsewhere, you can provide its path here
+                to skip the RAG generation pipeline.
+            </p>
+
+            <div class="input-group">
+                <label>Do you have an existing RAG index?</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="existing_rag" value="no" checked onchange="toggleExistingRagInput()">
+                        No (generate new)
+                    </label>
+                    <label>
+                        <input type="radio" name="existing_rag" value="yes" onchange="toggleExistingRagInput()">
+                        Yes (provide path)
+                    </label>
+                </div>
+            </div>
+
+            <div id="existing-rag-input" class="conditional-input" style="display: none;">
+                <div class="input-group">
+                    <label for="existing_rag_path">RAG Index Path</label>
+                    <input type="text" id="existing_rag_path" name="existing_rag_path" placeholder="/path/to/existing/rag-index">
+                    <p class="help-text">Path to directory containing faiss.index, documents_metadata.json, and chunks.json</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Existing Training Data (Optional) -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-number">5</span>
+                Existing Training Data (Optional)
+            </h2>
+            <p class="description">
+                If you already have training data in JSONL format, you can provide it here to skip the data generation pipeline.
+            </p>
+
+            <div class="input-group">
+                <label>Do you have existing training data?</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="existing_data" value="no" checked onchange="toggleExistingDataInput()">
+                        No (generate new)
+                    </label>
+                    <label>
+                        <input type="radio" name="existing_data" value="path" onchange="toggleExistingDataInput()">
+                        Yes (provide path)
+                    </label>
+                    <label>
+                        <input type="radio" name="existing_data" value="upload" onchange="toggleExistingDataInput()">
+                        Yes (upload file)
+                    </label>
+                </div>
+            </div>
+
+            <div id="existing-data-path-input" class="conditional-input" style="display: none;">
+                <div class="input-group">
+                    <label for="existing_data_path">Training Data Path</label>
+                    <input type="text" id="existing_data_path" name="existing_data_path" placeholder="/path/to/training_data.jsonl">
+                    <p class="help-text">Path to JSONL file with training data (instruct format)</p>
+                </div>
+            </div>
+
+            <div id="existing-data-upload-input" class="conditional-input" style="display: none;">
+                <div class="input-group">
+                    <label for="existing_data_file">Upload Training Data File</label>
+                    <input type="file" id="existing_data_file" name="existing_data_file" accept=".jsonl,.json">
+                    <p class="help-text">Upload JSONL file with training data (instruct format)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Section -->
+        <div class="submit-section">
+            <p style="margin-bottom: 20px; color: #666;">
+                Pipelines will only run for the data sources you provided. You can skip configuration entirely and return later.
+            </p>
+            <button type="submit" class="btn btn-primary">Start Configured Pipelines</button>
+            <a href="{{ url_for('pipelines.status', project_id=project.id) }}" class="btn btn-secondary" style="margin-left: 10px;">Skip for Now</a>
+            <a href="{{ url_for('welcome.index') }}" class="btn btn-secondary" style="margin-left: 10px;">Cancel</a>
+        </div>
+    </form>
+
+    <script>
+        let repoCount = 1;
+
+        function addRepo() {
+            repoCount++;
+            const repoEntries = document.getElementById('repo-entries');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'repo-entry';
+            newEntry.innerHTML = `
+                <input type="text" name="repo_${repoCount}" placeholder="/path/to/local/repo or https://github.com/user/repo">
+                <button type="button" class="btn btn-remove" onclick="removeRepo(this)">Remove</button>
+            `;
+            repoEntries.appendChild(newEntry);
+        }
+
+        function removeRepo(button) {
+            const entry = button.parentElement;
+            entry.remove();
+        }
+
+        function togglePapersInput() {
+            const type = document.querySelector('input[name="papers_type"]:checked').value;
+            const input = document.getElementById('papers-path-input');
+            if (type === 'directory') {
+                input.style.display = 'block';
+                document.getElementById('papers_dir').required = true;
+            } else {
+                input.style.display = 'none';
+                document.getElementById('papers_dir').required = false;
+                document.getElementById('papers_dir').value = '';
+            }
+        }
+
+        function toggleLabDocsInput() {
+            const type = document.querySelector('input[name="labdocs_type"]:checked').value;
+            const input = document.getElementById('labdocs-path-input');
+            if (type === 'directory') {
+                input.style.display = 'block';
+                document.getElementById('labdocs_dir').required = true;
+            } else {
+                input.style.display = 'none';
+                document.getElementById('labdocs_dir').required = false;
+                document.getElementById('labdocs_dir').value = '';
+            }
+        }
+
+        function toggleExistingRagInput() {
+            const value = document.querySelector('input[name="existing_rag"]:checked').value;
+            const input = document.getElementById('existing-rag-input');
+            if (value === 'yes') {
+                input.style.display = 'block';
+                document.getElementById('existing_rag_path').required = true;
+            } else {
+                input.style.display = 'none';
+                document.getElementById('existing_rag_path').required = false;
+                document.getElementById('existing_rag_path').value = '';
+            }
+        }
+
+        function toggleExistingDataInput() {
+            const value = document.querySelector('input[name="existing_data"]:checked').value;
+            const pathInput = document.getElementById('existing-data-path-input');
+            const uploadInput = document.getElementById('existing-data-upload-input');
+
+            if (value === 'path') {
+                pathInput.style.display = 'block';
+                uploadInput.style.display = 'none';
+                document.getElementById('existing_data_path').required = true;
+                document.getElementById('existing_data_file').required = false;
+            } else if (value === 'upload') {
+                pathInput.style.display = 'none';
+                uploadInput.style.display = 'block';
+                document.getElementById('existing_data_path').required = false;
+                document.getElementById('existing_data_file').required = true;
+            } else {
+                pathInput.style.display = 'none';
+                uploadInput.style.display = 'none';
+                document.getElementById('existing_data_path').required = false;
+                document.getElementById('existing_data_file').required = false;
+                document.getElementById('existing_data_path').value = '';
+                document.getElementById('existing_data_file').value = '';
+            }
+        }
+    </script>
+</body>
+</html>
