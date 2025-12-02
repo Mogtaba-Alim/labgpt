@@ -197,19 +197,19 @@ The sequential batch testing system allows you to efficiently test multiple prom
 2. **Test with dry run** (recommended first step):
 
 ```bash
-python sequential_batch_test.py prompts_config.json --dry-run
+python batch_proc.py prompts_config.json --dry-run
 ```
 
 3. **Run the full batch test**:
 
 ```bash
-python sequential_batch_test.py prompts_config.json
+python batch_proc.py prompts_config.json
 ```
 
 4. **Override models** (optional):
 
 ```bash
-python sequential_batch_test.py prompts_config.json --models "Qwen3-8B" "DeepSeek-R1-Distill-Qwen-32B"
+python batch_proc.py prompts_config.json --models "Qwen3-8B" "DeepSeek-R1-Distill-Qwen-32B"
 ```
 
 ### Model-Specific Optimization
@@ -333,13 +333,13 @@ python vllm_inference.py \
 
 ```bash
 # Test all configured prompts and models
-python sequential_batch_test.py prompts_config.json
+python batch_proc.py prompts_config.json
 
 # Test specific models only
-python sequential_batch_test.py prompts_config.json --models "Qwen/Qwen2.5-8B-Instruct" "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+python batch_proc.py prompts_config.json --models "Qwen/Qwen2.5-8B-Instruct" "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
 
 # Dry run to preview what will be executed
-python sequential_batch_test.py prompts_config.json --dry-run
+python batch_proc.py prompts_config.json --dry-run
 ```
 
 ---
@@ -393,7 +393,7 @@ After cleanup, your repository contains:
 ```
 labgpt/
 ├── vllm_inference.py           # Main vLLM inference script
-├── sequential_batch_test.py    # Batch testing script
+├── batch_proc.py               # Batch testing script
 ├── prompts_config.json         # Batch testing configuration
 ├── RAG/                        # Retrieval-Augmented Generation
 │   ├── pipeline.py             # Main RAG pipeline
