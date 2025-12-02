@@ -9,7 +9,6 @@ import json
 import argparse
 import os
 import sys
-import textwrap
 from datetime import datetime
 from pathlib import Path
 import subprocess
@@ -27,7 +26,7 @@ def load_config(config_file):
         sys.exit(1)
 
 
-def run_single_prompt(prompt_data, model, settings, output_dir, show_response=True):
+def run_single_prompt(prompt_data, model, settings, output_dir):
     """Run a single prompt against a single model."""
     print(f"\n{'='*60}")
     print(f"Running: {prompt_data['id']} | Model: {model}")
@@ -76,24 +75,6 @@ def run_single_prompt(prompt_data, model, settings, output_dir, show_response=Tr
         
         if result.returncode == 0:
             print(f"✅ Success: Output saved to {output_file}")
-            
-            # Read and display the response from the JSON output
-            if show_response:
-                try:
-                    with open(output_file, 'r') as f:
-                        output_data = json.load(f)
-                        response = output_data.get('response', 'No response found')
-                        
-                        print(f"\n📝 MODEL RESPONSE:")
-                        print(f"{'─' * 80}")
-                        # Wrap long responses for better readability
-                        wrapped_response = textwrap.fill(response, width=78)
-                        print(wrapped_response)
-                        print(f"{'─' * 80}\n")
-                        
-                except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-                    print(f"⚠️  Could not read response from output file: {e}")
-            
             return True, output_file
         else:
             print(f"❌ Error: {result.stderr}")
@@ -113,7 +94,6 @@ def main():
     parser.add_argument('config_file', help='JSON configuration file')
     parser.add_argument('--models', nargs='+', help='Override models from config')
     parser.add_argument('--dry-run', action='store_true', help='Show what would be run without executing')
-    parser.add_argument('--no-response', action='store_true', help='Hide model responses during execution')
     
     args = parser.parse_args()
     
@@ -162,7 +142,7 @@ def main():
             current_test += 1
             print(f"\n📊 Progress: {current_test}/{total_tests}")
             
-            success, output_file = run_single_prompt(prompt_data, model, settings, output_dir, show_response=not args.no_response)
+            success, output_file = run_single_prompt(prompt_data, model, settings, output_dir)
             
             results_summary.append({
                 'prompt_id': prompt_data['id'],
