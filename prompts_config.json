@@ -1,6 +1,6 @@
 {
   "settings": {
-    "api_key": "ff9c0c20-e1e0-dd05-94cf-bd233e99239e",
+    "api_key": "your-api-key-here",
     "index_dir": "indices/rag_demo_storage",
     "output_dir": "results",
     "models": {
