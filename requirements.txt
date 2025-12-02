@@ -1,34 +1,36 @@
-PyMuPDF==1.26.5             
-tiktoken==0.12.0            
+# LabGPT vLLM Inference - Core Dependencies
+# Updated for vLLM-only architecture (removed local model training/inference dependencies)
 
-nltk==3.9.2
+# Document Processing
+PyMuPDF==1.26.5             # PDF processing
+tiktoken==0.12.0             # Tokenization
+PyPDF2==3.0.1                # Additional PDF support
 
-sentence-transformers==3.3.1 
-torch==2.5.1                 
+# NLP and Text Processing
+nltk==3.9.2                  # Natural language processing
+sentence-transformers==3.3.1 # Embedding models for RAG
 
-faiss-cpu==1.12.0           
-rank-bm25==0.2.2            
+# RAG System Dependencies
+faiss-cpu==1.12.0            # Vector similarity search
+rank-bm25==0.2.2             # BM25 sparse retrieval
 
-numpy==2.3.4               
-scikit-learn==1.7.2         
+# Scientific Computing
+numpy==2.3.4                 # Numerical computing
+scikit-learn==1.7.2          # Machine learning utilities
+scipy>=1.16.3                # Scientific computing
 
-PyYAML==6.0.3       
+# Configuration and Utilities
+PyYAML==6.0.3                # YAML configuration files
+python-dotenv==1.2.1         # Environment variable management
 
+# HTTP and API
+requests==2.32.3             # HTTP requests for vLLM API calls
 
-anthropic==0.71.0
-openai==1.57.2
-
-Flask==3.1.0
-
-python-dotenv==1.2.1
-
-PyPDF2==3.0.1
-
-
-scipy>=1.16.3
-
-transformers>=4.57.1  
-bitsandbytes>=0.48.2  
-accelerate>=1.11.0 
-
-peft>=0.17.1
+# Note: Removed dependencies for local model inference:
+# - transformers (not needed for API-based inference)
+# - bitsandbytes (local quantization)
+# - accelerate (local model acceleration)
+# - peft (parameter efficient fine-tuning)
+# - torch (PyTorch - only needed if using local models)
+# - anthropic/openai (not needed for vLLM endpoint)
+# - Flask (web apps removed)
