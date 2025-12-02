@@ -230,7 +230,7 @@ results/
 └── batch_summary_20251202_143200.json
 ```
 
-For detailed batch testing documentation, see [BATCH_TESTING_GUIDE.md](BATCH_TESTING_GUIDE.md).
+The batch testing system provides a streamlined way to evaluate multiple models systematically.
 
 ---
 
@@ -300,7 +300,7 @@ For batch testing, configure models and prompts in `prompts_config.json`:
 - **Prompt management**: Simple ID and prompt structure for easy management
 - **Output control**: Configurable result directory and file naming
 
-See [BATCH_TESTING_GUIDE.md](BATCH_TESTING_GUIDE.md) for complete configuration details.
+All configuration options are detailed above in the batch testing examples.
 
 ---
 
@@ -395,7 +395,6 @@ labgpt/
 ├── vllm_inference.py           # Main vLLM inference script
 ├── sequential_batch_test.py    # Batch testing script
 ├── prompts_config.json         # Batch testing configuration
-├── BATCH_TESTING_GUIDE.md      # Batch testing documentation
 ├── RAG/                        # Retrieval-Augmented Generation
 │   ├── pipeline.py             # Main RAG pipeline
 │   ├── ingestion/              # Document processing
