@@ -27,15 +27,11 @@ def load_config(config_file):
 
 def filter_prompts(prompts, category=None, priority=None):
     """Filter prompts by category and/or priority."""
-    filtered = prompts
-    
-    if category:
-        filtered = [p for p in filtered if p.get('category') == category]
-    
-    if priority:
-        filtered = [p for p in filtered if p.get('priority') == priority]
-    
-    return filtered
+    # Since prompts only have 'id' and 'prompt' fields, return all prompts
+    # Category and priority filtering is no longer supported
+    if category or priority:
+        print("Warning: Category and priority filtering not supported with simplified prompt format")
+    return prompts
 
 def run_single_prompt(prompt_data, model, settings, output_dir):
     """Run a single prompt against a single model."""
@@ -94,8 +90,8 @@ def run_single_prompt(prompt_data, model, settings, output_dir):
 def main():
     parser = argparse.ArgumentParser(description='Sequential batch testing for vLLM inference')
     parser.add_argument('config_file', help='JSON configuration file')
-    parser.add_argument('--category', help='Filter by category')
-    parser.add_argument('--priority', help='Filter by priority (high/medium/low)')
+    parser.add_argument('--category', help='Filter by category (not supported with simplified format)')
+    parser.add_argument('--priority', help='Filter by priority (not supported with simplified format)')
     parser.add_argument('--models', nargs='+', help='Override models from config')
     parser.add_argument('--dry-run', action='store_true', help='Show what would be run without executing')
     

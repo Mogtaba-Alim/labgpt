@@ -35,21 +35,14 @@ python sequential_batch_test.py prompts_config.json
 python sequential_batch_test.py prompts_config.json --dry-run
 ```
 
-### 3. Filtering Options
+### 3. Model Override
 
 ```bash
-# Filter by category
-python sequential_batch_test.py prompts_config.json --category molecular_biology
-
-# Filter by priority
-python sequential_batch_test.py prompts_config.json --priority high
-
-# Combine filters
-python sequential_batch_test.py prompts_config.json --category molecular_biology --priority high
-
 # Override models from config
 python sequential_batch_test.py prompts_config.json --models qwen3-8b deepseek-r1-32b
 ```
+
+Note: Category and priority filtering have been removed in the simplified format.
 
 ## Configuration Format
 
@@ -65,10 +58,7 @@ python sequential_batch_test.py prompts_config.json --models qwen3-8b deepseek-r
 
 Each prompt has:
 - **`id`**: Unique identifier
-- **`category`**: Category for filtering (e.g., "molecular_biology", "machine_learning")
-- **`priority`**: Priority level ("high", "medium", "low")
 - **`prompt`**: The actual question/prompt text
-- **`description`**: Human-readable description
 
 ## Output Structure
 
@@ -102,17 +92,13 @@ Add new prompts to the `prompts` array in `prompts_config.json`:
 ```json
 {
   "id": "new_prompt_001",
-  "category": "your_category",
-  "priority": "medium",
-  "prompt": "Your question here?",
-  "description": "Brief description"
+  "prompt": "Your question here?"
 }
 ```
 
 ## Tips
 
 - Use `--dry-run` first to verify your configuration
-- Filter by category/priority to test specific subsets
 - Check the batch summary for overall success rates
 - Individual JSON files contain full model responses
 - The script runs sequentially to avoid overwhelming the API
