@@ -18,6 +18,7 @@ from typing import List, Dict, Optional
 from dataclasses import dataclass
 import requests
 from time import perf_counter
+from datetime import datetime
 
 # Import existing RAG components
 from RAG.pipeline import RAGPipeline
@@ -469,6 +470,28 @@ Examples:
         print("RESPONSE:")
         print(f"{'='*80}")
         print_paragraph(answer)
+        
+        # Save to JSON if requested
+        if args.output_json:
+            output_data = {
+                "query": args.query,
+                "model": args.model,
+                "response": answer,
+                "parameters": {
+                    "top_k": args.top_k,
+                    "max_new_tokens": args.max_new_tokens,
+                    "temperature": args.temperature,
+                    "top_p": args.top_p,
+                    "expand": args.expand,
+                    "cited_spans": args.cited_spans,
+                    "preset": args.preset
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            with open(args.output_json, 'w') as f:
+                json.dump(output_data, f, indent=2)
+            print(f"\n💾 Results saved to {args.output_json}")
     
     return 0
 
