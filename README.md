@@ -8,6 +8,7 @@ A streamlined RAG-augmented inference system that uses vLLM server API calls for
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [vLLM Inference](#vllm-inference)
+- [Batch Testing](#batch-testing)
 - [RAG System](#rag-system)
 - [Configuration](#configuration)
 - [Examples](#examples)
@@ -151,6 +152,88 @@ Output:
 
 ---
 
+## Batch Testing
+
+The sequential batch testing system allows you to efficiently test multiple prompts against multiple models with model-specific optimized parameters.
+
+### Quick Start
+
+1. **Configure your settings** in `prompts_config.json`:
+
+```json
+{
+  "settings": {
+    "api_key": "your-api-key-here",
+    "index_dir": "indices/rag_demo_storage",
+    "output_dir": "results",
+    "models": {
+      "Qwen3-8B": {
+        "temperature": 0.4,
+        "top_p": 0.9,
+        "max_tokens": 800,
+        "expand": false,
+        "cited_spans": false,
+        "preset": "default"
+      },
+      "DeepSeek-R1-Distill-Qwen-32B": {
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "max_tokens": 1000,
+        "expand": true,
+        "cited_spans": true,
+        "preset": "research"
+      }
+    }
+  },
+  "prompts": [
+    {
+      "id": "crispr_001",
+      "prompt": "How does CRISPR-Cas9 gene editing work at the molecular level?"
+    }
+  ]
+}
+```
+
+2. **Test with dry run** (recommended first step):
+
+```bash
+python sequential_batch_test.py prompts_config.json --dry-run
+```
+
+3. **Run the full batch test**:
+
+```bash
+python sequential_batch_test.py prompts_config.json
+```
+
+4. **Override models** (optional):
+
+```bash
+python sequential_batch_test.py prompts_config.json --models "Qwen3-8B" "DeepSeek-R1-Distill-Qwen-32B"
+```
+
+### Model-Specific Optimization
+
+Each model in the configuration has optimized parameters:
+
+- **Smaller Models** (Qwen3-8B, Gemma-3-4b-it): Higher temperature, basic RAG preset
+- **Larger Models** (DeepSeek-R1-32B, GPT-OSS-120B): Lower temperature, research preset with advanced features
+
+### Output Structure
+
+Results are saved with timestamps:
+
+```
+results/
+├── crispr_001_Qwen3-8B_20251202_143022.json
+├── crispr_001_DeepSeek-R1-Distill-Qwen-32B_20251202_143045.json
+└── batch_summary_20251202_143200.json
+```
+
+For detailed batch testing documentation, see [BATCH_TESTING_GUIDE.md](BATCH_TESTING_GUIDE.md).
+
+---
+
 ## RAG System
 
 The RAG (Retrieval-Augmented Generation) system provides context-aware responses by retrieving relevant information from your document collection.
@@ -195,32 +278,40 @@ export RAG_STORAGE_DIR="indices/rag_demo_storage"
 export PROMPTER_API_KEY="your-api-key"
 ```
 
-### Model Configuration
+### Single Query Configuration
 
-Edit `vllm_model_config.py` to add or modify available models:
+For individual queries, use command-line arguments with `vllm_inference.py`:
 
-```python
-MODEL_CONFIGS = {
-    "my-model": ModelConfig(
-        name="My Custom Model",
-        model_id="organization/model-name",
-        description="Description of the model",
-        recommended_params={"temperature": 0.4, "top_p": 0.9},
-        tags=["custom", "specialized"]
-    )
-}
+```bash
+python vllm_inference.py "Your query" \
+  --model "Qwen/Qwen2.5-8B-Instruct" \
+  --prompter-api-key "your-key" \
+  --index indices/rag_demo_storage \
+  --temperature 0.4 \
+  --top-p 0.9 \
+  --max-new-tokens 800
 ```
+
+### Batch Testing Configuration
+
+For batch testing, configure models and prompts in `prompts_config.json`:
+
+- **Model-specific parameters**: Each model has optimized temperature, token limits, and RAG settings
+- **Prompt management**: Simple ID and prompt structure for easy management
+- **Output control**: Configurable result directory and file naming
+
+See [BATCH_TESTING_GUIDE.md](BATCH_TESTING_GUIDE.md) for complete configuration details.
 
 ---
 
 ## Examples
 
-### Research Paper Analysis
+### Single Query Example
 
 ```bash
 python vllm_inference.py \
   "What are the latest developments in CRISPR base editing?" \
-  --model Qwen/Qwen3-8B \
+  --model "Qwen/Qwen2.5-8B-Instruct" \
   --prompter-api-key "your-key" \
   --index indices/rag_demo_storage \
   --expand --cited-spans --preset research \
@@ -232,21 +323,23 @@ python vllm_inference.py \
 ```bash
 python vllm_inference.py \
   "Compare different approaches to cancer immunotherapy" \
-  --test-models Qwen/Qwen3-8B google/gemma-3-4b-it deepseek-ai/DeepSeek-R1-Distill-Qwen-32B \
+  --test-models "Qwen/Qwen2.5-8B-Instruct" "google/gemma-3-4b-it" "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B" \
   --prompter-api-key "your-key" \
   --index indices/rag_demo_storage \
   --output-json results/immunotherapy_comparison.json
 ```
 
-### Lab Procedure Query
+### Batch Testing Example
 
 ```bash
-python vllm_inference.py \
-  "What safety protocols should I follow when working with cell cultures?" \
-  --model Qwen/Qwen3-8B \
-  --prompter-api-key "your-key" \
-  --index indices/rag_demo_storage \
-  --top-k 5
+# Test all configured prompts and models
+python sequential_batch_test.py prompts_config.json
+
+# Test specific models only
+python sequential_batch_test.py prompts_config.json --models "Qwen/Qwen2.5-8B-Instruct" "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+
+# Dry run to preview what will be executed
+python sequential_batch_test.py prompts_config.json --dry-run
 ```
 
 ---
@@ -278,6 +371,12 @@ python vllm_inference.py \
 - Add delays between API calls if making multiple requests
 - Check vLLM server capacity and limits
 
+**6. Batch Testing Issues**
+- **Config file not found**: Check the path to `prompts_config.json`
+- **Model errors**: Ensure model names use full Hugging Face IDs (e.g., `"Qwen/Qwen2.5-8B-Instruct"`)
+- **API key errors**: Verify your API key is set correctly in `prompts_config.json`
+- **Permission errors**: Use `--dry-run` first to test configuration
+
 ### Performance Tips
 
 - **Use appropriate `--top-k`**: 3-5 for focused queries, 5-10 for complex topics
@@ -293,24 +392,21 @@ After cleanup, your repository contains:
 
 ```
 labgpt/
-├── vllm_inference.py        # Main vLLM inference script
-├── vllm_model_config.py     # Model configurations
-├── example_vllm_usage.py    # Usage examples
-│   ├── vllm_inference.py    # Main inference script
-│   ├── vllm_model_config.py # Model configurations
-│   ├── example_vllm_usage.py # Usage examples
-│   └── README.md            # vLLM documentation
-├── RAG/                     # Retrieval-Augmented Generation
-│   ├── pipeline.py          # Main RAG pipeline
-│   ├── ingestion/           # Document processing
-│   ├── retrieval/           # Search and ranking
-│   └── generation/          # Answer generation
-├── indices/                 # Pre-built RAG indices
-│   └── rag_demo_storage/    # Default index
-├── results/                 # Test results and outputs
-├── data/                    # Source documents (optional)
-├── requirements.txt         # Python dependencies
-└── README.md               # This file
+├── vllm_inference.py           # Main vLLM inference script
+├── sequential_batch_test.py    # Batch testing script
+├── prompts_config.json         # Batch testing configuration
+├── BATCH_TESTING_GUIDE.md      # Batch testing documentation
+├── RAG/                        # Retrieval-Augmented Generation
+│   ├── pipeline.py             # Main RAG pipeline
+│   ├── ingestion/              # Document processing
+│   ├── retrieval/              # Search and ranking
+│   └── generation/             # Answer generation
+├── indices/                    # Pre-built RAG indices (gitignored)
+│   └── rag_demo_storage/       # Default index
+├── results/                    # Test results and outputs (gitignored)
+├── data/                       # Source documents (optional)
+├── requirements.txt            # Python dependencies
+└── README.md                  # This file
 ```
 
 ---
