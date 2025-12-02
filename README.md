@@ -9,7 +9,6 @@ A streamlined RAG-augmented inference system that uses vLLM server API calls for
 - [Quick Start](#quick-start)
 - [vLLM Inference](#vllm-inference)
 - [RAG System](#rag-system)
-- [Batch Testing](#batch-testing)
 - [Configuration](#configuration)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
@@ -184,62 +183,6 @@ python -m RAG.cli interactive --index my_index
 
 ---
 
-## Batch Testing
-
-### Sequential Testing with JSON Configuration
-
-Create a `prompts_config.json`:
-
-```json
-{
-  "settings": {
-    "api_key": "your-api-key",
-    "index_dir": "indices/rag_demo_storage",
-    "models": ["Qwen/Qwen3-8B", "google/gemma-3-4b-it"]
-  },
-  "prompts": [
-    {
-      "id": "crispr_001",
-      "category": "molecular_biology",
-      "prompt": "How does CRISPR-Cas9 gene editing work?",
-      "priority": "high"
-    },
-    {
-      "id": "ml_001", 
-      "category": "machine_learning",
-      "prompt": "Explain supervised vs unsupervised learning",
-      "priority": "medium"
-    }
-  ]
-}
-```
-
-Run batch tests:
-```bash
-# Test all prompts
-python sequential_batch_test.py prompts_config.json
-
-# Filter by category or priority
-python sequential_batch_test.py prompts_config.json --category molecular_biology
-python sequential_batch_test.py prompts_config.json --priority high
-```
-
-### Parallel Processing for Large Batches
-
-For hundreds of prompts, use the parallel processing script:
-```bash
-# Create prompts file (one per line)
-cat > prompts.txt << 'EOF'
-What is CRISPR gene editing?
-How does machine learning work?
-Explain pharmacogenomics
-EOF
-
-# Run with GNU Parallel (install: brew install parallel)
-./efficient_batch_test.sh
-```
-
----
 
 ## Configuration
 
@@ -332,16 +275,15 @@ python vllm_inference.py \
 - Check if your documents are properly indexed
 
 **5. API Timeout or Rate Limiting**
-- Reduce concurrent requests in batch testing
-- Add delays between API calls
+- Add delays between API calls if making multiple requests
 - Check vLLM server capacity and limits
 
 ### Performance Tips
 
 - **Use appropriate `--top-k`**: 3-5 for focused queries, 5-10 for complex topics
 - **Enable `--expand`**: Improves retrieval quality for complex queries
-- **Batch processing**: Use sequential testing for systematic evaluation
-- **Monitor API costs**: Track usage when testing many prompts
+- **Multi-model testing**: Use `--test-models` to compare responses across different models
+- **Monitor API costs**: Track usage when testing multiple models
 
 ---
 
