@@ -25,12 +25,8 @@ def load_config(config_file):
         print(f"Error: Invalid JSON in config file: {e}")
         sys.exit(1)
 
-def filter_prompts(prompts, category=None, priority=None):
-    """Filter prompts by category and/or priority."""
-    # Since prompts only have 'id' and 'prompt' fields, return all prompts
-    # Category and priority filtering is no longer supported
-    if category or priority:
-        print("Warning: Category and priority filtering not supported with simplified prompt format")
+def filter_prompts(prompts):
+    """Return all prompts (no filtering in simplified format)."""
     return prompts
 
 def run_single_prompt(prompt_data, model, settings, output_dir):
@@ -90,8 +86,6 @@ def run_single_prompt(prompt_data, model, settings, output_dir):
 def main():
     parser = argparse.ArgumentParser(description='Sequential batch testing for vLLM inference')
     parser.add_argument('config_file', help='JSON configuration file')
-    parser.add_argument('--category', help='Filter by category (not supported with simplified format)')
-    parser.add_argument('--priority', help='Filter by priority (not supported with simplified format)')
     parser.add_argument('--models', nargs='+', help='Override models from config')
     parser.add_argument('--dry-run', action='store_true', help='Show what would be run without executing')
     
@@ -102,8 +96,8 @@ def main():
     settings = config['settings']
     prompts = config['prompts']
     
-    # Filter prompts
-    filtered_prompts = filter_prompts(prompts, args.category, args.priority)
+    # Get all prompts (no filtering in simplified format)
+    filtered_prompts = filter_prompts(prompts)
     
     if not filtered_prompts:
         print("No prompts match the specified filters.")
@@ -159,10 +153,6 @@ def main():
             'config_file': args.config_file,
             'total_tests': total_tests,
             'successful_tests': successful_tests,
-            'filters': {
-                'category': args.category,
-                'priority': args.priority
-            },
             'results': results_summary
         }, f, indent=2)
     
