@@ -12,6 +12,7 @@ test_production/
 test_basic/
 rag_demo_storage/
 indices/
+results/
 
 RAG/rag_comprehensive_guide.md
 
