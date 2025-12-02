@@ -106,6 +106,8 @@ The sequential batch testing system allows you to efficiently test multiple prom
 
 1. **Configure your settings** in `prompts_config.json`:
 
+   **⚠️ Important:** Replace `"your-api-key-here"` with your actual PROMPTER API key.
+
 ```json
 {
   "settings": {
