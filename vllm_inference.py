@@ -20,21 +20,16 @@ import requests
 from time import perf_counter
 
 # Import existing RAG components
-from sentence_transformers import SentenceTransformer
 from RAG.pipeline import RAGPipeline
 from RAG.models import Chunk, RetrievalResult
 
 # Configuration
-EMBEDDING_MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
 DEFAULT_STORAGE_DIR = os.environ.get("RAG_STORAGE_DIR", "rag_demo_storage")
 DEFAULT_TOP_K = 3
 
 # vLLM server configuration
 DEFAULT_VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "https://prompter.uhndata.io/proxy/v1/chat/completions")
 DEFAULT_MODEL = "Qwen/Qwen2.5-8B-Instruct"
-
-# Load embedding model for RAG (same as original)
-embed_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
 
 # LabGPT system prompt (same as original)
 LABGPT_SYSTEM = """You are LABGPT, an advanced AI assistant specialized in laboratory research, computational biology, and scientific programming. You were developed to assist researchers at the BHK Lab and similar research institutions.
