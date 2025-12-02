@@ -27,13 +27,13 @@ def load_config(config_file):
 
 
 def run_single_prompt(prompt_data, model, settings, output_dir):
-    """Run a single prompt against a single model."""
+    """Run a single prompt against a single model and return the response."""
     print(f"\n{'='*60}")
     print(f"Running: {prompt_data['id']} | Model: {model}")
     print(f"Prompt: {prompt_data['prompt'][:100]}...")
     print(f"{'='*60}")
     
-    # Build command
+    # Build command (no JSON output file needed)
     cmd = [
         'python', 'vllm_inference.py',
         prompt_data['prompt'],
@@ -63,31 +63,44 @@ def run_single_prompt(prompt_data, model, settings, output_dir):
     if params.get('max_tokens'):
         cmd.extend(['--max-new-tokens', str(params['max_tokens'])])
     
-    # Add output JSON
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = f"{output_dir}/{prompt_data['id']}_{model}_{timestamp}.json"
-    cmd.extend(['--output-json', output_file])
-    
     try:
-        # Run the command with real-time output
+        # Run the command and capture output
         print(f"🚀 Executing command...")
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         
         if result.returncode == 0:
-            print(f"✅ Success: Output saved to {output_file}")
-            return True, output_file
+            # Extract the response from stdout
+            # The response is printed after "RESPONSE:" and before the next section
+            stdout = result.stdout
+            response_start = stdout.find("RESPONSE:")
+            if response_start != -1:
+                response_section = stdout[response_start + len("RESPONSE:"):].strip()
+                # Find the end of the response (before any additional output like timing info)
+                response_lines = response_section.split('\n')
+                # Filter out empty lines and separator lines
+                response_text = []
+                for line in response_lines:
+                    if line.strip() and not line.startswith('=') and not line.startswith('💾'):
+                        response_text.append(line.strip())
+                
+                model_response = '\n'.join(response_text).strip()
+                print(f"✅ Success: Got response ({len(model_response)} chars)")
+                return True, model_response, params
+            else:
+                print(f"⚠️  Warning: Could not extract response from output")
+                return False, "Could not extract response", params
         else:
             print(f"❌ Error: {result.stderr}")
             if result.stdout:
                 print(f"📄 Output: {result.stdout}")
-            return False, None
+            return False, f"Error: {result.stderr}", params
             
     except subprocess.TimeoutExpired:
         print(f"⏰ Timeout: Command took longer than 5 minutes")
-        return False, None
+        return False, "Timeout after 5 minutes", {}
     except Exception as e:
         print(f"💥 Exception: {e}")
-        return False, None
+        return False, f"Exception: {str(e)}", {}
 
 def main():
     parser = argparse.ArgumentParser(description='Sequential batch testing for vLLM inference')
@@ -142,26 +155,29 @@ def main():
             current_test += 1
             print(f"\n📊 Progress: {current_test}/{total_tests}")
             
-            success, output_file = run_single_prompt(prompt_data, model, settings, output_dir)
+            success, response, params = run_single_prompt(prompt_data, model, settings, output_dir)
             
             results_summary.append({
                 'prompt_id': prompt_data['id'],
+                'prompt': prompt_data['prompt'],
                 'model': model,
                 'success': success,
-                'output_file': output_file,
+                'response': response,
+                'parameters': params,
                 'timestamp': datetime.now().isoformat()
             })
             
             if success:
                 successful_tests += 1
     
-    # Save summary
+    # Save summary with all responses
     summary_file = f"{output_dir}/batch_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(summary_file, 'w') as f:
         json.dump({
             'config_file': args.config_file,
             'total_tests': total_tests,
             'successful_tests': successful_tests,
+            'run_timestamp': datetime.now().isoformat(),
             'results': results_summary
         }, f, indent=2)
     
