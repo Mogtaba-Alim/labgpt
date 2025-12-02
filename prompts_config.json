@@ -2,15 +2,40 @@
   "settings": {
     "api_key": "your-api-key-here",
     "index_dir": "indices/rag_demo_storage",
-    "models": ["Qwen/Qwen2.5-8B-Instruct", "google/gemma-3-4b-it"],
     "output_dir": "results",
-    "default_params": {
-      "temperature": 0.4,
-      "top_p": 0.9,
-      "max_tokens": 800,
-      "expand": false,
-      "cited_spans": false,
-      "preset": "default"
+    "models": {
+      "Qwen3-8B": {
+        "temperature": 0.4,
+        "top_p": 0.9,
+        "max_tokens": 800,
+        "expand": false,
+        "cited_spans": false,
+        "preset": "default"
+      },
+      "Gemma-3-4b-it": {
+        "temperature": 0.5,
+        "top_p": 0.85,
+        "max_tokens": 700,
+        "expand": false,
+        "cited_spans": false,
+        "preset": "default"
+      },
+      "DeepSeek-R1-Distill-Qwen-32B": {
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "max_tokens": 1000,
+        "expand": true,
+        "cited_spans": true,
+        "preset": "research"
+      },
+      "GPT-OSS-120B": {
+        "temperature": 0.2,
+        "top_p": 0.9,
+        "max_tokens": 1200,
+        "expand": true,
+        "cited_spans": true,
+        "preset": "research"
+      }
     }
   },
   "prompts": [

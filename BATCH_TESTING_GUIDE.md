@@ -19,8 +19,25 @@ Edit `prompts_config.json` to set your API key and preferences:
   "settings": {
     "api_key": "your-actual-api-key-here",
     "index_dir": "indices/rag_demo_storage",
-    "models": ["qwen3-8b", "gemma3-4b"],
-    "output_dir": "results"
+    "output_dir": "results",
+    "models": {
+      "Qwen3-8B": {
+        "temperature": 0.4,
+        "top_p": 0.9,
+        "max_tokens": 800,
+        "expand": false,
+        "cited_spans": false,
+        "preset": "default"
+      },
+      "DeepSeek-R1-Distill-Qwen-32B": {
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "max_tokens": 1000,
+        "expand": true,
+        "cited_spans": true,
+        "preset": "research"
+      }
+    }
   }
 }
 ```
@@ -38,8 +55,8 @@ python sequential_batch_test.py prompts_config.json --dry-run
 ### 3. Model Override
 
 ```bash
-# Override models from config
-python sequential_batch_test.py prompts_config.json --models qwen3-8b deepseek-r1-32b
+# Override models from config (uses parameters from config if available)
+python sequential_batch_test.py prompts_config.json --models "Qwen3-8B" "DeepSeek-R1-Distill-Qwen-32B"
 ```
 
 Note: Category and priority filtering have been removed in the simplified format.
@@ -50,9 +67,16 @@ Note: Category and priority filtering have been removed in the simplified format
 
 - **`api_key`**: Your Prompter API key
 - **`index_dir`**: Path to your RAG index directory
-- **`models`**: List of model names to test (uses keys from `vllm_model_config.py`)
+- **`models`**: Object with model names as keys and their specific parameters as values
 - **`output_dir`**: Directory to save results
-- **`default_params`**: Default parameters for all tests
+
+Each model configuration includes:
+- **`temperature`**: Sampling temperature (0.0-1.0)
+- **`top_p`**: Nucleus sampling parameter (0.0-1.0)
+- **`max_tokens`**: Maximum tokens to generate
+- **`expand`**: Enable query expansion (true/false)
+- **`cited_spans`**: Enable cited span extraction (true/false)
+- **`preset`**: RAG preset to use ("default" or "research")
 
 ### Prompts Section
 
@@ -108,4 +132,4 @@ Add new prompts to the `prompts` array in `prompts_config.json`:
 - **"Config file not found"**: Check the path to `prompts_config.json`
 - **API errors**: Verify your API key in the config file
 - **Index errors**: Ensure the RAG index path is correct
-- **Model errors**: Check that model names match those in `vllm_model_config.py`
+- **Model errors**: Check that model names match those in your config file

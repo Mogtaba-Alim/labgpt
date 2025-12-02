@@ -42,8 +42,14 @@ def run_single_prompt(prompt_data, model, settings, output_dir):
         '--index', settings['index_dir']
     ]
     
+    # Get model-specific parameters
+    if isinstance(settings['models'], dict) and model in settings['models']:
+        params = settings['models'][model]
+    else:
+        # Fallback for command line override models
+        params = getattr(settings, 'default_params', {})
+    
     # Add optional parameters
-    params = settings.get('default_params', {})
     if params.get('expand'):
         cmd.append('--expand')
     if params.get('cited_spans'):
@@ -99,7 +105,12 @@ def main():
         return
     
     # Use models from args or config
-    models = args.models if args.models else settings['models']
+    if args.models:
+        models = args.models
+        # For command line models, use default params from first model in config
+        default_params = list(settings['models'].values())[0] if settings['models'] else {}
+    else:
+        models = list(settings['models'].keys())
     
     # Create output directory
     output_dir = settings.get('output_dir', 'results')
