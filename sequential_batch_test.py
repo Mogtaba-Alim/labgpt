@@ -25,9 +25,6 @@ def load_config(config_file):
         print(f"Error: Invalid JSON in config file: {e}")
         sys.exit(1)
 
-def filter_prompts(prompts):
-    """Return all prompts (no filtering in simplified format)."""
-    return prompts
 
 def run_single_prompt(prompt_data, model, settings, output_dir):
     """Run a single prompt against a single model."""
@@ -96,11 +93,9 @@ def main():
     settings = config['settings']
     prompts = config['prompts']
     
-    # Get all prompts (no filtering in simplified format)
-    filtered_prompts = filter_prompts(prompts)
-    
-    if not filtered_prompts:
-        print("No prompts match the specified filters.")
+    # Use all prompts
+    if not prompts:
+        print("No prompts found in configuration.")
         return
     
     # Use models from args or config
@@ -110,25 +105,25 @@ def main():
     output_dir = settings.get('output_dir', 'results')
     Path(output_dir).mkdir(exist_ok=True)
     
-    print(f"📋 Found {len(filtered_prompts)} prompts to test")
+    print(f"📋 Found {len(prompts)} prompts to test")
     print(f"🤖 Testing with {len(models)} models: {', '.join(models)}")
     print(f"📁 Output directory: {output_dir}")
     
     if args.dry_run:
         print("\n🔍 DRY RUN - Commands that would be executed:")
-        for prompt_data in filtered_prompts:
+        for prompt_data in prompts:
             for model in models:
                 print(f"  - {prompt_data['id']} × {model}: {prompt_data['prompt'][:50]}...")
         return
     
     # Run tests
-    total_tests = len(filtered_prompts) * len(models)
+    total_tests = len(prompts) * len(models)
     current_test = 0
     successful_tests = 0
     
     results_summary = []
     
-    for prompt_data in filtered_prompts:
+    for prompt_data in prompts:
         for model in models:
             current_test += 1
             print(f"\n📊 Progress: {current_test}/{total_tests}")
