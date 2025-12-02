@@ -25,12 +25,3 @@ python-dotenv==1.2.1         # Environment variable management
 
 # HTTP and API
 requests==2.32.3             # HTTP requests for vLLM API calls
-
-# Note: Removed dependencies for local model inference:
-# - transformers (not needed for API-based inference)
-# - bitsandbytes (local quantization)
-# - accelerate (local model acceleration)
-# - peft (parameter efficient fine-tuning)
-# - torch (PyTorch - only needed if using local models)
-# - anthropic/openai (not needed for vLLM endpoint)
-# - Flask (web apps removed)
