@@ -40,24 +40,16 @@
   },
   "prompts": [
     {
-      "id": "basic_001",
-      "prompt": "What is pharmacogenomics and why is it important in cancer treatment?"
+      "id": "meetings_001",
+      "prompt": "What are the mandatory meetings in the bhk lab?"
     },
     {
-      "id": "intermediate_001",
-      "prompt": "How do patient-derived xenografts (PDXs) help in drug response prediction and what are their advantages over traditional cell line models?"
+      "id": "sow_001",
+      "prompt": "What is an SOW and how do I fill it out?"
     },
     {
-      "id": "advanced_001",
-      "prompt": "Explain the methodological challenges in large-scale pharmacogenomic studies, particularly regarding reproducibility and consistency across different datasets like GDSC and CCLE."
-    },
-    {
-      "id": "expert_001",
-      "prompt": "Describe the integration of radiomics features with genomic biomarkers for precision radiation therapy, including the impact of imaging parameter variations on feature robustness and clinical translation."
-    },
-    {
-      "id": "research_001",
-      "prompt": "Analyze the computational and statistical approaches for identifying synergistic drug combinations in precision oncology, considering network-based methods, machine learning algorithms, and the challenges of translating in vitro findings to clinical applications."
+      "id": "offboarding_001",
+      "prompt": "What are the offboarding requirements for the BHK lab and what do I need to do?"
     }
   ]
 }
