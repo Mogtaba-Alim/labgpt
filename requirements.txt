@@ -1,5 +1,4 @@
 # LabGPT vLLM Inference - Core Dependencies
-# Updated for vLLM-only architecture (removed local model training/inference dependencies)
 
 # Document Processing
 PyMuPDF==1.26.5             # PDF processing

@@ -2,20 +2,6 @@
 
 A streamlined RAG-augmented inference system that uses vLLM server API calls for efficient model testing and evaluation.
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [vLLM Inference](#vllm-inference)
-- [Batch Testing](#batch-testing)
-- [RAG System](#rag-system)
-- [Configuration](#configuration)
-- [Examples](#examples)
-- [Troubleshooting](#troubleshooting)
-
----
-
 ## Overview
 
 LabGPT vLLM Inference provides a clean, efficient way to test multiple language models against your documents using a vLLM server endpoint. This architecture offers several advantages:
@@ -35,10 +21,8 @@ LabGPT vLLM Inference provides a clean, efficient way to test multiple language 
 ```
 
 **Key Benefits:**
-- **No Local Model Loading**: Leverage remote GPU resources via API calls
 - **Multi-Model Testing**: Easy comparison across different models
 - **Scalable**: Test hundreds of prompts efficiently
-- **Cost-Effective**: Pay per API call instead of maintaining local GPUs
 - **RAG Integration**: Full retrieval-augmented generation with your documents
 
 ---
@@ -47,8 +31,8 @@ LabGPT vLLM Inference provides a clean, efficient way to test multiple language 
 
 ### Prerequisites
 - Python 3.8+
-- Access to a vLLM server endpoint
-- API key for authentication (if required)
+- Access to UHN network
+- PROMPTER API key
 
 ### Setup
 
@@ -107,50 +91,12 @@ python vllm_inference.py "How does machine learning apply to drug discovery?" \
 
 ### Available Models
 
-Check configured models:
-```bash
-python vllm_model_config.py
-```
-
 Current models:
 - **Qwen/Qwen3-8B**: Alibaba's 8B parameter model
 - **google/gemma-3-4b-it**: Google's 4B instruction-tuned model  
 - **deepseek-ai/DeepSeek-R1-Distill-Qwen-32B**: DeepSeek's 32B reasoning model
 - **openai/GPT-OSS-120B**: OpenAI's 120B open-source model
 
-### Command Line Options
-
-```bash
-python vllm_inference.py [QUERY] [OPTIONS]
-
-Required:
-  QUERY                    Your question or prompt
-
-Model Selection:
-  --model MODEL           Single model to use (default: Qwen/Qwen3-8B)
-  --test-models MODEL...  Test multiple models and compare
-
-API Configuration:
-  --vllm-url URL          API endpoint (default: https://prompter.uhndata.io/proxy/v1/chat/completions)
-  --prompter-api-key KEY  API key for authentication
-
-RAG Configuration:
-  --index DIR             RAG index directory (default: rag_demo_storage)
-  --top-k N               Number of context chunks (default: 3)
-  --expand                Enable query expansion for better retrieval
-  --cited-spans           Extract specific supporting text segments
-  --preset PRESET         RAG preset: 'default' or 'research'
-
-Generation Parameters:
-  --temperature FLOAT     Sampling temperature (default: 0.4)
-  --top-p FLOAT          Nucleus sampling (default: 0.9)
-  --max-new-tokens INT   Maximum tokens to generate (default: 600)
-
-Output:
-  --output-json FILE     Save results to JSON file
-```
-
----
 
 ## Batch Testing
 
