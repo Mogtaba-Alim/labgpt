@@ -14,6 +14,9 @@ rag_demo_storage/
 indices/
 results/
 
+# Batch testing configurations (may contain API keys)
+prompts_config.json
+
 RAG/rag_comprehensive_guide.md
 
 data_generation/Paper_Outputs_with_chunks/

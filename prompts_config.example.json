@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "api_key": "your-api-key-here",
+    "index_dir": "indices/rag_demo_storage",
+    "models": ["qwen3-8b", "gemma3-4b"],
+    "output_dir": "results",
+    "default_params": {
+      "temperature": 0.4,
+      "top_p": 0.9,
+      "max_tokens": 800,
+      "expand": false,
+      "cited_spans": false,
+      "preset": "default"
+    }
+  },
+  "prompts": [
+    {
+      "id": "crispr_001",
+      "category": "molecular_biology",
+      "priority": "high",
+      "prompt": "How does CRISPR-Cas9 gene editing work at the molecular level?",
+      "description": "Basic CRISPR mechanism explanation"
+    },
+    {
+      "id": "ml_001", 
+      "category": "machine_learning",
+      "priority": "medium",
+      "prompt": "Explain the difference between supervised and unsupervised learning with examples",
+      "description": "ML fundamentals comparison"
+    },
+    {
+      "id": "pharma_001",
+      "category": "pharmacology",
+      "priority": "high",
+      "prompt": "What is pharmacogenomics and how does it impact personalized medicine?",
+      "description": "Pharmacogenomics overview"
+    },
+    {
+      "id": "bioinfo_001",
+      "category": "bioinformatics",
+      "priority": "low",
+      "prompt": "How do you perform quality control on RNA-seq data?",
+      "description": "RNA-seq QC procedures"
+    },
+    {
+      "id": "stats_001",
+      "category": "statistics",
+      "priority": "medium",
+      "prompt": "What is the difference between Type I and Type II errors in statistical testing?",
+      "description": "Statistical error types"
+    },
+    {
+      "id": "protein_001",
+      "category": "molecular_biology",
+      "priority": "high",
+      "prompt": "Explain the process of protein folding and what factors influence it",
+      "description": "Protein folding mechanisms"
+    }
+  ]
+}
